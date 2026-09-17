@@ -181,6 +181,8 @@ select{
 .tile .sub{font-size:13px; color:var(--muted); margin-top:5px; font-variant-numeric:tabular-nums}
 .tile.delta .val.good{color:var(--good-text)}
 .tile.delta .val.bad{color:var(--bad-text)}
+.tile.t-afa::before{background:var(--fuel)}
+.tile.t-icpt::before{background:var(--brand-teal)}
 
 /* ---------- CHARTS & TABLES ---------- */
 .duo{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:22px; align-items:start}
@@ -332,6 +334,26 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <span class="key"><span class="sw line" style="background:repeating-linear-gradient(90deg,var(--fuel) 0 6px,transparent 6px 10px)"></span>Konsep ICPT (purata blok 6 bulan)</span>
     </div>
   </div>
+  <div class="tiles" style="margin-top:18px">
+    <div class="tile t-afa">
+      <span class="tag">AFA bulanan</span>
+      <div class="lbl" id="cmpAfaLbl">Bil baharu &middot; AFA bulan sebenar</div>
+      <div class="val" id="cmpAfaVal">RM 0.00</div>
+      <div class="sub" id="cmpAfaSub"></div>
+    </div>
+    <div class="tile t-icpt">
+      <span class="tag">Konsep ICPT</span>
+      <div class="lbl">Bil baharu &middot; kadar purata blok 6 bulan</div>
+      <div class="val" id="cmpIcptVal">RM 0.00</div>
+      <div class="sub" id="cmpIcptSub"></div>
+    </div>
+    <div class="tile delta">
+      <span class="tag">Beza</span>
+      <div class="lbl" id="cmpDiffLbl">AFA bulanan vs konsep ICPT</div>
+      <div class="val" id="cmpDiffVal">RM 0.00</div>
+      <div class="sub" id="cmpDiffSub"></div>
+    </div>
+  </div>
   <details>
     <summary>Jadual penuh kadar AFA bulanan</summary>
     <div class="tbl-card" style="margin-top:10px; max-width:420px">
@@ -391,7 +413,14 @@ const AFA_MONTHS = [
 ].map(([m,v])=>({m,v,era:"afa"}));
 const TIMELINE = ICPT_MONTHS.concat(AFA_MONTHS);
 
+const AFA_BLOCKS = [ // blok 6 bulan (indeks dalam AFA_MONTHS)
+  {label:"Jul–Dis 25", s:0, e:5},
+  {label:"Jan–Jun 26", s:6, e:11},
+  {label:"Jul–Sep 26", s:12, e:14, partial:true},
+];
 const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+const blockOf = j => AFA_BLOCKS.find(b=>j>=b.s&&j<=b.e);
+const blockAvg = b => avgOf(AFA_MONTHS.slice(b.s,b.e+1).map(d=>d.v));
 const AFA_AVG6 = avgOf(AFA_MONTHS.slice(-6).map(d=>d.v));
 const AFA_AVG12 = avgOf(AFA_MONTHS.slice(-12).map(d=>d.v));
 
@@ -617,13 +646,8 @@ function drawAfa(){
   lbl(2,-2,14).textContent="−2.00";
 
   // konsep ICPT: purata setiap blok 6 bulan sebagai kadar tetap
-  const blocks=[
-    {label:"Jul–Dis 25", s:0, e:5},
-    {label:"Jan–Jun 26", s:6, e:11},
-    {label:"Jul–Sep 26 (blok belum lengkap)", s:12, e:14},
-  ];
-  for(const b of blocks){
-    const avg=avgOf(AFA_MONTHS.slice(b.s,b.e+1).map(d=>d.v));
+  for(const b of AFA_BLOCKS){
+    const avg=blockAvg(b);
     const x1=mL+band*(6+b.s)+3, x2=mL+band*(6+b.e+1)-3, yy=y(avg);
     el("line",{x1,x2,y1:yy,y2:yy,stroke:"var(--fuel)","stroke-width":2.5,"stroke-dasharray":"7 5","stroke-linecap":"round"},svg);
     const t=el("text",{x:b.s===12?x1+2:(x1+x2)/2,y:yy-8,"text-anchor":b.s===12?"start":"middle","font-size":11,"font-weight":700,
@@ -631,7 +655,7 @@ function drawAfa(){
       "font-variant-numeric":"tabular-nums"},svg);
     t.textContent=fmtSen(avg);
     const hit=el("rect",{x:x1,y:yy-9,width:x2-x1,height:18,fill:"transparent"},svg);
-    bindTip(hit,`<b>Konsep ICPT — ${b.label}</b><br>Purata blok: ${fmtSen(avg)}/kWj<br><span style='opacity:.75'>Kadar tetap jika semakan dibuat 6 bulan sekali</span>`);
+    bindTip(hit,`<b>Konsep ICPT — ${b.label}${b.partial?" (blok belum lengkap)":""}</b><br>Purata blok: ${fmtSen(avg)}/kWj<br><span style='opacity:.75'>Kadar tetap jika semakan dibuat 6 bulan sekali</span>`);
   }
 
   const pts=[];
@@ -698,6 +722,35 @@ function update(){
   drawCompare(o,n,u);
   fillOldTbl(o,u);
   fillNewTbl(n,u);
+
+  // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
+  const selV=$("#afaSel").value;
+  let selIdx=AFA_MONTHS.length-1;
+  if(selV.startsWith("m:")){
+    const k=AFA_MONTHS.findIndex(x=>x.m===selV.slice(2));
+    if(k>=0) selIdx=k;
+  }
+  const mObj=AFA_MONTHS[selIdx];
+  const blk=blockOf(selIdx), bAvg=blockAvg(blk);
+  const bilA=calcNew(u,mObj.v,withTax), bilB=calcNew(u,bAvg,withTax);
+  $("#cmpAfaLbl").textContent="Bil baharu · AFA "+mObj.m;
+  $("#cmpAfaVal").textContent=fmtRM(bilA.total);
+  $("#cmpIcptVal").textContent=fmtRM(bilB.total);
+  if(u<=600){
+    $("#cmpAfaSub").textContent="AFA dikecualikan (≤600 kWj)";
+    $("#cmpIcptSub").textContent="AFA dikecualikan (≤600 kWj)";
+  }else{
+    $("#cmpAfaSub").textContent="AFA "+mObj.m+": "+fmtSen(mObj.v)+"/kWj";
+    $("#cmpIcptSub").textContent="Purata "+blk.label+": "+fmtSen(bAvg)+"/kWj";
+  }
+  const dd=bilA.total-bilB.total;
+  const ddv=$("#cmpDiffVal");
+  ddv.textContent=(Math.abs(dd)<0.005?"":dd<0?"−":"+")+"RM "+Math.abs(dd).toFixed(2);
+  ddv.className="val "+(dd<=0?"good":"bad");
+  $("#cmpDiffLbl").textContent = u<=600 ? "Tiada beza — AFA dikecualikan"
+    : dd<=0 ? "Jimat dengan AFA bulanan" : "Bayar lebih dengan AFA bulanan";
+  $("#cmpDiffSub").textContent = u<=600 ? "Penggunaan ≤600 kWj tidak dikenakan AFA"
+    : "berbanding jika kadar tetap 6 bulan (konsep ICPT)";
 }
 
 $("#kwh").addEventListener("input",update);
