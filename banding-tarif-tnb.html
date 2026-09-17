@@ -1,0 +1,632 @@
+<title>Banding Tarif TNB</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  /* ground & ink */
+  --page:#f7f7f4; --surface:#fcfcfb; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --hairline:rgba(11,11,11,.10);
+  --accent:#2a78d6;
+  /* old bill: ordinal blue ramp (blok 1..5) */
+  --blk1:#86b6ef; --blk2:#6da7ec; --blk3:#5598e7; --blk4:#3987e5; --blk5:#256abf;
+  /* fuel mechanisms (ICPT & AFA share the orange family) */
+  --fuel:#eb6834;
+  /* new bill components */
+  --c-tenaga:#2a78d6; --c-kapasiti:#1baf7a; --c-rangkaian:#eda100; --c-peruncitan:#e87ba4;
+  --c-eei:#008300;
+  /* afa trend diverging */
+  --reb:#2a78d6; --sur:#e34948; --avg:#0b0b0b;
+  --tax:#b9b7ae;
+  --good-text:#006300; --bad-text:#b32222;
+  --chip:#efeeea; --chip-on:#0b0b0b; --chip-on-ink:#fcfcfb;
+  --tooltip-bg:#0b0b0b; --tooltip-ink:#fcfcfb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --hairline:rgba(255,255,255,.10);
+    --accent:#3987e5;
+    --blk1:#1c4a80; --blk2:#215a9b; --blk3:#2a6cb9; --blk4:#3987e5; --blk5:#6da7ec;
+    --fuel:#d95926;
+    --c-tenaga:#3987e5; --c-kapasiti:#199e70; --c-rangkaian:#c98500; --c-peruncitan:#d55181;
+    --c-eei:#1da31d;
+    --reb:#3987e5; --sur:#e66767; --avg:#ffffff;
+    --tax:#5a5952;
+    --good-text:#0ca30c; --bad-text:#e66767;
+    --chip:#262624; --chip-on:#fcfcfb; --chip-on-ink:#0b0b0b;
+    --tooltip-bg:#fcfcfb; --tooltip-ink:#0b0b0b;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --hairline:rgba(255,255,255,.10);
+  --accent:#3987e5;
+  --blk1:#1c4a80; --blk2:#215a9b; --blk3:#2a6cb9; --blk4:#3987e5; --blk5:#6da7ec;
+  --fuel:#d95926;
+  --c-tenaga:#3987e5; --c-kapasiti:#199e70; --c-rangkaian:#c98500; --c-peruncitan:#d55181;
+  --c-eei:#1da31d;
+  --reb:#3987e5; --sur:#e66767; --avg:#ffffff;
+  --tax:#5a5952;
+  --good-text:#0ca30c; --bad-text:#e66767;
+  --chip:#262624; --chip-on:#fcfcfb; --chip-on-ink:#0b0b0b;
+  --tooltip-bg:#fcfcfb; --tooltip-ink:#0b0b0b;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--page); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55;
+  padding-inline:16px; padding-block:0 48px;
+}
+.wrap{max-width:1080px; margin:0 auto}
+header.top{padding-block:36px 8px}
+.kicker{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-2); font-weight:600}
+h1{
+  font-family:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+  font-weight:800; font-size:clamp(28px,5vw,44px); line-height:1.06;
+  margin:.25em 0 .3em; text-wrap:balance; letter-spacing:-.01em;
+}
+.lede{color:var(--ink-2); max-width:62ch; margin:0}
+h2{
+  font-family:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+  font-weight:700; font-size:22px; margin:0 0 4px; letter-spacing:-.005em; text-wrap:balance;
+}
+.sec-sub{color:var(--ink-2); margin:0 0 18px; font-size:14px}
+section{margin-top:44px}
+
+/* ---- controls ---- */
+.panel{
+  background:var(--surface); border:1px solid var(--hairline); border-radius:14px;
+  padding:20px 22px; margin-top:20px;
+}
+.controls{display:flex; flex-wrap:wrap; gap:22px; align-items:flex-end}
+.ctl{display:flex; flex-direction:column; gap:6px}
+.ctl label{font-size:12px; letter-spacing:.1em; text-transform:uppercase; font-weight:600; color:var(--ink-2)}
+.kwh-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+input[type=number]{
+  font:600 26px/1 "IBM Plex Sans",system-ui,sans-serif; font-variant-numeric:tabular-nums;
+  width:130px; padding:8px 10px; color:var(--ink);
+  background:var(--page); border:1px solid var(--axis); border-radius:10px;
+}
+input[type=number]:focus, select:focus, input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.unit{font-weight:600; color:var(--ink-2)}
+input[type=range]{width:min(380px,70vw); accent-color:var(--accent)}
+.presets{display:flex; gap:8px; flex-wrap:wrap}
+.presets button{
+  font:600 13px "IBM Plex Sans",system-ui,sans-serif; color:var(--ink);
+  background:var(--chip); border:1px solid transparent; border-radius:999px;
+  padding:5px 12px; cursor:pointer;
+}
+.presets button[aria-pressed="true"]{background:var(--chip-on); color:var(--chip-on-ink)}
+select{
+  font:500 14px "IBM Plex Sans",system-ui,sans-serif; color:var(--ink);
+  background:var(--page); border:1px solid var(--axis); border-radius:10px; padding:8px 10px;
+  max-width:290px;
+}
+.toggle{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink-2); font-weight:500}
+.toggle input{width:16px; height:16px; accent-color:var(--accent)}
+
+/* ---- hero tiles ---- */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:20px}
+.tile{background:var(--surface); border:1px solid var(--hairline); border-radius:14px; padding:18px 20px}
+.tile .lbl{font-size:13px; color:var(--ink-2); font-weight:500}
+.tile .val{font-family:"Archivo",system-ui,sans-serif; font-weight:800; font-size:38px; line-height:1.1; margin-top:2px}
+.tile .sub{font-size:13px; color:var(--muted); margin-top:4px; font-variant-numeric:tabular-nums}
+.tile.delta .val.good{color:var(--good-text)}
+.tile.delta .val.bad{color:var(--bad-text)}
+.tile .tag{display:inline-block; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  padding:2px 8px; border-radius:999px; background:var(--chip); color:var(--ink-2); margin-bottom:6px}
+
+/* ---- charts & tables ---- */
+.duo{display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:22px; align-items:start}
+@media (max-width:860px){ .duo{grid-template-columns:1fr} }
+.chart-card{background:var(--surface); border:1px solid var(--hairline); border-radius:14px; padding:18px}
+.chart-card h3, .tbl-card h3{
+  font-family:"Archivo",system-ui,sans-serif; font-weight:700; font-size:15px; margin:0 0 2px;
+}
+.chart-note{font-size:12.5px; color:var(--muted); margin:0 0 10px}
+.scroller{overflow-x:auto}
+svg{display:block}
+svg text{font-family:"IBM Plex Sans",system-ui,sans-serif}
+.legend{display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:12px; font-size:12.5px; color:var(--ink-2)}
+.legend .key{display:inline-flex; align-items:center; gap:6px}
+.legend .sw{width:11px; height:11px; border-radius:3px; flex:none}
+.legend .sw.line{height:3px; border-radius:2px; width:16px}
+
+.tbl-card{background:var(--surface); border:1px solid var(--hairline); border-radius:14px; padding:18px; }
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th,td{padding:6px 8px; text-align:left; border-bottom:1px solid var(--grid)}
+th{font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-weight:600}
+td.num, th.num{text-align:right; font-variant-numeric:tabular-nums}
+td .dot{display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:7px; vertical-align:1px}
+tr.total td{border-bottom:none; border-top:2px solid var(--axis); font-weight:700; font-size:14.5px}
+tr.minor td{color:var(--ink-2)}
+td.neg{color:var(--good-text); font-weight:600}
+td.pos-sur{color:var(--bad-text)}
+.tbl-stack{display:flex; flex-direction:column; gap:22px}
+
+/* tooltip */
+#tip{
+  position:fixed; z-index:30; pointer-events:none; display:none;
+  background:var(--tooltip-bg); color:var(--tooltip-ink);
+  font:500 12.5px/1.45 "IBM Plex Sans",system-ui,sans-serif;
+  padding:7px 10px; border-radius:8px; max-width:260px;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);
+}
+#tip b{font-weight:700}
+
+/* notes */
+.notes{font-size:13px; color:var(--ink-2)}
+.notes ol{padding-left:20px; margin:8px 0}
+.notes li{margin-bottom:6px}
+.notes a{color:var(--accent)}
+details{margin-top:14px}
+summary{cursor:pointer; font-weight:600; font-size:13.5px}
+footer{margin-top:48px; padding-top:16px; border-top:1px solid var(--grid); font-size:12.5px; color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="kicker">Tarif elektrik domestik &middot; Semenanjung Malaysia</div>
+  <h1>Bil TNB anda: sebelum vs selepas Julai 2025</h1>
+  <p class="lede">Masukkan penggunaan bulanan (kWj) dan bandingkan bil di bawah struktur lama
+  (kadar blok + ICPT) dengan struktur baharu RP4 (Caj Tenaga, Kapasiti, Rangkaian, Peruncitan,
+  AFA dan Insentif Cekap Tenaga) yang berkuat kuasa 1 Julai 2025.</p>
+</header>
+
+<div class="panel">
+  <div class="controls">
+    <div class="ctl">
+      <label for="kwh">Penggunaan bulanan</label>
+      <div class="kwh-row">
+        <input id="kwh" type="number" min="1" max="5000" step="1" value="500">
+        <span class="unit">kWj</span>
+        <input id="kwhRange" type="range" min="50" max="2000" step="10" value="500" aria-label="Penggunaan bulanan (kWj)">
+      </div>
+      <div class="presets" id="presets" role="group" aria-label="Contoh penggunaan">
+        <button data-v="200">200</button><button data-v="350">350</button>
+        <button data-v="500" aria-pressed="true">500</button><button data-v="700">700</button>
+        <button data-v="1000">1000</button><button data-v="1600">1600</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <label for="afaSel">Kadar AFA untuk bil baharu</label>
+      <select id="afaSel"></select>
+    </div>
+    <div class="ctl">
+      <label>Cukai &amp; kumpulan wang</label>
+      <span class="toggle"><input id="taxTgl" type="checkbox" checked> Kira KWTBB 1.6% &amp; Cukai Perkhidmatan 8%</span>
+    </div>
+  </div>
+</div>
+
+<div class="tiles">
+  <div class="tile">
+    <span class="tag">Sebelum Jul 2025</span>
+    <div class="lbl">Bil lama (blok + ICPT)</div>
+    <div class="val" id="oldVal">RM 0.00</div>
+    <div class="sub" id="oldEff"></div>
+  </div>
+  <div class="tile">
+    <span class="tag">Mulai Jul 2025</span>
+    <div class="lbl">Bil baharu (RP4)</div>
+    <div class="val" id="newVal">RM 0.00</div>
+    <div class="sub" id="newEff"></div>
+  </div>
+  <div class="tile delta">
+    <span class="tag">Beza</span>
+    <div class="lbl" id="deltaLbl">Perubahan bil</div>
+    <div class="val" id="deltaVal">RM 0.00</div>
+    <div class="sub" id="deltaPct"></div>
+  </div>
+</div>
+
+<section>
+  <h2>Anatomi bil: kadar blok lama vs caj berkomponen baharu</h2>
+  <p class="sec-sub">Bar kiri memecahkan bil lama mengikut blok kadar (1&ndash;200, 201&ndash;300, &hellip;) berserta ICPT.
+  Bar kanan memecahkan bil baharu mengikut komponen RP4. Segmen di bawah garisan sifar ialah rebat.</p>
+  <div class="duo">
+    <div class="chart-card">
+      <h3>Perbandingan bil untuk <span id="chartKwh">500</span> kWj</h3>
+      <p class="chart-note">RM sebulan &middot; tuding pada segmen untuk nilai penuh</p>
+      <div class="scroller"><svg id="cmpChart" viewBox="0 0 680 420" role="img" aria-label="Carta bar bertindan: bil lama vs bil baharu"></svg></div>
+      <div class="legend" id="cmpLegend"></div>
+    </div>
+    <div class="tbl-stack">
+      <div class="tbl-card">
+        <h3>Bil lama &mdash; kadar blok</h3>
+        <table id="oldTbl"><thead><tr><th>Perkara</th><th class="num">Unit</th><th class="num">Kadar</th><th class="num">RM</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div class="tbl-card">
+        <h3>Bil baharu &mdash; komponen RP4</h3>
+        <table id="newTbl"><thead><tr><th>Perkara</th><th class="num">Kadar</th><th class="num">RM</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>ICPT vs AFA: trend pelarasan bahan api</h2>
+  <p class="sec-sub">Dulu, ICPT disemak setiap 6 bulan (domestik &le;1,500 kWj menikmati rebat tetap 2 sen/kWj sehingga Jun 2025).
+  Mulai Julai 2025, AFA disemak <em>setiap bulan</em> &mdash; garisan menunjukkan purata bergerak 6 bulan yang digunakan sebagai
+  anggaran dalam kalkulator ini. Pengguna &le;600 kWj dikecualikan daripada AFA.</p>
+  <div class="chart-card">
+    <h3>Kadar pelarasan bahan api, Jan 2025 &ndash; Sep 2026 (sen/kWj)</h3>
+    <p class="chart-note">Negatif = rebat kepada pengguna &middot; positif = surcaj</p>
+    <div class="scroller"><svg id="afaChart" viewBox="0 0 960 330" style="min-width:720px" role="img" aria-label="Carta trend ICPT dan AFA bulanan"></svg></div>
+    <div class="legend">
+      <span class="key"><span class="sw" style="background:var(--fuel)"></span>Era ICPT (rebat domestik &le;1,500 kWj)</span>
+      <span class="key"><span class="sw" style="background:var(--reb)"></span>AFA &mdash; rebat</span>
+      <span class="key"><span class="sw" style="background:var(--sur)"></span>AFA &mdash; surcaj</span>
+      <span class="key"><span class="sw line" style="background:var(--avg)"></span>Purata bergerak 6 bulan</span>
+    </div>
+  </div>
+  <details>
+    <summary>Jadual penuh kadar AFA bulanan</summary>
+    <div class="tbl-card" style="margin-top:10px; max-width:420px">
+      <table id="afaTbl"><thead><tr><th>Bulan</th><th class="num">AFA (sen/kWj)</th></tr></thead><tbody></tbody></table>
+    </div>
+  </details>
+</section>
+
+<section class="notes">
+  <h2>Nota &amp; andaian</h2>
+  <ol>
+    <li><b>Bil lama</b>: Tarif A domestik &mdash; blok 21.8 / 33.4 / 51.6 / 54.6 / 57.1 sen/kWj; ICPT Jan&ndash;Jun 2025:
+      rebat 2 sen/kWj (&le;1,500 kWj) atau surcaj 10 sen/kWj (&gt;1,500 kWj); caj minimum RM3.</li>
+    <li><b>Bil baharu (Domestik Am)</b>: Caj Tenaga 27.03 sen/kWj (&gt;1,500 kWj: 37.03 sen untuk semua unit),
+      Caj Kapasiti 4.55 sen, Caj Rangkaian 12.85 sen, Caj Peruncitan RM10/bulan (dikecualikan &le;600 kWj).</li>
+    <li><b>Insentif Cekap Tenaga (EEI)</b>: rebat berperingkat 25.0 &rarr; 0.5 sen/kWj untuk penggunaan &le;1,000 kWj,
+      dikenakan ke atas semua unit mengikut jumlah penggunaan bulan itu.</li>
+    <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj. Pilihan lalai kalkulator ialah purata 6 bulan terkini;
+      anda boleh pilih mana-mana bulan sebenar dari senarai.</li>
+    <li><b>KWTBB</b> 1.6% dikenakan jika penggunaan &gt;300 kWj; <b>Cukai Perkhidmatan</b> 8% dikenakan ke atas bahagian
+      penggunaan melebihi 600 kWj. Kedua-duanya anggaran &mdash; kaedah pengiraan penuh TNB mungkin berbeza sedikit.</li>
+    <li>Alat ini untuk perbandingan kasar sahaja; rujuk bil sebenar atau kalkulator rasmi myTNB untuk angka muktamad.</li>
+  </ol>
+  <p>Sumber: <a href="https://www.st.gov.my/jadual-elektrik-baharu-lebih-236-juta-pengguna-domestik-semenanjung-nikmati-kadar-lebih-adil" target="_blank" rel="noopener">Suruhanjaya Tenaga (jadual tarif RP4, Jun 2025)</a> &middot;
+  <a href="https://paultan.org/2026/09/02/tnb-afa-rate-september-2026-set-at-3-67-sen-kwh/" target="_blank" rel="noopener">kadar AFA bulanan Jul 2025&ndash;Sep 2026</a> &middot;
+  <a href="https://www.mytnb.com.my/tariff" target="_blank" rel="noopener">myTNB</a></p>
+</section>
+
+<footer>Dikemas kini September 2026. Kadar AFA terkini diumumkan Suruhanjaya Tenaga pada awal setiap bulan.</footer>
+</div>
+
+<div id="tip" role="status"></div>
+
+<script>
+"use strict";
+/* ================= DATA ================= */
+const OLD_BLOCKS = [ // [hingga kWj, sen/kWj]
+  [200,21.8],[300,33.4],[600,51.6],[900,54.6],[Infinity,57.1]
+];
+const BLOCK_META = [
+  {name:"Blok 1 (1–200)",rate:21.8,v:"--blk1"},
+  {name:"Blok 2 (201–300)",rate:33.4,v:"--blk2"},
+  {name:"Blok 3 (301–600)",rate:51.6,v:"--blk3"},
+  {name:"Blok 4 (601–900)",rate:54.6,v:"--blk4"},
+  {name:"Blok 5 (>900)",rate:57.1,v:"--blk5"},
+];
+const EEI = [ // [hingga kWj, rebat sen/kWj]
+  [200,25],[250,24.5],[300,22.5],[350,21],[400,17],[450,14.5],[500,12],[550,10.5],
+  [600,9],[650,7.5],[700,5.5],[750,4.5],[800,4],[850,2.5],[900,1],[1000,0.5]
+];
+const ICPT_MONTHS = ["Jan 25","Feb 25","Mac 25","Apr 25","Mei 25","Jun 25"].map(m=>({m,v:-2,era:"icpt"}));
+const AFA_MONTHS = [
+  ["Jul 25",0.00],["Ogo 25",-1.45],["Sep 25",-1.10],["Okt 25",-6.50],["Nov 25",-8.91],["Dis 25",-6.42],
+  ["Jan 26",-4.99],["Feb 26",-2.77],["Mac 26",-2.15],["Apr 26",-0.47],["Mei 26",1.38],["Jun 26",2.59],
+  ["Jul 26",3.59],["Ogo 26",3.80],["Sep 26",3.67]
+].map(([m,v])=>({m,v,era:"afa"}));
+const TIMELINE = ICPT_MONTHS.concat(AFA_MONTHS);
+
+const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+const AFA_AVG6 = avgOf(AFA_MONTHS.slice(-6).map(d=>d.v));
+const AFA_AVG12 = avgOf(AFA_MONTHS.slice(-12).map(d=>d.v));
+
+/* ================= KIRAAN ================= */
+function calcOld(u, withTax){
+  const segs=[]; let prev=0;
+  for(let i=0;i<OLD_BLOCKS.length;i++){
+    const [cap,rate]=OLD_BLOCKS[i];
+    const take=Math.max(0, Math.min(u,cap)-prev);
+    if(take>0) segs.push({i, kwh:take, rate, rm:take*rate/100});
+    prev=cap; if(u<=cap) break;
+  }
+  let blockTotal=segs.reduce((a,s)=>a+s.rm,0);
+  blockTotal=Math.max(blockTotal,3); // caj minimum RM3
+  const icptRate = u>1500 ? 10 : -2;
+  const icpt = u*icptRate/100;
+  let kwtbb=0, sst=0;
+  if(withTax){
+    if(u>300) kwtbb = 0.016*blockTotal;
+    if(u>600){
+      const over=u-600;
+      const b4=Math.min(over,300), b5=Math.max(0,over-300);
+      const overCost=(b4*54.6+b5*57.1)/100 + over*icptRate/100;
+      sst=0.08*overCost;
+    }
+  }
+  return {segs, blockTotal, icptRate, icpt, kwtbb, sst, total: blockTotal+icpt+kwtbb+sst};
+}
+
+function eeiRate(u){
+  if(u>1000) return 0;
+  for(const [cap,r] of EEI) if(u<=cap) return r;
+  return 0;
+}
+
+function calcNew(u, afaRate, withTax){
+  const tRate = u>1500 ? 37.03 : 27.03;
+  const tenaga = u*tRate/100;
+  const kapasiti = u*4.55/100;
+  const rangkaian = u*12.85/100;
+  const peruncitan = u>600 ? 10 : 0;
+  const afaApplies = u>600;
+  const afa = afaApplies ? u*afaRate/100 : 0;
+  const eRate = eeiRate(u);
+  const eei = -u*eRate/100;
+  let kwtbb=0, sst=0;
+  if(withTax){
+    const base = tenaga+kapasiti+rangkaian+peruncitan+afa+eei;
+    if(u>300) kwtbb = 0.016*Math.max(base,0);
+    if(u>600) sst = 0.08*((u-600)/u)*(tenaga+afa+kapasiti+rangkaian);
+  }
+  return {tRate, tenaga, kapasiti, rangkaian, peruncitan, afaApplies, afaRate, afa, eRate, eei, kwtbb, sst,
+          total: tenaga+kapasiti+rangkaian+peruncitan+afa+eei+kwtbb+sst};
+}
+
+/* ================= UTIL ================= */
+const $ = s=>document.querySelector(s);
+const fmtRM = v => (v<0?"−RM ":"RM ")+Math.abs(v).toFixed(2);
+const fmtRM0 = v => (v<0?"−":"")+"RM"+Math.abs(v).toFixed(2);
+const fmtSen = v => (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(2)+" sen";
+const NS="http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){
+  const n=document.createElementNS(NS,tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(n);
+  return n;
+}
+const tip=$("#tip");
+function bindTip(node, html){
+  node.addEventListener("pointerenter",()=>{tip.innerHTML=html; tip.style.display="block";});
+  node.addEventListener("pointermove",e=>{
+    const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+    let x=e.clientX+pad, y=e.clientY-h-10;
+    if(x+w>innerWidth-8) x=e.clientX-w-pad;
+    if(y<8) y=e.clientY+pad;
+    tip.style.left=x+"px"; tip.style.top=y+"px";
+  });
+  node.addEventListener("pointerleave",()=>{tip.style.display="none";});
+}
+function niceTicks(min,max,n){
+  const span=max-min, raw=span/n, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const steps=[1,2,2.5,5,10]; let step=mag*10;
+  for(const s of steps){ if(raw/mag<=s){step=s*mag; break;} }
+  const t=[]; for(let v=Math.ceil(min/step)*step; v<=max+1e-9; v+=step) t.push(+v.toFixed(10));
+  return t;
+}
+
+/* ================= CARTA PERBANDINGAN ================= */
+function drawCompare(o,n,u){
+  const svg=$("#cmpChart"); svg.innerHTML="";
+  const W=680,H=420,mL=58,mR=16,mT=44,mB=34;
+  const plotW=W-mL-mR, plotH=H-mT-mB;
+
+  const oldSegs = o.segs.map(s=>({label:BLOCK_META[s.i].name+" @ "+s.rate+" sen/kWj", sub:s.kwh+" kWj", rm:s.rm, fill:`var(${BLOCK_META[s.i].v})`}));
+  if(o.kwtbb||o.sst) oldSegs.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:o.kwtbb+o.sst, fill:"var(--tax)"});
+  const oldNeg=[], oldPos=oldSegs;
+  (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"−")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
+
+  const newPos=[
+    {label:"Caj Tenaga @ "+n.tRate+" sen/kWj", sub:u+" kWj", rm:n.tenaga, fill:"var(--c-tenaga)"},
+    {label:"Caj Kapasiti @ 4.55 sen/kWj", sub:u+" kWj", rm:n.kapasiti, fill:"var(--c-kapasiti)"},
+    {label:"Caj Rangkaian @ 12.85 sen/kWj", sub:u+" kWj", rm:n.rangkaian, fill:"var(--c-rangkaian)"},
+  ];
+  if(n.peruncitan) newPos.push({label:"Caj Peruncitan", sub:"RM10/bulan", rm:n.peruncitan, fill:"var(--c-peruncitan)"});
+  const newNeg=[];
+  if(n.afaApplies && n.afa!==0)
+    (n.afa>=0?newPos:newNeg).push({label:"AFA ("+fmtSen(n.afaRate)+"/kWj)", sub:u+" kWj", rm:n.afa, fill:"var(--fuel)"});
+  if(n.kwtbb||n.sst) newPos.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:n.kwtbb+n.sst, fill:"var(--tax)"});
+  if(n.eei!==0) newNeg.push({label:"Insentif Cekap Tenaga (−"+n.eRate+" sen/kWj)", sub:"rebat", rm:n.eei, fill:"var(--c-eei)"});
+
+  const sumPos=a=>a.filter(s=>s.rm>0).reduce((x,s)=>x+s.rm,0);
+  const sumNeg=a=>a.filter(s=>s.rm<0).reduce((x,s)=>x+s.rm,0);
+  const maxPos=Math.max(sumPos(oldPos),sumPos(newPos),1);
+  const minNeg=Math.min(sumNeg(oldNeg),sumNeg(newNeg),0);
+  const yMax=maxPos*1.12, yMin=minNeg*1.25;
+  const y=v=> mT + (yMax-v)/(yMax-yMin)*plotH;
+
+  // grid + ticks
+  for(const t of niceTicks(yMin,yMax,6)){
+    const yy=y(t);
+    el("line",{x1:mL,x2:W-mR,y1:yy,y2:yy,stroke: t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
+    el("text",{x:mL-8,y:yy+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent="RM"+t.toFixed(0);
+  }
+
+  const groups=[
+    {x:mL+plotW*0.27, title:"SEBELUM", sub:"Blok + ICPT", pos:oldPos, neg:oldNeg, total:o.total},
+    {x:mL+plotW*0.73, title:"SELEPAS", sub:"Komponen RP4", pos:newPos, neg:newNeg, total:n.total},
+  ];
+  const bw=Math.min(150,plotW*0.3);
+  for(const g of groups){
+    let acc=0;
+    for(const s of g.pos.filter(s=>s.rm>0)){
+      const y1=y(acc+s.rm), y2=y(acc);
+      const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:2},svg);
+      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
+      acc+=s.rm;
+    }
+    let dn=0;
+    for(const s of g.neg){
+      const y1=y(dn), y2=y(dn+s.rm);
+      const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:2},svg);
+      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
+      dn+=s.rm;
+    }
+    // jumlah bersih
+    el("text",{x:g.x, y:y(acc)-10,"text-anchor":"middle","font-size":15,"font-weight":700,fill:"var(--ink)"},svg).textContent=fmtRM0(g.total);
+    el("text",{x:g.x, y:H-16,"text-anchor":"middle","font-size":12,"font-weight":700,"letter-spacing":"1.5",fill:"var(--ink)"},svg).textContent=g.title;
+    el("text",{x:g.x, y:H-3,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=g.sub;
+    // penanda jumlah bersih pada skala
+    const ty=y(g.total);
+    el("line",{x1:g.x-bw/2-8,x2:g.x+bw/2+8,y1:ty,y2:ty,stroke:"var(--ink)","stroke-width":2,"stroke-dasharray":"5 3"},svg);
+  }
+
+  // legend
+  const legend=$("#cmpLegend");
+  const items=[
+    ["var(--blk1)","Blok lama (cerah→gelap = blok 1→5)"],
+    ["var(--fuel)","ICPT / AFA (bahan api)"],
+    ["var(--c-tenaga)","Caj Tenaga"],["var(--c-kapasiti)","Caj Kapasiti"],
+    ["var(--c-rangkaian)","Caj Rangkaian"],["var(--c-peruncitan)","Caj Peruncitan"],
+    ["var(--c-eei)","Insentif Cekap Tenaga"],["var(--tax)","KWTBB + cukai"],
+  ];
+  legend.innerHTML=items.map(([c,t])=>`<span class="key"><span class="sw" style="background:${c}"></span>${t}</span>`).join("");
+}
+
+/* ================= JADUAL ================= */
+function fillOldTbl(o,u){
+  const tb=$("#oldTbl tbody"); tb.innerHTML="";
+  const row=(cells,cls)=>{const tr=document.createElement("tr"); if(cls)tr.className=cls;
+    tr.innerHTML=cells; tb.appendChild(tr);};
+  for(const s of o.segs){
+    const m=BLOCK_META[s.i];
+    row(`<td><span class="dot" style="background:var(${m.v})"></span>${m.name}</td><td class="num">${s.kwh}</td><td class="num">${m.rate.toFixed(1)} sen</td><td class="num">${s.rm.toFixed(2)}</td>`);
+  }
+  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate>0?"+":"−"}${Math.abs(o.icptRate).toFixed(1)} sen</td><td class="num ${o.icpt<0?"neg":"pos-sur"}">${o.icpt.toFixed(2)}</td>`);
+  if(o.kwtbb) row(`<td>KWTBB</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
+  if(o.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
+  row(`<td colspan="3">Jumlah</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
+}
+function fillNewTbl(n,u){
+  const tb=$("#newTbl tbody"); tb.innerHTML="";
+  const row=(cells,cls)=>{const tr=document.createElement("tr"); if(cls)tr.className=cls;
+    tr.innerHTML=cells; tb.appendChild(tr);};
+  row(`<td><span class="dot" style="background:var(--c-tenaga)"></span>Caj Tenaga</td><td class="num">${n.tRate} sen</td><td class="num">${n.tenaga.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA</td><td class="num">${n.afaApplies?fmtSen(n.afaRate):"dikecualikan"}</td><td class="num ${n.afa<0?"neg":n.afa>0?"pos-sur":""}">${n.afaApplies?n.afa.toFixed(2):"0.00"}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-kapasiti)"></span>Caj Kapasiti</td><td class="num">4.55 sen</td><td class="num">${n.kapasiti.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-rangkaian)"></span>Caj Rangkaian</td><td class="num">12.85 sen</td><td class="num">${n.rangkaian.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-peruncitan)"></span>Caj Peruncitan</td><td class="num">${n.peruncitan?"RM10":"dikecualikan"}</td><td class="num">${n.peruncitan.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-eei)"></span>Insentif Cekap Tenaga</td><td class="num">${n.eRate?("−"+n.eRate+" sen"):"–"}</td><td class="num ${n.eei<0?"neg":""}">${n.eei.toFixed(2)}</td>`);
+  if(n.kwtbb) row(`<td>KWTBB</td><td class="num">1.6%</td><td class="num">${n.kwtbb.toFixed(2)}</td>`,"minor");
+  if(n.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">8%</td><td class="num">${n.sst.toFixed(2)}</td>`,"minor");
+  row(`<td colspan="2">Jumlah</td><td class="num">${n.total.toFixed(2)}</td>`,"total");
+}
+
+/* ================= CARTA AFA ================= */
+function drawAfa(){
+  const svg=$("#afaChart"); svg.innerHTML="";
+  const W=960,H=330,mL=50,mR=118,mT=30,mB=40;
+  const plotW=W-mL-mR, plotH=H-mT-mB;
+  const yMin=-10, yMax=5;
+  const y=v=> mT+(yMax-v)/(yMax-yMin)*plotH;
+  const band=plotW/TIMELINE.length;
+  const bw=Math.min(24,band-8);
+  const xC=i=> mL+band*i+band/2;
+
+  for(let t=yMin;t<=yMax;t+=2.5){
+    el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
+    el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent=(t>0?"+":"")+t;
+  }
+  // pembahagi era di sempadan Jun25|Jul25
+  const divX=mL+band*6;
+  el("line",{x1:divX,x2:divX,y1:mT-14,y2:H-mB+6,stroke:"var(--axis)","stroke-width":1,"stroke-dasharray":"4 4"},svg);
+  el("text",{x:divX-8,y:mT-2,"text-anchor":"end","font-size":11,"font-weight":700,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="ERA ICPT";
+  el("text",{x:divX+8,y:mT-2,"text-anchor":"start","font-size":11,"font-weight":700,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="ERA AFA — semakan bulanan";
+
+  TIMELINE.forEach((d,i)=>{
+    const fill = d.era==="icpt" ? "var(--fuel)" : (d.v<0 ? "var(--reb)" : "var(--sur)");
+    const h=Math.abs(y(d.v)-y(0));
+    const r=el("rect",{x:xC(i)-bw/2, y:d.v<0?y(0)+1:y(d.v), width:bw, height:Math.max(h-1,d.v===0?2:1), fill, rx:2},svg);
+    bindTip(r,`<b>${d.m}</b><br>${d.era==="icpt"?"ICPT domestik":"AFA"}: ${fmtSen(d.v)}/kWj${d.era==="icpt"?"<br><span style='opacity:.75'>&le;1,500 kWj; >1,500 kWj: +10 sen</span>":""}`);
+    if(i%3===0||i===TIMELINE.length-1)
+      el("text",{x:xC(i),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=d.m;
+  });
+
+  // label ekstrem sahaja
+  const lbl=(i,v,dy)=>el("text",{x:xC(i),y:y(v)+dy,"text-anchor":"middle","font-size":11,"font-weight":600,fill:"var(--ink-2)","font-variant-numeric":"tabular-nums"},svg);
+  lbl(10,-8.91,14).textContent="−8.91";           // Nov 25 (indeks 6+4)
+  lbl(TIMELINE.length-1,3.67,-8).textContent="+3.67";  // Sep 26
+  lbl(2,-2,14).textContent="−2.00";               // era ICPT
+
+  // purata bergerak 6 bulan (AFA sahaja, bermula Dis 25)
+  const pts=[];
+  AFA_MONTHS.forEach((d,j)=>{
+    if(j>=5){
+      const avg=avgOf(AFA_MONTHS.slice(j-5,j+1).map(x=>x.v));
+      pts.push({i:6+j, v:avg});
+    }
+  });
+  const path=pts.map((p,k)=>(k?"L":"M")+xC(p.i)+" "+y(p.v)).join(" ");
+  el("path",{d:path,fill:"none",stroke:"var(--avg)","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
+  const last=pts[pts.length-1];
+  el("circle",{cx:xC(last.i),cy:y(last.v),r:4.5,fill:"var(--avg)",stroke:"var(--surface)","stroke-width":2},svg);
+  el("text",{x:xC(last.i)+12,y:y(last.v)+4,"font-size":11.5,"font-weight":600,fill:"var(--ink)"},svg).textContent="Purata 6 bln: "+fmtSen(last.v);
+
+  // jadual AFA
+  const tb=$("#afaTbl tbody");
+  tb.innerHTML = TIMELINE.map(d=>`<tr><td>${d.m}${d.era==="icpt"?" <span style='color:var(--muted)'>(ICPT)</span>":""}</td><td class="num ${d.v<0?"neg":d.v>0?"pos-sur":""}">${fmtSen(d.v)}</td></tr>`).join("");
+}
+
+/* ================= KEMAS KINI ================= */
+function buildAfaSelect(){
+  const sel=$("#afaSel");
+  const opts=[
+    {v:"avg6", t:`Purata 6 bulan terkini (${fmtSen(AFA_AVG6)})`},
+    {v:"avg12", t:`Purata 12 bulan (${fmtSen(AFA_AVG12)})`},
+  ].concat(AFA_MONTHS.slice().reverse().map(d=>({v:"m:"+d.m, t:`${d.m} (${fmtSen(d.v)})`})));
+  sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join("");
+  sel.value="avg6";
+}
+function currentAfaRate(){
+  const v=$("#afaSel").value;
+  if(v==="avg6") return AFA_AVG6;
+  if(v==="avg12") return AFA_AVG12;
+  const m=v.slice(2);
+  const d=AFA_MONTHS.find(x=>x.m===m);
+  return d?d.v:0;
+}
+
+function update(){
+  let u=parseInt($("#kwh").value,10);
+  if(!Number.isFinite(u)||u<1) u=1;
+  if(u>5000) u=5000;
+  $("#kwh").value=u;
+  $("#kwhRange").value=Math.min(Math.max(u,50),2000);
+  document.querySelectorAll("#presets button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===u)));
+  $("#chartKwh").textContent=u;
+
+  const withTax=$("#taxTgl").checked;
+  const afaRate=currentAfaRate();
+  const o=calcOld(u,withTax), n=calcNew(u,afaRate,withTax);
+
+  $("#oldVal").textContent=fmtRM(o.total);
+  $("#newVal").textContent=fmtRM(n.total);
+  $("#oldEff").textContent=(o.total/u*100).toFixed(1)+" sen/kWj efektif";
+  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · AFA "+fmtSen(afaRate);
+
+  const d=n.total-o.total;
+  const dv=$("#deltaVal");
+  dv.textContent=(d<=0?"−":"+")+"RM "+Math.abs(d).toFixed(2);
+  dv.className="val "+(d<=0?"good":"bad");
+  $("#deltaLbl").textContent= d<=0 ? "Jimat dengan tarif baharu" : "Naik dengan tarif baharu";
+  $("#deltaPct").textContent=(d<=0?"−":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
+
+  drawCompare(o,n,u);
+  fillOldTbl(o,u);
+  fillNewTbl(n,u);
+}
+
+$("#kwh").addEventListener("input",update);
+$("#kwhRange").addEventListener("input",e=>{$("#kwh").value=e.target.value; update();});
+$("#afaSel").addEventListener("change",update);
+$("#taxTgl").addEventListener("change",update);
+$("#presets").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  $("#kwh").value=b.dataset.v; update();
+});
+
+buildAfaSelect();
+drawAfa();
+update();
+</script>
