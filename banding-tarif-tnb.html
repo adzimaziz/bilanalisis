@@ -244,7 +244,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <div class="presets" id="presets" role="group" aria-label="Contoh penggunaan">
         <button data-v="200">200</button><button data-v="350">350</button>
         <button data-v="500" aria-pressed="true">500</button><button data-v="600">600</button><button data-v="700">700</button>
-        <button data-v="1000">1000</button><button data-v="1600">1600</button>
+        <button data-v="800">800</button><button data-v="1000">1000</button><button data-v="1600">1600</button>
       </div>
     </div>
     <div class="ctl">
@@ -254,6 +254,10 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <div class="ctl">
       <label>Cukai &amp; kumpulan wang</label>
       <span class="toggle"><input id="taxTgl" type="checkbox" checked> Kira KWTBB 1.6% &amp; Cukai Perkhidmatan 8%</span>
+    </div>
+    <div class="ctl">
+      <label>Perlindungan Sep&ndash;Dis 2026</label>
+      <span class="toggle"><input id="protTgl" type="checkbox"> Had pengecualian AFA, Peruncitan &amp; SST dinaikkan ke 800 kWj</span>
     </div>
   </div>
 </div>
@@ -307,17 +311,20 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
 <section>
   <h2>ICPT vs AFA: trend pelarasan bahan api</h2>
   <div class="rule"></div>
-  <p class="sec-sub">Dulu, ICPT disemak setiap 6 bulan (domestik &le;1,500 kWj menikmati rebat tetap 2 sen/kWj sehingga Jun 2025).
+  <p class="sec-sub">Dulu, ICPT disemak setiap 6 bulan (domestik &le;600 kWj menikmati rebat tetap 2 sen/kWj sehingga Jun 2025;
+  601&ndash;1,500 kWj tiada pelarasan, &gt;1,500 kWj surcaj 10 sen/kWj).
   Mulai Julai 2025, AFA disemak <em>setiap bulan</em>. Garis putus oren menunjukkan <b>konsep ICPT</b>: kadar purata setiap
   blok 6 bulan &mdash; inilah kadar tetap yang anda akan bayar jika semakan masih dibuat 6 bulan sekali. Bandingkan dengan bar
   bulanan: contohnya Nov 2025, AFA sebenar beri rebat 8.91 sen tetapi konsep ICPT hanya 4.06 sen. Garis hitam pula ialah
-  purata bergerak 6 bulan yang digunakan sebagai anggaran dalam kalkulator. Pengguna &le;600 kWj dikecualikan daripada AFA.</p>
+  purata bergerak 6 bulan yang digunakan sebagai anggaran dalam kalkulator. Pengguna &le;600 kWj dikecualikan daripada AFA
+  &mdash; dan bagi penggunaan Sep&ndash;Dis 2026, had perlindungan ini dinaikkan kepada <b>800 kWj</b> (pengecualian AFA,
+  Caj Peruncitan &amp; SST).</p>
   <div class="chart-card">
     <h3>Kadar pelarasan bahan api, Jan 2025 &ndash; Sep 2026 (sen/kWj)</h3>
     <p class="chart-note">Negatif = rebat kepada pengguna &middot; positif = surcaj</p>
     <div class="scroller"><svg id="afaChart" viewBox="0 0 960 330" style="min-width:720px" role="img" aria-label="Carta trend ICPT dan AFA bulanan"></svg></div>
     <div class="legend">
-      <span class="key"><span class="sw" style="background:var(--fuel)"></span>Era ICPT (rebat domestik &le;1,500 kWj)</span>
+      <span class="key"><span class="sw" style="background:var(--fuel)"></span>Era ICPT (rebat domestik &le;600 kWj)</span>
       <span class="key"><span class="sw" style="background:var(--reb)"></span>AFA &mdash; rebat</span>
       <span class="key"><span class="sw" style="background:var(--sur)"></span>AFA &mdash; surcaj</span>
       <span class="key"><span class="sw line" style="background:var(--avg)"></span>Purata bergerak 6 bulan</span>
@@ -357,15 +364,20 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <div class="rule"></div>
   <ol>
     <li><b>Bil lama</b>: Tarif A domestik &mdash; blok 21.8 / 33.4 / 51.6 / 54.6 / 57.1 sen/kWj; ICPT Jan&ndash;Jun 2025:
-      rebat 2 sen/kWj (&le;1,500 kWj) atau surcaj 10 sen/kWj (&gt;1,500 kWj); caj minimum RM3.</li>
+      rebat 2 sen/kWj (&le;600 kWj), tiada pelarasan (601&ndash;1,500 kWj), surcaj 10 sen/kWj (&gt;1,500 kWj); caj minimum RM3.</li>
     <li><b>Bil baharu (Domestik Am)</b>: Caj Tenaga 27.03 sen/kWj (&gt;1,500 kWj: 37.03 sen untuk semua unit),
       Caj Kapasiti 4.55 sen, Caj Rangkaian 12.85 sen, Caj Peruncitan RM10/bulan (dikecualikan &le;600 kWj).</li>
+    <li><b>Perlindungan diperluas (Sep&ndash;Dis 2026)</b>: had perlindungan dinaikkan daripada 600 kWj kepada
+      <b>800 kWj</b> sebulan bagi penggunaan September&ndash;Disember 2026 &mdash; pengguna sehingga 800 kWj mendapat
+      pengecualian AFA, Caj Peruncitan &amp; SST. Aktifkan togol &ldquo;Perlindungan Sep&ndash;Dis 2026&rdquo; di panel
+      kawalan untuk melihat kesannya.</li>
     <li><b>Insentif Cekap Tenaga (EEI)</b>: rebat berperingkat 25.0 &rarr; 0.5 sen/kWj untuk penggunaan &le;1,000 kWj,
       dikenakan ke atas semua unit mengikut jumlah penggunaan bulan itu.</li>
-    <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj. Pilihan lalai kalkulator ialah purata 6 bulan terkini;
-      anda boleh pilih mana-mana bulan sebenar dari senarai.</li>
+    <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Pilihan lalai
+      kalkulator ialah purata 6 bulan terkini; anda boleh pilih mana-mana bulan sebenar dari senarai.</li>
     <li><b>KWTBB</b> 1.6% dikenakan jika penggunaan &gt;300 kWj; <b>Cukai Perkhidmatan</b> 8% dikenakan ke atas bahagian
-      penggunaan melebihi 600 kWj. Kedua-duanya anggaran &mdash; kaedah pengiraan penuh TNB mungkin berbeza sedikit.</li>
+      penggunaan melebihi 600 kWj (800 kWj bagi Sep&ndash;Dis 2026). Kedua-duanya anggaran &mdash; kaedah pengiraan penuh
+      TNB mungkin berbeza sedikit.</li>
     <li>Alat ini untuk perbandingan kasar sahaja; rujuk bil sebenar atau kalkulator rasmi myTNB untuk angka muktamad.</li>
   </ol>
   <p>Sumber: <a href="https://www.st.gov.my/jadual-elektrik-baharu-lebih-236-juta-pengguna-domestik-semenanjung-nikmati-kadar-lebih-adil" target="_blank" rel="noopener">Suruhanjaya Tenaga (jadual tarif RP4, Jun 2025)</a> &middot;
@@ -425,7 +437,7 @@ function calcOld(u, withTax){
   }
   let blockTotal=segs.reduce((a,s)=>a+s.rm,0);
   blockTotal=Math.max(blockTotal,3); // caj minimum RM3
-  const icptRate = u>1500 ? 10 : -2;
+  const icptRate = u>1500 ? 10 : (u>600 ? 0 : -2);
   const icpt = u*icptRate/100;
   let kwtbb=0, sst=0;
   if(withTax){
@@ -446,13 +458,13 @@ function eeiRate(u){
   return 0;
 }
 
-function calcNew(u, afaRate, withTax){
+function calcNew(u, afaRate, withTax, lim=600){
   const tRate = u>1500 ? 37.03 : 27.03;
   const tenaga = u*tRate/100;
   const kapasiti = u*4.55/100;
   const rangkaian = u*12.85/100;
-  const peruncitan = u>600 ? 10 : 0;
-  const afaApplies = u>600;
+  const peruncitan = u>lim ? 10 : 0;
+  const afaApplies = u>lim;
   const afa = afaApplies ? u*afaRate/100 : 0;
   const eRate = eeiRate(u);
   const eei = -u*eRate/100;
@@ -460,9 +472,9 @@ function calcNew(u, afaRate, withTax){
   if(withTax){
     const base = tenaga+kapasiti+rangkaian+peruncitan+afa+eei;
     if(u>300) kwtbb = 0.016*Math.max(base,0);
-    if(u>600) sst = 0.08*((u-600)/u)*(tenaga+afa+kapasiti+rangkaian);
+    if(u>lim) sst = 0.08*((u-lim)/u)*(tenaga+afa+kapasiti+rangkaian);
   }
-  return {tRate, tenaga, kapasiti, rangkaian, peruncitan, afaApplies, afaRate, afa, eRate, eei, kwtbb, sst,
+  return {tRate, tenaga, kapasiti, rangkaian, peruncitan, afaApplies, afaRate, afa, eRate, eei, kwtbb, sst, lim,
           total: tenaga+kapasiti+rangkaian+peruncitan+afa+eei+kwtbb+sst};
 }
 
@@ -507,7 +519,8 @@ function drawCompare(o,n,u){
   const oldSegs = o.segs.map(s=>({label:BLOCK_META[s.i].name+" @ "+s.rate+" sen/kWj", sub:s.kwh+" kWj", rm:s.rm, fill:`var(${BLOCK_META[s.i].v})`}));
   if(o.kwtbb||o.sst) oldSegs.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:o.kwtbb+o.sst, fill:"var(--tax)"});
   const oldNeg=[], oldPos=oldSegs;
-  (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"−")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
+  if(o.icpt!==0)
+    (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"−")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
 
   const newPos=[
     {label:"Caj Tenaga @ "+n.tRate+" sen/kWj", sub:u+" kWj", rm:n.tenaga, fill:"var(--c-tenaga)"},
@@ -581,7 +594,7 @@ function fillOldTbl(o,u){
     const m=BLOCK_META[s.i];
     row(`<td><span class="dot" style="background:var(${m.v})"></span>${m.name}</td><td class="num">${s.kwh}</td><td class="num">${m.rate.toFixed(1)} sen</td><td class="num">${s.rm.toFixed(2)}</td>`);
   }
-  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate>0?"+":"−"}${Math.abs(o.icptRate).toFixed(1)} sen</td><td class="num ${o.icpt<0?"neg":"pos-sur"}">${o.icpt.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate===0?"tiada":(o.icptRate>0?"+":"−")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
   if(o.kwtbb) row(`<td>KWTBB</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
   if(o.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
   row(`<td colspan="3">Jumlah</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
@@ -625,7 +638,7 @@ function drawAfa(){
     const fill = d.era==="icpt" ? "var(--fuel)" : (d.v<0 ? "var(--reb)" : "var(--sur)");
     const h=Math.abs(y(d.v)-y(0));
     const r=el("rect",{x:xC(i)-bw/2, y:d.v<0?y(0)+1:y(d.v), width:bw, height:Math.max(h-1,d.v===0?2:1), fill, rx:3},svg);
-    bindTip(r,`<b>${d.m}</b><br>${d.era==="icpt"?"ICPT domestik":"AFA"}: ${fmtSen(d.v)}/kWj${d.era==="icpt"?"<br><span style='opacity:.75'>&le;1,500 kWj; >1,500 kWj: +10 sen</span>":""}`);
+    bindTip(r,`<b>${d.m}</b><br>${d.era==="icpt"?"ICPT domestik":"AFA"}: ${fmtSen(d.v)}/kWj${d.era==="icpt"?"<br><span style='opacity:.75'>&le;600 kWj; 601–1,500: tiada; >1,500 kWj: +10 sen</span>":""}`);
     if(i%3===0||i===TIMELINE.length-1)
       el("text",{x:xC(i),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=d.m;
   });
@@ -694,8 +707,9 @@ function update(){
   $("#chartKwh").textContent=u;
 
   const withTax=$("#taxTgl").checked;
+  const lim=$("#protTgl").checked ? 800 : 600;
   const afaRate=currentAfaRate();
-  const o=calcOld(u,withTax), n=calcNew(u,afaRate,withTax);
+  const o=calcOld(u,withTax), n=calcNew(u,afaRate,withTax,lim);
 
   $("#oldVal").textContent=fmtRM(o.total);
   $("#newVal").textContent=fmtRM(n.total);
@@ -722,13 +736,13 @@ function update(){
   }
   const mObj=AFA_MONTHS[selIdx];
   const blk=blockOf(selIdx), bAvg=blockAvg(blk);
-  const bilA=calcNew(u,mObj.v,withTax), bilB=calcNew(u,bAvg,withTax);
+  const bilA=calcNew(u,mObj.v,withTax,lim), bilB=calcNew(u,bAvg,withTax,lim);
   $("#cmpAfaLbl").textContent="Bil baharu · AFA "+mObj.m;
   $("#cmpAfaVal").textContent=fmtRM(bilA.total);
   $("#cmpIcptVal").textContent=fmtRM(bilB.total);
-  if(u<=600){
-    $("#cmpAfaSub").textContent="AFA dikecualikan (≤600 kWj)";
-    $("#cmpIcptSub").textContent="AFA dikecualikan (≤600 kWj)";
+  if(u<=lim){
+    $("#cmpAfaSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
+    $("#cmpIcptSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
   }else{
     $("#cmpAfaSub").textContent="AFA "+mObj.m+": "+fmtSen(mObj.v)+"/kWj";
     $("#cmpIcptSub").textContent="Purata "+blk.label+": "+fmtSen(bAvg)+"/kWj";
@@ -737,9 +751,9 @@ function update(){
   const ddv=$("#cmpDiffVal");
   ddv.textContent=(Math.abs(dd)<0.005?"":dd<0?"−":"+")+"RM "+Math.abs(dd).toFixed(2);
   ddv.className="val "+(dd<=0?"good":"bad");
-  $("#cmpDiffLbl").textContent = u<=600 ? "Tiada beza — AFA dikecualikan"
+  $("#cmpDiffLbl").textContent = u<=lim ? "Tiada beza — AFA dikecualikan"
     : dd<=0 ? "Jimat dengan AFA bulanan" : "Bayar lebih dengan AFA bulanan";
-  $("#cmpDiffSub").textContent = u<=600 ? "Penggunaan ≤600 kWj tidak dikenakan AFA"
+  $("#cmpDiffSub").textContent = u<=lim ? "Penggunaan ≤"+lim+" kWj tidak dikenakan AFA"
     : "berbanding jika kadar tetap 6 bulan (konsep ICPT)";
 }
 
@@ -747,6 +761,7 @@ $("#kwh").addEventListener("input",update);
 $("#kwhRange").addEventListener("input",e=>{$("#kwh").value=e.target.value; update();});
 $("#afaSel").addEventListener("change",update);
 $("#taxTgl").addEventListener("change",update);
+$("#protTgl").addEventListener("change",update);
 $("#presets").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   $("#kwh").value=b.dataset.v; update();
