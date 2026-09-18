@@ -1,10 +1,11 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ms">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Kalkulator perbandingan bil elektrik domestik TNB: struktur blok + ICPT lama vs komponen RP4 baharu, dengan trend AFA bulanan.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%220.9em%22 font-size=%2290%22>⚡</text></svg>"><title>Banding Tarif TNB</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%220.9em%22 font-size=%2290%22>⚡</text></svg>">
+<title>Banding Tarif TNB</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 :root{
@@ -406,10 +407,10 @@ const OLD_BLOCKS = [ // [hingga kWj, sen/kWj]
   [200,21.8],[300,33.4],[600,51.6],[900,54.6],[Infinity,57.1]
 ];
 const BLOCK_META = [
-  {name:"Blok 1 (1â€“200)",rate:21.8,v:"--blk1"},
-  {name:"Blok 2 (201â€“300)",rate:33.4,v:"--blk2"},
-  {name:"Blok 3 (301â€“600)",rate:51.6,v:"--blk3"},
-  {name:"Blok 4 (601â€“900)",rate:54.6,v:"--blk4"},
+  {name:"Blok 1 (1–200)",rate:21.8,v:"--blk1"},
+  {name:"Blok 2 (201–300)",rate:33.4,v:"--blk2"},
+  {name:"Blok 3 (301–600)",rate:51.6,v:"--blk3"},
+  {name:"Blok 4 (601–900)",rate:54.6,v:"--blk4"},
   {name:"Blok 5 (>900)",rate:57.1,v:"--blk5"},
 ];
 const EEI = [ // [hingga kWj, rebat sen/kWj]
@@ -425,9 +426,9 @@ const AFA_MONTHS = [
 const TIMELINE = ICPT_MONTHS.concat(AFA_MONTHS);
 
 const AFA_BLOCKS = [ // blok 6 bulan (indeks dalam AFA_MONTHS)
-  {label:"Julâ€“Dis 25", s:0, e:5},
-  {label:"Janâ€“Jun 26", s:6, e:11},
-  {label:"Julâ€“Sep 26", s:12, e:14, partial:true},
+  {label:"Jul–Dis 25", s:0, e:5},
+  {label:"Jan–Jun 26", s:6, e:11},
+  {label:"Jul–Sep 26", s:12, e:14, partial:true},
 ];
 const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const blockOf = j => AFA_BLOCKS.find(b=>j>=b.s&&j<=b.e);
@@ -489,9 +490,9 @@ function calcNew(u, afaRate, withTax, lim=600){
 
 /* ================= UTIL ================= */
 const $ = s=>document.querySelector(s);
-const fmtRM = v => (v<0?"âˆ’RM ":"RM ")+Math.abs(v).toFixed(2);
-const fmtRM0 = v => (v<0?"âˆ’":"")+"RM"+Math.abs(v).toFixed(2);
-const fmtSen = v => (v>0?"+":v<0?"âˆ’":"")+Math.abs(v).toFixed(2)+" sen";
+const fmtRM = v => (v<0?"−RM ":"RM ")+Math.abs(v).toFixed(2);
+const fmtRM0 = v => (v<0?"−":"")+"RM"+Math.abs(v).toFixed(2);
+const fmtSen = v => (v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(2)+" sen";
 const NS="http://www.w3.org/2000/svg";
 function el(tag, attrs, parent){
   const n=document.createElementNS(NS,tag);
@@ -529,7 +530,7 @@ function drawCompare(o,n,u){
   if(o.kwtbb||o.sst) oldSegs.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:o.kwtbb+o.sst, fill:"var(--tax)"});
   const oldNeg=[], oldPos=oldSegs;
   if(o.icpt!==0)
-    (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"âˆ’")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
+    (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"−")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
 
   const newPos=[
     {label:"Caj Tenaga @ "+n.tRate+" sen/kWj", sub:u+" kWj", rm:n.tenaga, fill:"var(--c-tenaga)"},
@@ -541,7 +542,7 @@ function drawCompare(o,n,u){
   if(n.afaApplies && n.afa!==0)
     (n.afa>=0?newPos:newNeg).push({label:"AFA ("+fmtSen(n.afaRate)+"/kWj)", sub:u+" kWj", rm:n.afa, fill:"var(--fuel)"});
   if(n.kwtbb||n.sst) newPos.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:n.kwtbb+n.sst, fill:"var(--tax)"});
-  if(n.eei!==0) newNeg.push({label:"Insentif Cekap Tenaga (âˆ’"+n.eRate+" sen/kWj)", sub:"rebat", rm:n.eei, fill:"var(--c-eei)"});
+  if(n.eei!==0) newNeg.push({label:"Insentif Cekap Tenaga (−"+n.eRate+" sen/kWj)", sub:"rebat", rm:n.eei, fill:"var(--c-eei)"});
 
   const sumPos=a=>a.filter(s=>s.rm>0).reduce((x,s)=>x+s.rm,0);
   const sumNeg=a=>a.filter(s=>s.rm<0).reduce((x,s)=>x+s.rm,0);
@@ -566,14 +567,14 @@ function drawCompare(o,n,u){
     for(const s of g.pos.filter(s=>s.rm>0)){
       const y1=y(acc+s.rm), y2=y(acc);
       const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:3},svg);
-      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" Â· ":""}${fmtRM(s.rm)}`);
+      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
       acc+=s.rm;
     }
     let dn=0;
     for(const s of g.neg){
       const y1=y(dn), y2=y(dn+s.rm);
       const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:3},svg);
-      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" Â· ":""}${fmtRM(s.rm)}`);
+      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
       dn+=s.rm;
     }
     el("text",{x:g.x, y:y(acc)-10,"text-anchor":"middle","font-size":15,"font-weight":800,fill:"var(--ink)"},svg).textContent=fmtRM0(g.total);
@@ -585,7 +586,7 @@ function drawCompare(o,n,u){
 
   const legend=$("#cmpLegend");
   const items=[
-    ["var(--blk1)","Blok lama (cerahâ†’gelap = blok 1â†’5)"],
+    ["var(--blk1)","Blok lama (cerah→gelap = blok 1→5)"],
     ["var(--fuel)","ICPT / AFA (bahan api)"],
     ["var(--c-tenaga)","Caj Tenaga"],["var(--c-kapasiti)","Caj Kapasiti"],
     ["var(--c-rangkaian)","Caj Rangkaian"],["var(--c-peruncitan)","Caj Peruncitan"],
@@ -603,7 +604,7 @@ function fillOldTbl(o,u){
     const m=BLOCK_META[s.i];
     row(`<td><span class="dot" style="background:var(${m.v})"></span>${m.name}</td><td class="num">${s.kwh}</td><td class="num">${m.rate.toFixed(1)} sen</td><td class="num">${s.rm.toFixed(2)}</td>`);
   }
-  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate===0?"tiada":(o.icptRate>0?"+":"âˆ’")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate===0?"tiada":(o.icptRate>0?"+":"−")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
   if(o.kwtbb) row(`<td>KWTBB</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
   if(o.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
   row(`<td colspan="3">Jumlah</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
@@ -617,7 +618,7 @@ function fillNewTbl(n,u){
   row(`<td><span class="dot" style="background:var(--c-kapasiti)"></span>Caj Kapasiti</td><td class="num">4.55 sen</td><td class="num">${n.kapasiti.toFixed(2)}</td>`);
   row(`<td><span class="dot" style="background:var(--c-rangkaian)"></span>Caj Rangkaian</td><td class="num">12.85 sen</td><td class="num">${n.rangkaian.toFixed(2)}</td>`);
   row(`<td><span class="dot" style="background:var(--c-peruncitan)"></span>Caj Peruncitan</td><td class="num">${n.peruncitan?"RM10":"dikecualikan"}</td><td class="num">${n.peruncitan.toFixed(2)}</td>`);
-  row(`<td><span class="dot" style="background:var(--c-eei)"></span>Insentif Cekap Tenaga</td><td class="num">${n.eRate?("âˆ’"+n.eRate+" sen"):"â€“"}</td><td class="num ${n.eei<0?"neg":""}">${n.eei.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-eei)"></span>Insentif Cekap Tenaga</td><td class="num">${n.eRate?("−"+n.eRate+" sen"):"–"}</td><td class="num ${n.eei<0?"neg":""}">${n.eei.toFixed(2)}</td>`);
   if(n.kwtbb) row(`<td>KWTBB</td><td class="num">1.6%</td><td class="num">${n.kwtbb.toFixed(2)}</td>`,"minor");
   if(n.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">8%</td><td class="num">${n.sst.toFixed(2)}</td>`,"minor");
   row(`<td colspan="2">Jumlah</td><td class="num">${n.total.toFixed(2)}</td>`,"total");
@@ -641,21 +642,21 @@ function drawAfa(){
   const divX=mL+band*6;
   el("line",{x1:divX,x2:divX,y1:mT-14,y2:H-mB+6,stroke:"var(--axis)","stroke-width":1,"stroke-dasharray":"4 4"},svg);
   el("text",{x:divX-8,y:mT-2,"text-anchor":"end","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="ERA ICPT";
-  el("text",{x:divX+8,y:mT-2,"text-anchor":"start","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="ERA AFA â€” semakan bulanan";
+  el("text",{x:divX+8,y:mT-2,"text-anchor":"start","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="ERA AFA — semakan bulanan";
 
   TIMELINE.forEach((d,i)=>{
     const fill = d.era==="icpt" ? "var(--fuel)" : (d.v<0 ? "var(--reb)" : "var(--sur)");
     const h=Math.abs(y(d.v)-y(0));
     const r=el("rect",{x:xC(i)-bw/2, y:d.v<0?y(0)+1:y(d.v), width:bw, height:Math.max(h-1,d.v===0?2:1), fill, rx:3},svg);
-    bindTip(r,`<b>${d.m}</b><br>${d.era==="icpt"?"ICPT domestik":"AFA"}: ${fmtSen(d.v)}/kWj${d.era==="icpt"?"<br><span style='opacity:.75'>&le;600 kWj; 601â€“1,500: tiada; >1,500 kWj: +10 sen</span>":""}`);
+    bindTip(r,`<b>${d.m}</b><br>${d.era==="icpt"?"ICPT domestik":"AFA"}: ${fmtSen(d.v)}/kWj${d.era==="icpt"?"<br><span style='opacity:.75'>&le;600 kWj; 601–1,500: tiada; >1,500 kWj: +10 sen</span>":""}`);
     if(i%3===0||i===TIMELINE.length-1)
       el("text",{x:xC(i),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=d.m;
   });
 
   const lbl=(i,v,dy)=>el("text",{x:xC(i),y:y(v)+dy,"text-anchor":"middle","font-size":11,"font-weight":700,fill:"var(--ink-2)","font-variant-numeric":"tabular-nums"},svg);
-  lbl(10,-8.91,14).textContent="âˆ’8.91";
+  lbl(10,-8.91,14).textContent="−8.91";
   lbl(TIMELINE.length-1,3.67,-8).textContent="+3.67";
-  lbl(2,-2,14).textContent="âˆ’2.00";
+  lbl(2,-2,14).textContent="−2.00";
 
   // konsep ICPT: purata setiap blok 6 bulan sebagai kadar tetap
   for(const b of AFA_BLOCKS){
@@ -667,7 +668,7 @@ function drawAfa(){
       "font-variant-numeric":"tabular-nums"},svg);
     t.textContent=fmtSen(avg);
     const hit=el("rect",{x:x1,y:yy-9,width:x2-x1,height:18,fill:"transparent"},svg);
-    bindTip(hit,`<b>Konsep ICPT â€” ${b.label}${b.partial?" (blok belum lengkap)":""}</b><br>Purata blok: ${fmtSen(avg)}/kWj<br><span style='opacity:.75'>Kadar tetap jika semakan dibuat 6 bulan sekali</span>`);
+    bindTip(hit,`<b>Konsep ICPT — ${b.label}${b.partial?" (blok belum lengkap)":""}</b><br>Purata blok: ${fmtSen(avg)}/kWj<br><span style='opacity:.75'>Kadar tetap jika semakan dibuat 6 bulan sekali</span>`);
   }
 
   const pts=[];
@@ -723,14 +724,14 @@ function update(){
   $("#oldVal").textContent=fmtRM(o.total);
   $("#newVal").textContent=fmtRM(n.total);
   $("#oldEff").textContent=(o.total/u*100).toFixed(1)+" sen/kWj efektif";
-  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif Â· AFA "+fmtSen(afaRate);
+  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · AFA "+fmtSen(afaRate);
 
   const d=n.total-o.total;
   const dv=$("#deltaVal");
-  dv.textContent=(d<=0?"âˆ’":"+")+"RM "+Math.abs(d).toFixed(2);
+  dv.textContent=(d<=0?"−":"+")+"RM "+Math.abs(d).toFixed(2);
   dv.className="val "+(d<=0?"good":"bad");
   $("#deltaLbl").textContent= d<=0 ? "Jimat dengan tarif baharu" : "Naik dengan tarif baharu";
-  $("#deltaPct").textContent=(d<=0?"âˆ’":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
+  $("#deltaPct").textContent=(d<=0?"−":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
 
   drawCompare(o,n,u);
   fillOldTbl(o,u);
@@ -746,23 +747,23 @@ function update(){
   const mObj=AFA_MONTHS[selIdx];
   const blk=blockOf(selIdx), bAvg=blockAvg(blk);
   const bilA=calcNew(u,mObj.v,withTax,lim), bilB=calcNew(u,bAvg,withTax,lim);
-  $("#cmpAfaLbl").textContent="Bil baharu Â· AFA "+mObj.m;
+  $("#cmpAfaLbl").textContent="Bil baharu · AFA "+mObj.m;
   $("#cmpAfaVal").textContent=fmtRM(bilA.total);
   $("#cmpIcptVal").textContent=fmtRM(bilB.total);
   if(u<=lim){
-    $("#cmpAfaSub").textContent="AFA dikecualikan (â‰¤"+lim+" kWj)";
-    $("#cmpIcptSub").textContent="AFA dikecualikan (â‰¤"+lim+" kWj)";
+    $("#cmpAfaSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
+    $("#cmpIcptSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
   }else{
     $("#cmpAfaSub").textContent="AFA "+mObj.m+": "+fmtSen(mObj.v)+"/kWj";
     $("#cmpIcptSub").textContent="Purata "+blk.label+": "+fmtSen(bAvg)+"/kWj";
   }
   const dd=bilA.total-bilB.total;
   const ddv=$("#cmpDiffVal");
-  ddv.textContent=(Math.abs(dd)<0.005?"":dd<0?"âˆ’":"+")+"RM "+Math.abs(dd).toFixed(2);
+  ddv.textContent=(Math.abs(dd)<0.005?"":dd<0?"−":"+")+"RM "+Math.abs(dd).toFixed(2);
   ddv.className="val "+(dd<=0?"good":"bad");
-  $("#cmpDiffLbl").textContent = u<=lim ? "Tiada beza â€” AFA dikecualikan"
+  $("#cmpDiffLbl").textContent = u<=lim ? "Tiada beza — AFA dikecualikan"
     : dd<=0 ? "Jimat dengan AFA bulanan" : "Bayar lebih dengan AFA bulanan";
-  $("#cmpDiffSub").textContent = u<=lim ? "Penggunaan â‰¤"+lim+" kWj tidak dikenakan AFA"
+  $("#cmpDiffSub").textContent = u<=lim ? "Penggunaan ≤"+lim+" kWj tidak dikenakan AFA"
     : "berbanding jika kadar tetap 6 bulan (konsep ICPT)";
 }
 
