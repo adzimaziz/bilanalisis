@@ -298,6 +298,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <div class="rule"></div>
   <p class="sec-sub">Bar kiri memecahkan bil lama mengikut blok kadar (1&ndash;200, 201&ndash;300, &hellip;) berserta ICPT.
   Bar kanan memecahkan bil baharu mengikut komponen RP4. Segmen di bawah garisan sifar ialah rebat.</p>
+  <p style="margin:0 0 18px"><span class="toggle"><input id="fuelTgl" type="checkbox"> Kecualikan ICPT / AFA &mdash; banding struktur tarif sahaja tanpa pelarasan bahan api</span></p>
   <div class="duo">
     <div class="chart-card">
       <h3>Perbandingan bil untuk <span id="chartKwh">500</span> kWj</h3>
@@ -437,7 +438,7 @@ const AFA_AVG6 = avgOf(AFA_MONTHS.slice(-6).map(d=>d.v));
 const AFA_AVG12 = avgOf(AFA_MONTHS.slice(-12).map(d=>d.v));
 
 /* ================= KIRAAN ================= */
-function calcOld(u, withTax){
+function calcOld(u, withTax, noFuel=false){
   const segs=[]; let prev=0;
   for(let i=0;i<OLD_BLOCKS.length;i++){
     const [cap,rate]=OLD_BLOCKS[i];
@@ -447,7 +448,7 @@ function calcOld(u, withTax){
   }
   let blockTotal=segs.reduce((a,s)=>a+s.rm,0);
   blockTotal=Math.max(blockTotal,3); // caj minimum RM3
-  const icptRate = u>1500 ? 10 : (u>600 ? 0 : -2);
+  const icptRate = noFuel ? 0 : (u>1500 ? 10 : (u>600 ? 0 : -2));
   const icpt = u*icptRate/100;
   let kwtbb=0, sst=0;
   if(withTax){
@@ -459,7 +460,7 @@ function calcOld(u, withTax){
       sst=0.08*overCost;
     }
   }
-  return {segs, blockTotal, icptRate, icpt, kwtbb, sst, total: blockTotal+icpt+kwtbb+sst};
+  return {segs, blockTotal, icptRate, icpt, kwtbb, sst, noFuel, total: blockTotal+icpt+kwtbb+sst};
 }
 
 function eeiRate(u){
@@ -468,13 +469,13 @@ function eeiRate(u){
   return 0;
 }
 
-function calcNew(u, afaRate, withTax, lim=600){
+function calcNew(u, afaRate, withTax, lim=600, noFuel=false){
   const tRate = u>1500 ? 37.03 : 27.03;
   const tenaga = u*tRate/100;
   const kapasiti = u*4.55/100;
   const rangkaian = u*12.85/100;
   const peruncitan = u>lim ? 10 : 0;
-  const afaApplies = u>lim;
+  const afaApplies = u>lim && !noFuel;
   const afa = afaApplies ? u*afaRate/100 : 0;
   const eRate = eeiRate(u);
   const eei = -u*eRate/100;
@@ -604,7 +605,7 @@ function fillOldTbl(o,u){
     const m=BLOCK_META[s.i];
     row(`<td><span class="dot" style="background:var(${m.v})"></span>${m.name}</td><td class="num">${s.kwh}</td><td class="num">${m.rate.toFixed(1)} sen</td><td class="num">${s.rm.toFixed(2)}</td>`);
   }
-  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.icptRate===0?"tiada":(o.icptRate>0?"+":"−")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.noFuel?"dikecualikan":o.icptRate===0?"tiada":(o.icptRate>0?"+":"−")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
   if(o.kwtbb) row(`<td>KWTBB</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
   if(o.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
   row(`<td colspan="3">Jumlah</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
@@ -733,9 +734,13 @@ function update(){
   $("#deltaLbl").textContent= d<=0 ? "Jimat dengan tarif baharu" : "Naik dengan tarif baharu";
   $("#deltaPct").textContent=(d<=0?"−":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
 
-  drawCompare(o,n,u);
-  fillOldTbl(o,u);
-  fillNewTbl(n,u);
+  // anatomi bil: togol kecualikan ICPT/AFA hanya kesan seksyen ini
+  const noFuel=$("#fuelTgl").checked;
+  const oA = noFuel ? calcOld(u,withTax,true) : o;
+  const nA = noFuel ? calcNew(u,afaRate,withTax,lim,true) : n;
+  drawCompare(oA,nA,u);
+  fillOldTbl(oA,u);
+  fillNewTbl(nA,u);
 
   // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
   const selV=$("#afaSel").value;
@@ -772,6 +777,7 @@ $("#kwhRange").addEventListener("input",e=>{$("#kwh").value=e.target.value; upda
 $("#afaSel").addEventListener("change",update);
 $("#taxTgl").addEventListener("change",update);
 $("#protTgl").addEventListener("change",update);
+$("#fuelTgl").addEventListener("change",update);
 $("#presets").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return;
   $("#kwh").value=b.dataset.v; update();
