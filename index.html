@@ -269,6 +269,10 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <label>Perlindungan Sep&ndash;Dis 2026</label>
       <span class="toggle"><input id="protTgl" type="checkbox"> Had pengecualian AFA, Peruncitan &amp; SST dinaikkan ke 800 kWj</span>
     </div>
+    <div class="ctl">
+      <label>Pelarasan bahan api</label>
+      <span class="toggle"><input id="fuelTgl" type="checkbox"> Kecualikan ICPT / AFA daripada keseluruhan analisis</span>
+    </div>
   </div>
 </div>
 
@@ -298,7 +302,6 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <div class="rule"></div>
   <p class="sec-sub">Bar kiri memecahkan bil lama mengikut blok kadar (1&ndash;200, 201&ndash;300, &hellip;) berserta ICPT.
   Bar kanan memecahkan bil baharu mengikut komponen RP4. Segmen di bawah garisan sifar ialah rebat.</p>
-  <p style="margin:0 0 18px"><span class="toggle"><input id="fuelTgl" type="checkbox"> Kecualikan ICPT / AFA &mdash; banding struktur tarif sahaja tanpa pelarasan bahan api</span></p>
   <div class="duo">
     <div class="chart-card">
       <h3>Perbandingan bil untuk <span id="chartKwh">500</span> kWj</h3>
@@ -719,13 +722,14 @@ function update(){
 
   const withTax=$("#taxTgl").checked;
   const lim=$("#protTgl").checked ? 800 : 600;
+  const noFuel=$("#fuelTgl").checked;
   const afaRate=currentAfaRate();
-  const o=calcOld(u,withTax), n=calcNew(u,afaRate,withTax,lim);
+  const o=calcOld(u,withTax,noFuel), n=calcNew(u,afaRate,withTax,lim,noFuel);
 
   $("#oldVal").textContent=fmtRM(o.total);
   $("#newVal").textContent=fmtRM(n.total);
   $("#oldEff").textContent=(o.total/u*100).toFixed(1)+" sen/kWj efektif";
-  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · AFA "+fmtSen(afaRate);
+  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · "+(noFuel?"AFA dikecualikan":"AFA "+fmtSen(afaRate));
 
   const d=n.total-o.total;
   const dv=$("#deltaVal");
@@ -734,13 +738,9 @@ function update(){
   $("#deltaLbl").textContent= d<=0 ? "Jimat dengan tarif baharu" : "Naik dengan tarif baharu";
   $("#deltaPct").textContent=(d<=0?"−":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
 
-  // anatomi bil: togol kecualikan ICPT/AFA hanya kesan seksyen ini
-  const noFuel=$("#fuelTgl").checked;
-  const oA = noFuel ? calcOld(u,withTax,true) : o;
-  const nA = noFuel ? calcNew(u,afaRate,withTax,lim,true) : n;
-  drawCompare(oA,nA,u);
-  fillOldTbl(oA,u);
-  fillNewTbl(nA,u);
+  drawCompare(o,n,u);
+  fillOldTbl(o,u);
+  fillNewTbl(n,u);
 
   // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
   const selV=$("#afaSel").value;
@@ -751,11 +751,14 @@ function update(){
   }
   const mObj=AFA_MONTHS[selIdx];
   const blk=blockOf(selIdx), bAvg=blockAvg(blk);
-  const bilA=calcNew(u,mObj.v,withTax,lim), bilB=calcNew(u,bAvg,withTax,lim);
+  const bilA=calcNew(u,mObj.v,withTax,lim,noFuel), bilB=calcNew(u,bAvg,withTax,lim,noFuel);
   $("#cmpAfaLbl").textContent="Bil baharu · AFA "+mObj.m;
   $("#cmpAfaVal").textContent=fmtRM(bilA.total);
   $("#cmpIcptVal").textContent=fmtRM(bilB.total);
-  if(u<=lim){
+  if(noFuel){
+    $("#cmpAfaSub").textContent="AFA dikecualikan (togol analisis)";
+    $("#cmpIcptSub").textContent="AFA dikecualikan (togol analisis)";
+  }else if(u<=lim){
     $("#cmpAfaSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
     $("#cmpIcptSub").textContent="AFA dikecualikan (≤"+lim+" kWj)";
   }else{
@@ -766,9 +769,10 @@ function update(){
   const ddv=$("#cmpDiffVal");
   ddv.textContent=(Math.abs(dd)<0.005?"":dd<0?"−":"+")+"RM "+Math.abs(dd).toFixed(2);
   ddv.className="val "+(dd<=0?"good":"bad");
-  $("#cmpDiffLbl").textContent = u<=lim ? "Tiada beza — AFA dikecualikan"
+  $("#cmpDiffLbl").textContent = (noFuel||u<=lim) ? "Tiada beza — AFA dikecualikan"
     : dd<=0 ? "Jimat dengan AFA bulanan" : "Bayar lebih dengan AFA bulanan";
-  $("#cmpDiffSub").textContent = u<=lim ? "Penggunaan ≤"+lim+" kWj tidak dikenakan AFA"
+  $("#cmpDiffSub").textContent = noFuel ? "ICPT / AFA dikecualikan daripada keseluruhan analisis"
+    : u<=lim ? "Penggunaan ≤"+lim+" kWj tidak dikenakan AFA"
     : "berbanding jika kadar tetap 6 bulan (konsep ICPT)";
 }
 
