@@ -15,7 +15,7 @@ npm ci --ignore-scripts
 npm run build:3d
 ```
 
-Sertakan `game-3d.js` dan `game-3d.js.LEGAL.txt` apabila menerbitkan website, bersama HTML, CSS dan lesen dalam `THIRD-PARTY-NOTICES.txt`. Folder `node_modules` dan fail sumber tidak perlu diterbitkan. Game menggunakan Three.js 0.180.0 dan esbuild 0.25.10 untuk membina bundle tempatan.
+Sertakan `game-3d.js`, `game-3d.js.LEGAL.txt` dan `tenaga-music.m4a` (muzik latar, dikongsi dengan game 2D) apabila menerbitkan website, bersama HTML, CSS dan lesen dalam `THIRD-PARTY-NOTICES.txt`. Folder `node_modules` dan fail sumber tidak perlu diterbitkan. Game menggunakan Three.js 0.180.0 dan esbuild 0.25.10 untuk membina bundle tempatan.
 
 ## Cara main
 

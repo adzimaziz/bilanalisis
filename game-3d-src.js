@@ -4,6 +4,27 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 
 // This is a friendly visual story, not a grid simulator or tariff calculator.
 const $ = s => document.querySelector(s);
+// ----- Audio: muzik latar "Tenaga Music" + SFX WebAudio (tiada fail tambahan) -----
+const music=new Audio('tenaga-music.m4a');music.loop=true;music.volume=.35;music.preload='auto';
+let soundOn=true, audioCtx=null;
+function startMusic(){if(soundOn&&music.paused)music.play().catch(()=>{});}
+function setSound(on){
+ soundOn=on;const b=$('#soundTgl');b.setAttribute('aria-pressed',String(on));b.querySelector('.fullscreen-label').textContent=on?'Bunyi: ON':'Bunyi: OFF';
+ if(on)startMusic();else music.pause();
+}
+function sfx(kind){
+ if(!soundOn)return;
+ try{
+  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const t=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  if(kind==='err'){o.type='triangle';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(150,t+.16);g.gain.setValueAtTime(.10,t);}
+  else{o.type='sine';o.frequency.setValueAtTime(500,t);o.frequency.exponentialRampToValueAtTime(880,t+.11);g.gain.setValueAtTime(.20,t);}
+  g.gain.exponentialRampToValueAtTime(.001,t+.22);o.start(t);o.stop(t+.24);
+ }catch(e){}
+}
+document.addEventListener('pointerdown',startMusic);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const definitions = {
   plant: {name:'Loji elektrik', hint:'Tempat elektrik dibuat'},
@@ -221,13 +242,13 @@ function celebrate(){clearTimeout(celebrationTimer);viewport.classList.remove('c
 function unlock(){if(learned.has(stage))return;learned.add(stage);celebrate();}
 function place(type,cell,fromCell=null){
  if(!engineReady||(!available().includes(type)&&!fromCell))return false;
- if(!allowed(type,cell,fromCell)){say(stage===4?'Petak itu sudah berisi. Cuba petak kosong ya.':`Hampir! Letak ${definitions[type].name} di ${goalCell(type)} yang bercahaya.`);return false;}
+ if(!allowed(type,cell,fromCell)){sfx('err');say(stage===4?'Petak itu sudah berisi. Cuba petak kosong ya.':`Hampir! Letak ${definitions[type].name} di ${goalCell(type)} yang bercahaya.`);return false;}
  let message='';
  if(stage===4){if(fromCell){delete buildings[fromCell];decorations.delete(fromCell);}buildings[cell]=type;decorations.add(cell);message=fromCell?`Dah dialihkan ke ${cell}. Cantik susunan baharu!`:type==='solar'?'Panel solar buat elektrik daripada cahaya. Waktu malam, ia tidak menjana.':type==='tree'?'Teduhnya kampung! Pokok ini untuk menghias.':'Selamat datang, jiran baharu!';}
  else if(type==='fuel'){fueled=true;unlock();message='Vroom! Bahan api sampai. Loji boleh buat elektrik. ★';}
  else if(type==='up'||type==='down'){prices.add(type);lastPrice=type;message=type==='up'?'Kos bahan api naik berbanding asas. AFA boleh menambah bayaran (surcaj). Cuba harga turun pula.':'Kos turun berbanding asas. AFA boleh mengurangkan bayaran (rebat). ★';if(prices.size===2)unlock();}
  else{buildings[cell]=type;message=type==='plant'?'Loji dah berdiri! Sekarang hantar bahan api.':type==='station'?'Pencawang siap. Jom bawa masuk rumah!':type==='house'?'Klik! Lampu menyala. Elektrik dah sampai ke rumah. ★':'Loji sokongan dah bersedia. Pesta boleh diteruskan! ★';if(type==='house'||type==='backup')unlock();}
- renderUI();say(message);(isComplete()?$('#next'):$('#tray .piece'))?.focus({preventScroll:true});return true;
+ sfx('pop');renderUI();say(message);(isComplete()?$('#next'):$('#tray .piece'))?.focus({preventScroll:true});return true;
 }
 function screenRay(clientX,clientY){
  const rect=canvas.getBoundingClientRect();if(clientX<rect.left||clientY<rect.top||clientX>rect.right||clientY>rect.bottom)return false;
@@ -280,6 +301,7 @@ function resetCamera(){if(!camera)return;clearSelected();camera.position.set(11,
 $('#resetView').addEventListener('click',resetCamera);
 $('#next').addEventListener('click',()=>{if(!isComplete())return;stage++;lastPrice=null;renderUI();say('');$('#taskTitle').focus({preventScroll:true});if(stage===4){celebrate();$('#finish').scrollIntoView({behavior:'smooth',block:'nearest'});}else $('.game-layout').scrollIntoView({behavior:'smooth',block:'start'});});
 $('#restart').addEventListener('click',()=>{if(!engineReady)return;cancelDrag();stage=0;buildings={};fueled=false;learned=new Set();prices=new Set();decorations=new Set();lastPrice=null;selected=null;suppressClick=0;resetCamera();renderUI();say('Jom bina kampung baharu!');$('#taskTitle').focus({preventScroll:true});});
+$('#soundTgl').addEventListener('click',()=>setSound(!soundOn));
 $('#retry').addEventListener('click',()=>location.reload());
 function renderFrame(time){
  if(!engineReady)return;tickId=requestAnimationFrame(renderFrame);if(document.hidden||time-lastFrame<30)return;lastFrame=time;

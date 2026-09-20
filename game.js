@@ -1,6 +1,27 @@
 'use strict';
 // A guided story, not a model of real-world grid operation or tariff calculation.
 const $ = selector => document.querySelector(selector);
+// ----- Audio: muzik latar "Tenaga Music" + SFX WebAudio (tiada fail tambahan) -----
+const music=new Audio('tenaga-music.m4a');music.loop=true;music.volume=.35;music.preload='auto';
+let soundOn=true, audioCtx=null;
+function startMusic(){if(soundOn&&music.paused)music.play().catch(()=>{});}
+function setSound(on){
+ soundOn=on;const b=$('#soundTgl');b.setAttribute('aria-pressed',String(on));b.textContent=on?'♪ Bunyi: ON':'♪ Bunyi: OFF';
+ if(on)startMusic();else music.pause();
+}
+function sfx(kind){
+ if(!soundOn)return;
+ try{
+  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  const t=audioCtx.currentTime,o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  if(kind==='err'){o.type='triangle';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(150,t+.16);g.gain.setValueAtTime(.10,t);}
+  else{o.type='sine';o.frequency.setValueAtTime(500,t);o.frequency.exponentialRampToValueAtTime(880,t+.11);g.gain.setValueAtTime(.20,t);}
+  g.gain.exponentialRampToValueAtTime(.001,t+.22);o.start(t);o.stop(t+.24);
+ }catch(e){}
+}
+document.addEventListener('pointerdown',startMusic);
 const face = (x=60,y=70) => `<g stroke="#4b625b" stroke-width="2.7" stroke-linecap="round" fill="none"><path d="M${x-9} ${y}v2m18-2v2m-13 5q4 5 8 0"/></g><g fill="#edafa0" opacity=".75"><ellipse cx="${x-15}" cy="${y+5}" rx="4" ry="2"/><ellipse cx="${x+15}" cy="${y+5}" rx="4" ry="2"/></g>`;
 function art(type) {
  const shell = content => `<svg class="art" viewBox="0 0 120 110" aria-hidden="true" focusable="false"><g stroke-linejoin="round" stroke-linecap="round">${content}</g></svg>`;
@@ -95,12 +116,13 @@ function celebrate(){
 function unlock(){if(learned.has(stage))return;learned.add(stage);celebrate();}
 function place(key,slot){
  if(!available().includes(key))return false;
- if(!targets(key).includes(slot)){say('Dekat tapak yang berkelip ya. Tak apa, cuba lagi!');return false;}
+ if(!targets(key).includes(slot)){sfx('err');say('Dekat tapak yang berkelip ya. Tak apa, cuba lagi!');return false;}
  let message='';
  if(stage===4){buildings[slot]=key;message=key==='solar'?'Cantiknya! Panel solar buat elektrik daripada cahaya matahari. Waktu malam, ia tidak menjana.':key==='tree'?'Teduhnya! Pokok ini untuk menghias kampung.':'Jiran baharu dah sampai. Selamat datang!';}
  else if(key==='fuel'){fueled=true;unlock();message='Vroom! Bahan api sampai. Loji boleh mula buat elektrik. ★';}
  else if(key==='up'||key==='down'){lastPrice=key;priceSeen.add(key);message=key==='up'?'Harga bahan api naik berbanding asas. AFA boleh menambah bayaran (surcaj). Sekarang cuba harga turun pula.':'Harga turun berbanding asas. AFA boleh mengurangkan bayaran (rebat). ★';if(priceSeen.size===2)unlock();}
  else {buildings[slot]=key;message=key==='plant'?'Loji dah siap! Sekarang, beri loji bahan api.':key==='station'?'Pencawang dah siap! Jom bawa masuk rumah.':key==='house'?'Klik! Lampu rumah menyala. Elektrik dah sampai! ★':'Loji sokongan dah bersedia. Penduduk boleh terus berpesta! ★';if(key==='house'||key==='backup')unlock();}
+ sfx('pop');
  render();say(message);
  // Keyboard users retain a useful focus after the placed item's button is replaced.
  const focusTarget=complete()?$('#next'):$('#tray .item');
@@ -144,6 +166,7 @@ $('#next').addEventListener('click',()=>{
  $('#taskTitle').focus({preventScroll:true});
  if(stage===4){celebrate();$('#finish').scrollIntoView({behavior:'smooth',block:'nearest'});}else $('.play-layout').scrollIntoView({behavior:'smooth',block:'start'});
 });
+$('#soundTgl').addEventListener('click',()=>setSound(!soundOn));
 $('#restart').addEventListener('click',()=>{
  clearDrag();clearTimeout(celebrationTimer);$('#celebration').innerHTML='';stage=0;buildings={};fueled=false;learned=new Set();priceSeen=new Set();lastPrice=null;selected=null;suppressClickUntil=0;render();say('Jom bina kampung baharu!');$('#taskTitle').focus({preventScroll:true});
 });
