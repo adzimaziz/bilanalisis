@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bina Kampung Kilowatt! Seret loji, pencawang dan rumah dalam game comel untuk mengenali caj elektrik dengan mudah.">
+<title>Kampung Kilowatt — Jom nyalakan kampung!</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏡</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="game.css"><script src="game.js" defer></script>
+</head>
+<body>
+<div class="wrap">
+<nav aria-label="Navigasi utama"><a class="brand" href="index.html"><span>ϟ</span> Banding Tarif TNB</a><a href="index.html">← Kalkulator bil</a></nav>
+<header class="intro"><div class="intro-copy"><p class="eyebrow">BINA · MAIN · FAHAM</p><h1>Kampung <span>Kilowatt<span class="spark">✦</span></span></h1><p>Jom bina kampung kecil yang penuh cahaya!</p></div><div class="intro-stamp"><span>☀</span> Santai-santai je.<br>Tak perlu pandai elektrik.</div></header>
+<main>
+<div class="game-top"><ol id="chapters" aria-label="Perjalanan kampung"></ol><div class="stars" aria-label="Bintang dikumpul"><span id="stars">☆ ☆ ☆ ☆</span><small id="starCount">0 daripada 4</small></div></div>
+<div class="play-layout">
+<section class="world-panel" aria-label="Kampung anda">
+<div class="world-top"><span><i></i> <span id="worldName">KAMPUNG KILOWATT</span></span><span id="dayLabel">☀ Pagi yang indah</span></div>
+<div class="world" id="world">
+<svg class="terrain" viewBox="0 0 800 590" preserveAspectRatio="none" aria-hidden="true">
+<defs><pattern id="grass" width="55" height="49" patternUnits="userSpaceOnUse"><path d="M12 28l2-5 2 5m22 9 2-4 2 4" fill="none" stroke="#94be83" stroke-width="2" stroke-linecap="round" opacity=".5"/></pattern><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#dff4ef"/><stop offset="1" stop-color="#f5f8df"/></linearGradient></defs>
+<path fill="url(#sky)" d="M0 0h800v590H0z"/><path d="M0 130Q110 15 240 119Q365 5 510 121Q667 20 800 95V590H0Z" fill="#bddbb1"/><path d="M0 167Q150 105 305 158Q529 111 800 152V590H0Z" fill="#cee5b6"/><path fill="url(#grass)" d="M0 160h800v430H0z"/>
+<path d="M647 151q78-23 114 22t-19 64q-68 28-117-8t22-78" fill="#a2d8d3" stroke="#e1eed0" stroke-width="9"/><path d="M652 186h31m13 24h35m-13-40h16" stroke="#e9faf0" stroke-width="4" stroke-linecap="round"/>
+<path class="road-edge" d="M-20 347Q140 361 190 292T415 310Q506 328 631 268M411 312Q384 421 230 456M391 399Q524 468 820 480"/>
+<path class="road" d="M-20 347Q140 361 190 292T415 310Q506 328 631 268M411 312Q384 421 230 456M391 399Q524 468 820 480"/>
+<path class="electric-line" id="line1" d="M191 277Q275 248 411 310"/><path class="electric-line" id="line2" d="M418 310Q526 301 624 251"/><path class="electric-line" id="line3" d="M237 448Q342 451 410 315"/>
+<g class="cloud cloud-one" fill="#fff" opacity=".85"><ellipse cx="145" cy="67" rx="43" ry="14"/><circle cx="128" cy="58" r="17"/><circle cx="154" cy="52" r="24"/></g><g class="cloud cloud-two" fill="#fff" opacity=".75"><ellipse cx="527" cy="57" rx="47" ry="13"/><circle cx="513" cy="48" r="20"/><circle cx="538" cy="48" r="16"/></g>
+<g id="sun" transform="translate(708 64)"><circle r="28" fill="#ffe78f" stroke="#ecc462" stroke-width="3"/><path d="M-10 0v3m20-3v3m-14 8q4 5 8 0" stroke="#936e36" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+<g class="scene-tree" transform="translate(54 228)"><path d="M0 0v38" stroke="#aa8664" stroke-width="9"/><circle cy="-9" r="26" fill="#76ac7c"/><circle cx="-16" r="19" fill="#88bd85"/><circle cx="16" r="19" fill="#88bd85"/></g><g class="scene-tree" transform="translate(737 361)"><path d="M0 0v38" stroke="#aa8664" stroke-width="9"/><circle cy="-9" r="26" fill="#76ac7c"/><circle cx="-16" r="19" fill="#88bd85"/><circle cx="16" r="19" fill="#88bd85"/></g>
+<g transform="translate(71 456)"><path d="M0 3v32m53-32v32" stroke="#ad8968" stroke-width="6"/><rect x="-10" y="-16" width="75" height="35" rx="7" fill="#fff5d8" stroke="#bda47b" stroke-width="3"/><text x="27" y="7" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="700" fill="#877356">SELAMAT DATANG</text></g>
+<g fill="#fff8da"><path d="M81 390h5v14h-5zM76 395h15v5H76z"/><path d="M558 223h5v14h-5zM553 228h15v5h-15z"/><path d="M696 510h5v14h-5zM691 515h15v5h-15z"/></g>
+</svg>
+<div class="world-caption" id="worldCaption">Sebuah kampung kecil. Sebuah permulaan besar.</div>
+<div id="lots"></div><div class="celebration" id="celebration" aria-hidden="true"></div>
+<div class="world-bubble" id="worldBubble">Penghuni kampung tak sabar nak pindah masuk…</div>
+</div>
+<div class="world-bottom"><span id="villageStatus">🌱 Kampung anda sedang dibina</span><button id="restart" class="text-button">↻ Mula semula</button></div>
+</section>
+<aside class="builder" aria-label="Panduan dan barang binaan">
+<div class="guide"><div class="guide-head"><div class="mascot" aria-hidden="true"><span>ϟ</span><i></i></div><div><span class="eyebrow">KAWAN ANDA, SI KILAT</span><p id="chapterLabel">CERITA 1 / 4</p></div></div><h2 id="taskTitle" tabindex="-1"></h2><p id="taskText"></p></div>
+<div class="toolbox"><div class="toolbox-title"><h3 id="trayTitle">Kotak binaan</h3><span>↓ Pilih barang</span></div><div id="tray" class="tray"></div><p class="gesture" id="gesture">Seret barang ke tapak berkelip.<br>Atau tekan barang, kemudian tekan tapak.</p></div>
+<p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+<div id="discovery" class="discovery" hidden><span class="discovery-tag">★ KAD BAHARU!</span><h3 id="discoveryTitle"></h3><p id="discoveryText"></p><button id="next" class="primary">Jom sambung →</button></div>
+</aside>
+</div>
+<section class="album" aria-labelledby="albumTitle"><div class="album-heading"><div><p class="eyebrow">BELAJAR SIKIT-SIKIT</p><h2 id="albumTitle">Koleksi cerita bil anda</h2></div><span id="albumCount">0 / 4 kad dibuka</span></div><div class="cards" id="cards"></div></section>
+<section class="finish" id="finish" hidden tabindex="-1"><span class="finish-icon">🏡 ✨</span><h2>Hore! Kampung anda dah bersinar.</h2><p>Sekarang anda tahu: buat elektrik, sediakan loji, hantar elektrik — semuanya ada kos. AFA pula melaras kos yang berubah.</p><p class="finish-small">Nak main lagi? Hias dua tapak taman dengan rumah, pokok atau solar!</p><a class="primary" href="index.html">Tengok cerita ini dalam bil sebenar →</a></section>
+<details class="parents"><summary>Untuk yang nak tahu lebih lanjut</summary><p>Ini permainan cerita, bukan simulasi teknikal atau pengiraan bil. Loji ditunjukkan secara ringkas; Malaysia menggunakan sumber seperti gas, arang batu, hidro dan solar. Kabel disambungkan secara automatik untuk memudahkan permainan.</p><p>Contoh caj merujuk kepada struktur TNB di Semenanjung Malaysia. Caj kapasiti meliputi ketersediaan loji, bukan loji simpanan sahaja. Caj rangkaian meliputi sistem penghantaran dan pengagihan, termasuk pencawang. AFA ialah pelarasan bulanan kos bahan api dan penjanaan lain berbanding kos asas; kadar dan kelayakan rebat atau surcaj tertakluk kepada ketetapan semasa. Bil sebenar turut mempunyai komponen lain.</p><p>Rujukan: <a href="https://www.st.gov.my/pricing/electricity-pricing-framework/components-ibr" target="_blank" rel="noopener">Suruhanjaya Tenaga</a> · <a href="https://www.mytnb.com.my/tariff" target="_blank" rel="noopener">myTNB</a></p></details>
+</main><footer><span>Kampung kecil, cerita elektrik yang besar. ♡</span><a href="index.html">Banding Tarif TNB</a></footer>
+</div>
+</body></html>
+
