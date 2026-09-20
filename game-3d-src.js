@@ -24,7 +24,10 @@ function sfx(kind){
   g.gain.exponentialRampToValueAtTime(.001,t+.22);o.start(t);o.stop(t+.24);
  }catch(e){}
 }
-document.addEventListener('pointerdown',startMusic);
+// pointerdown sahaja tidak diiktiraf sebagai aktivasi pengguna pada skrin sentuh —
+// pointerup/touchend/click diperlukan supaya autoplay dibenarkan di mobile.
+for(const ev of ['pointerdown','pointerup','touchend','click','keydown'])
+ document.addEventListener(ev,startMusic);
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const definitions = {
   plant: {name:'Loji elektrik', hint:'Tempat elektrik dibuat'},
