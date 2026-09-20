@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bina Kampung Kilowatt di atas papan 3D. Seret buah loji, pencawang dan rumah sambil belajar cerita mudah di sebalik empat caj elektrik.">
+<title>Kampung Kilowatt 3D — Sebuah kampung di atas papan</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏡</text></svg>">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="game-3d.css"><script src="game-3d.js" defer></script>
+</head>
+<body><div class="wrap">
+<nav aria-label="Navigasi utama"><a class="brand" href="index.html"><span>ϟ</span> Banding Tarif TNB</a><div class="nav-links"><a href="game.html">Versi 2D</a><a href="index.html">Kalkulator bil ↗</a></div></nav>
+<header class="intro"><div><p class="eyebrow">KAMPUNG KECIL. CERITA BESAR.</p><h1>Kampung Kilowatt <span class="badge-3d">3D</span></h1><p>Susun buah. Nyalakan rumah. Kenali cerita di sebalik bil.</p></div><span class="stamp">Dibina oleh anda.<br><b>Dihidupkan bersama. ♡</b></span></header>
+<main>
+<div class="journey"><ol id="journey" aria-label="Empat cerita elektrik"></ol><span class="star-counter" id="starCounter" aria-label="0 daripada 4 bintang">☆ ☆ ☆ ☆</span></div>
+<div class="game-layout">
+<section class="board-panel" aria-label="Papan permainan tiga dimensi">
+<div class="board-title"><span><i></i> PAPAN KAMPUNG ANDA</span><div class="board-actions"><span id="dayBadge">☀ Pagi yang indah</span><button id="fullscreen" class="fullscreen-button" aria-label="Buka skrin penuh" aria-pressed="false" title="Buka skrin penuh"><span aria-hidden="true">⛶</span><span class="fullscreen-label">Skrin penuh</span></button></div></div>
+<div class="viewport" id="viewport">
+<canvas id="board" aria-label="Papan 3D. Pilih buah binaan dan petak bercahaya. Seret ruang kosong untuk memusingkan pandangan." tabindex="0"></canvas>
+<div class="loading" id="loading"><div class="loader-cube">ϟ</div><h2>Sedang membuka kotak kampung…</h2><p>Sekejap ya, Si Kilat sedang susun papan.</p></div>
+<div class="fallback" id="fallback" hidden><span>🏡</span><h2>Papan 3D belum dapat dibuka.</h2><p id="fallbackText">Cuba muat semula. Anda juga boleh terus bermain versi 2D.</p><button class="primary" id="retry">Cuba semula</button><a href="game.html">Main versi 2D →</a></div>
+<div class="board-tag" aria-hidden="true">EDISI PAPAN<br><b>01 — KILOWATT</b></div>
+<button id="targetHint" class="target-hint" hidden aria-label="Pilih tapak yang bercahaya"></button>
+<div class="board-toast" id="boardToast" aria-hidden="true">Sebuah kampung menanti sentuhan anda.</div>
+<div class="camera-controls" aria-label="Kawalan pandangan"><button id="rotateLeft" aria-label="Pusing pandangan ke kiri" title="Pusing kiri">↶</button><button id="rotateRight" aria-label="Pusing pandangan ke kanan" title="Pusing kanan">↷</button><span></span><button id="zoomOut" aria-label="Jauhkan pandangan" title="Jauhkan">−</button><button id="zoomIn" aria-label="Dekatkan pandangan" title="Dekatkan">＋</button><button id="resetView" aria-label="Pulihkan pandangan asal" title="Pandangan asal">⌂</button></div>
+</div>
+<div class="board-footer"><span>↔ Seret ruang kosong untuk pusing · Cubit untuk zum</span><button class="text-button" id="restart">↻ Mula semula</button></div>
+</section>
+<aside class="builder" aria-label="Arahan permainan">
+<div class="guide-head"><div class="mascot" aria-hidden="true">ϟ<span>•‿•</span></div><div><p class="eyebrow">SI KILAT SEDIA MEMBANTU</p><span id="chapter">CERITA 1 / 4</span></div></div>
+<h2 id="taskTitle" tabindex="-1">Jom bina sebuah kampung.</h2><p class="task-text" id="taskText">Papan anda sedang disediakan.</p>
+<div id="toolbox" class="toolbox"><div class="toolbox-heading"><h3>Buah binaan</h3><span>ANGKAT & LETAK</span></div><div id="tray" class="tray"></div><p class="gesture">Seret buah ke petak bercahaya.<br>Atau tekan buah, kemudian petak.</p></div>
+<p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+<div id="discovery" class="discovery" hidden><span>★ SATU CERITA DAH TERBUKA</span><h3 id="lessonTitle"></h3><p id="lessonText"></p><button id="next" class="primary">Jom sambung →</button></div>
+<details class="cell-picker" id="cellPicker"><summary>Pilih petak dengan butang</summary><p>Pilih buah dahulu. Butang ini juga boleh digunakan dengan papan kekunci.</p><div id="cellButtons" class="cell-buttons"></div></details>
+</aside>
+</div>
+<section class="album" aria-labelledby="albumTitle"><div class="album-title"><div><p class="eyebrow">TAK PERLU HAFAL. MAIN DAN KENAL.</p><h2 id="albumTitle">Empat cerita dalam satu bil.</h2></div><span id="cardCount">0 / 4 dikumpul</span></div><div id="cards" class="cards"></div></section>
+<section id="finish" class="finish" hidden tabindex="-1"><span>✦ ♡ ✦</span><h2>Kampung siap. Cerita pun lengkap!</h2><p>Sekarang boleh main bebas: tambah rumah, pokok dan solar di petak kosong. Buah hiasan juga boleh dialihkan dengan seret-lepas.</p><a class="primary" href="index.html">Jom tengok bil sebenar →</a></section>
+<details class="notes"><summary>Sedikit nota untuk yang ingin tahu</summary><p>Ini permainan cerita. Papan, sambungan automatik dan bangunan kecil ini memudahkan cara elektrik dijana dan dihantar. Ia bukan reka bentuk grid sebenar atau pengiraan bil. Solar menghasilkan elektrik daripada cahaya; loji sebenar di Malaysia menggunakan pelbagai sumber, termasuk gas, arang batu dan hidro.</p><p>Empat caj yang diterangkan merujuk kepada konteks TNB di Semenanjung Malaysia. Caj kapasiti meliputi ketersediaan loji, bukan loji sokongan sahaja. Caj rangkaian meliputi penghantaran dan pengagihan. AFA melaras perubahan kos bahan api dan penjanaan lain berbanding kos asas setiap bulan; kadar serta kelayakan rebat atau surcaj tertakluk kepada ketetapan semasa. Bil sebenar juga mempunyai komponen lain.</p><p>Rujukan: <a href="https://www.st.gov.my/pricing/electricity-pricing-framework/components-ibr" target="_blank" rel="noopener">Suruhanjaya Tenaga</a> · <a href="https://www.mytnb.com.my/tariff" target="_blank" rel="noopener">myTNB</a></p></details>
+</main><footer><span>Sebuah dunia kecil, di hujung jari anda. ♡</span><div><a href="game.html">Kampung Kilowatt 2D</a><a href="index.html">Banding Tarif TNB</a></div></footer>
+</div>
+<noscript><p class="noscript">Hidupkan JavaScript untuk bermain Kampung Kilowatt 3D.</p></noscript>
+</body></html>
