@@ -28,6 +28,10 @@ function sfx(kind){
 // pointerup/touchend/click diperlukan supaya autoplay dibenarkan di mobile.
 for(const ev of ['pointerdown','pointerup','touchend','click','keydown'])
  document.addEventListener(ev,startMusic);
+// In-app browser (Facebook/WhatsApp) biarkan webview hidup di latar —
+// pause muzik bila halaman disembunyikan/ditutup, sambung bila kembali.
+document.addEventListener('visibilitychange',()=>{if(document.hidden)music.pause();else startMusic();});
+addEventListener('pagehide',()=>music.pause());
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const definitions = {
   plant: {name:'Loji elektrik', hint:'Tempat elektrik dibuat'},

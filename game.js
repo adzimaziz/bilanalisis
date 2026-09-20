@@ -25,6 +25,10 @@ function sfx(kind){
 // pointerup/touchend/click diperlukan supaya autoplay dibenarkan di mobile.
 for(const ev of ['pointerdown','pointerup','touchend','click','keydown'])
  document.addEventListener(ev,startMusic);
+// In-app browser (Facebook/WhatsApp) biarkan webview hidup di latar —
+// pause muzik bila halaman disembunyikan/ditutup, sambung bila kembali.
+document.addEventListener('visibilitychange',()=>{if(document.hidden)music.pause();else startMusic();});
+addEventListener('pagehide',()=>music.pause());
 const face = (x=60,y=70) => `<g stroke="#4b625b" stroke-width="2.7" stroke-linecap="round" fill="none"><path d="M${x-9} ${y}v2m18-2v2m-13 5q4 5 8 0"/></g><g fill="#edafa0" opacity=".75"><ellipse cx="${x-15}" cy="${y+5}" rx="4" ry="2"/><ellipse cx="${x+15}" cy="${y+5}" rx="4" ry="2"/></g>`;
 function art(type) {
  const shell = content => `<svg class="art" viewBox="0 0 120 110" aria-hidden="true" focusable="false"><g stroke-linejoin="round" stroke-linecap="round">${content}</g></svg>`;
