@@ -299,13 +299,35 @@ canvas.addEventListener('pointerdown',e=>{
 },true);
 $('#targetHint').addEventListener('click',()=>{if(selected)place(selected,goalCell(selected));else say('Pilih buah dalam kotak binaan dahulu. Kemudian tekan tapak ini.');});
 $('#cellButtons').addEventListener('click',e=>{const b=e.target.closest('[data-cell]');if(!b||b.disabled)return;if(selected)place(selected,b.dataset.cell);else say('Pilih buah binaan dahulu, kemudian pilih petak.');});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelDrag();clearSelected();updateTargets();say('Pilihan dibatalkan. Anda boleh pusing papan semula.');}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cancelDrag();clearSelected();updateTargets();if(document.fullscreenElement===gameLayout){document.exitFullscreen().catch(()=>say('Gunakan butang Keluar untuk tutup skrin penuh.'));}else if(fullscreenFallback){fullscreenFallback=false;syncFullscreen();}else say('Pilihan dibatalkan. Anda boleh pusing papan semula.');}});
 function turn(angle){if(!controls)return;clearSelected();controls.enabled=true;controls.update();const offset=camera.position.clone().sub(controls.target);offset.applyAxisAngle(new THREE.Vector3(0,1,0),angle);camera.position.copy(controls.target).add(offset);controls.update();}
 $('#rotateLeft').addEventListener('click',()=>turn(-Math.PI/4));$('#rotateRight').addEventListener('click',()=>turn(Math.PI/4));
 function zoom(factor){if(!camera)return;camera.zoom=THREE.MathUtils.clamp(camera.zoom*factor,.75,1.65);camera.updateProjectionMatrix();controls.update();}
 $('#zoomIn').addEventListener('click',()=>zoom(1.15));$('#zoomOut').addEventListener('click',()=>zoom(1/1.15));
 function resetCamera(){if(!camera)return;clearSelected();camera.position.set(11,12,15);camera.zoom=1;controls.target.set(0,.15,0);camera.updateProjectionMatrix();controls.update();}
 $('#resetView').addEventListener('click',resetCamera);
+let fullscreenFallback=false;
+const gameLayout=$('.game-layout');
+function syncFullscreen(){
+ const active=document.fullscreenElement===gameLayout||fullscreenFallback;
+ gameLayout.classList.toggle('is-fullscreen',active);document.body.classList.toggle('fullscreen-open',active);
+ $('#fullscreen').setAttribute('aria-pressed',String(active));
+ $('#fullscreen').setAttribute('aria-label',active?'Keluar skrin penuh':'Buka skrin penuh');
+ $('#fullscreen').title=active?'Keluar skrin penuh (Esc)':'Buka skrin penuh';
+ $('#fullscreen .fullscreen-label').textContent=active?'Keluar':'Skrin penuh';
+ requestAnimationFrame(()=>{resize();if(engineReady)renderer.render(scene,camera);});
+}
+$('#fullscreen').addEventListener('click',async()=>{
+ cancelDrag();clearSelected();
+ if(gameLayout.classList.contains('is-fullscreen')){
+  fullscreenFallback=false;
+  if(document.fullscreenElement===gameLayout){try{await document.exitFullscreen();}catch{say('Tekan Esc untuk keluar daripada skrin penuh.');}}
+  syncFullscreen();return;
+ }
+ if(gameLayout.requestFullscreen){try{await gameLayout.requestFullscreen();syncFullscreen();return;}catch{/* Embedded browsers can deny native fullscreen; expand the same play area in-page. */}}
+ fullscreenFallback=true;syncFullscreen();
+});
+document.addEventListener('fullscreenchange',syncFullscreen);
 $('#next').addEventListener('click',()=>{if(!isComplete())return;stage++;lastPrice=null;renderUI();say('');$('#taskTitle').focus({preventScroll:true});if(stage===4){celebrate();$('#finish').scrollIntoView({behavior:'smooth',block:'nearest'});}else $('.game-layout').scrollIntoView({behavior:'smooth',block:'start'});});
 $('#restart').addEventListener('click',()=>{if(!engineReady)return;cancelDrag();stage=0;buildings={};fueled=false;learned=new Set();prices=new Set();decorations=new Set();lastPrice=null;selected=null;suppressClick=0;resetCamera();renderUI();say('Jom bina kampung baharu!');$('#taskTitle').focus({preventScroll:true});});
 $('#soundTgl').addEventListener('click',()=>setSound(!soundOn));

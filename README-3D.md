@@ -21,4 +21,4 @@ Sertakan `game-3d.js`, `game-3d.js.LEGAL.txt` dan `tenaga-music.m4a` (muzik lata
 
 Seret buah ke petak bercahaya, atau tekan buah kemudian tekan petak. Pilihan petak berbutang juga tersedia untuk papan kekunci. Seret ruang kosong untuk memusingkan kamera; cubit atau gunakan butang untuk zum. Escape membatalkan pilihan. Selepas empat cerita selesai, tambah hiasan pada petak kosong dan seret hiasan untuk mengalihkannya. Kemajuan bermula semula apabila halaman dimuat semula.
 
-Jika WebGL tidak tersedia, halaman menawarkan pautan kepada game 2D.
+Butang **Skrin penuh** membesarkan papan bersama kotak binaan. Tekan **Keluar** atau **Escape** untuk kembali. Jika browser tidak membenarkan Fullscreen API, permainan menggunakan paparan penuh di dalam halaman. Jika WebGL tidak tersedia, halaman menawarkan pautan kepada game 2D.
