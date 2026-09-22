@@ -196,6 +196,14 @@ select{
 .scroller{overflow-x:auto}
 svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
+.zoombar{display:flex; align-items:center; gap:6px; margin:0 0 10px}
+.zoombar button{
+  font:700 14px/1 "Plus Jakarta Sans",system-ui,sans-serif; color:var(--chip-ink);
+  background:var(--chip); border:1px solid transparent; border-radius:8px;
+  min-width:30px; padding:6px 10px; cursor:pointer;
+}
+.zoombar button:hover{border-color:var(--axis)}
+.zoombar .zoominfo{font-size:12px; color:var(--muted); margin-left:6px; font-variant-numeric:tabular-nums}
 .legend{display:flex; flex-wrap:wrap; gap:7px 18px; margin-top:14px; font-size:12.5px; color:var(--ink-2); font-weight:500}
 .legend .key{display:inline-flex; align-items:center; gap:7px}
 .legend .sw{width:11px; height:11px; border-radius:3.5px; flex:none}
@@ -384,7 +392,13 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   garis bil baharu: Insentif Cekap Tenaga mengecil berperingkat, dan caj tambahan bermula selepas had pengecualian.</p>
   <div class="chart-card">
     <h3>Bil lama vs bil baharu &middot; <span id="curveAfaLbl"></span></h3>
-    <p class="chart-note">Tuding pada carta untuk banding nilai pada mana-mana kWj &middot; garis menegak = penggunaan anda sekarang</p>
+    <p class="chart-note">Tuding untuk banding nilai pada setiap 1 kWj &middot; scroll / seret untuk zoom &amp; pan &middot; dwiklik untuk reset &middot; garis menegak = penggunaan anda sekarang</p>
+    <div class="zoombar">
+      <button id="zIn" type="button" aria-label="Zum masuk">+</button>
+      <button id="zOut" type="button" aria-label="Zum keluar">&minus;</button>
+      <button id="zReset" type="button">Reset</button>
+      <span class="zoominfo" id="zInfo"></span>
+    </div>
     <div class="scroller"><svg id="curveChart" viewBox="0 0 960 380" style="min-width:640px" role="img" aria-label="Carta garis: jumlah bil (RM) melawan penggunaan (kWj) bagi tarif lama dan baharu"></svg></div>
     <div class="legend">
       <span class="key"><span class="sw line" style="background:var(--blk4)"></span>Bil lama (blok + ICPT)</span>
@@ -825,33 +839,62 @@ function drawAfa(){
     + AFA_FORECAST.months.map(d=>`<tr><td>${d.m} <span style='color:var(--muted)'>(unjuran)</span></td><td class="num ${d.v<0?"neg":"pos-sur"}">${fmtSen(d.v)}</td></tr>`).join("");
 }
 
-/* ================= LENGKUNG BIL ================= */
+/* ================= LENGKUNG BIL (zoom + pan, resolusi 1 kWj) ================= */
+const CURVE_MAX=2000, CURVE_MIN_SPAN=40;
+const curveView={x0:0, x1:CURVE_MAX};
+let curveArgs=null;
+
 function drawCurve(uNow, withTax, protOn, noFuel, afaRate){
+  curveArgs={uNow, withTax, protOn, noFuel, afaRate};
+  renderCurve();
+}
+
+function curveZoom(factor, centerU){
+  const span=curveView.x1-curveView.x0;
+  const c = centerU!==undefined ? centerU : (curveView.x0+curveView.x1)/2;
+  let ns=Math.min(CURVE_MAX, Math.max(CURVE_MIN_SPAN, span*factor));
+  let nx0=c-(c-curveView.x0)*ns/span;
+  nx0=Math.max(0, Math.min(CURVE_MAX-ns, nx0));
+  curveView.x0=nx0; curveView.x1=nx0+ns;
+  renderCurve();
+}
+
+function renderCurve(){
+  if(!curveArgs) return;
+  const {uNow, withTax, protOn, noFuel, afaRate}=curveArgs;
   const svg=$("#curveChart"); svg.innerHTML="";
   const W=960,H=380,mL=60,mR=88,mT=16,mB=44;
   const plotW=W-mL-mR, plotH=H-mT-mB;
-  const U=2000;
-
-  const xs=[];
-  for(let u=10;u<=U;u+=10) xs.push(u);
-  for(const b of [301,601,801,901,1001,1501]) if(!xs.includes(b)) xs.push(b);
-  xs.sort((a,b)=>a-b);
+  const U0=curveView.x0, U1=curveView.x1, span=U1-U0;
+  $("#zInfo").textContent=Math.round(U0).toLocaleString("en-MY")+" – "+Math.round(U1).toLocaleString("en-MY")+" kWj";
 
   const oldAt=u=>calcOld(u,withTax,noFuel).total;
   const newAt=u=>{const lim=(protOn&&u<=800)?800:600; return calcNew(u,afaRate,withTax,lim,noFuel).total;};
+
+  // sampel setiap 1 kWj dalam julat kelihatan (dihadkan ~2000 titik)
+  const step=Math.max(1, Math.ceil(span/2000));
+  const xs=[];
+  for(let u=Math.max(1,Math.floor(U0)); u<=Math.ceil(U1); u+=step) xs.push(u);
+  if(xs[xs.length-1]<Math.ceil(U1)) xs.push(Math.ceil(U1));
   const oldPts=xs.map(u=>({u,v:oldAt(u)}));
   const newPts=xs.map(u=>({u,v:newAt(u)}));
-  const yMax=Math.max(...oldPts.map(p=>p.v),...newPts.map(p=>p.v))*1.06;
-  const x=u=>mL+u/U*plotW;
-  const y=v=>mT+(1-v/yMax)*plotH;
 
-  for(const t of niceTicks(0,yMax,6)){
+  let vMin=Infinity,vMax=-Infinity;
+  for(const p of oldPts){ if(p.v<vMin)vMin=p.v; if(p.v>vMax)vMax=p.v; }
+  for(const p of newPts){ if(p.v<vMin)vMin=p.v; if(p.v>vMax)vMax=p.v; }
+  const y0 = U0<=0 ? 0 : Math.max(0, vMin-(vMax-vMin)*0.06);
+  const y1v = vMax+(vMax-vMin)*0.06 || vMax*1.06 || 10;
+  const x=u=>mL+(u-U0)/span*plotW;
+  const y=v=>mT+(1-(v-y0)/(y1v-y0))*plotH;
+
+  for(const t of niceTicks(y0,y1v,6)){
     el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
     el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent="RM"+t.toLocaleString("en-MY");
   }
-  for(let u=0;u<=U;u+=250){
-    el("line",{x1:x(u),x2:x(u),y1:H-mB,y2:H-mB+4,stroke:"var(--axis)","stroke-width":1},svg);
-    el("text",{x:x(u),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent=u.toLocaleString("en-MY");
+  for(const t of niceTicks(U0,U1,8)){
+    if(t<U0-1e-9||t>U1+1e-9) continue;
+    el("line",{x1:x(t),x2:x(t),y1:H-mB,y2:H-mB+4,stroke:"var(--axis)","stroke-width":1},svg);
+    el("text",{x:x(t),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent=Math.round(t).toLocaleString("en-MY");
   }
   el("text",{x:mL+plotW/2,y:H-6,"text-anchor":"middle","font-size":11,"font-weight":600,fill:"var(--ink-2)"},svg).textContent="Penggunaan (kWj)";
 
@@ -859,33 +902,63 @@ function drawCurve(uNow, withTax, protOn, noFuel, afaRate){
   el("path",{d:path(oldPts),fill:"none",stroke:"var(--blk4)","stroke-width":2,"stroke-linejoin":"round"},svg);
   el("path",{d:path(newPts),fill:"none",stroke:"var(--c-eei)","stroke-width":2,"stroke-linejoin":"round"},svg);
 
-  // label hujung garis
   const endOld=oldPts[oldPts.length-1], endNew=newPts[newPts.length-1];
   const eLbl=(p,txt)=>el("text",{x:x(p.u)+8,y:y(p.v)+4,"font-size":11.5,"font-weight":700,fill:"var(--ink)",
     stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},svg).textContent=txt;
   eLbl(endOld,"Lama"); eLbl(endNew,"Baharu");
 
   // penanda penggunaan semasa
-  const um=Math.min(uNow,U);
-  el("line",{x1:x(um),x2:x(um),y1:mT,y2:H-mB,stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"},svg);
-  el("circle",{cx:x(um),cy:y(oldAt(um)),r:4.5,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2},svg);
-  el("circle",{cx:x(um),cy:y(newAt(um)),r:4.5,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2},svg);
+  if(uNow>=U0&&uNow<=U1){
+    el("line",{x1:x(uNow),x2:x(uNow),y1:mT,y2:H-mB,stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"},svg);
+    el("circle",{cx:x(uNow),cy:y(oldAt(uNow)),r:4.5,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2},svg);
+    el("circle",{cx:x(uNow),cy:y(newAt(uNow)),r:4.5,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2},svg);
+  }
 
-  // lapisan hover: crosshair + tooltip
+  // hover crosshair + tooltip (resolusi 1 kWj) & pan (seret) & zoom (roda)
   const cross=el("line",{x1:0,x2:0,y1:mT,y2:H-mB,stroke:"var(--axis)","stroke-width":1,visibility:"hidden"},svg);
   const dotO=el("circle",{r:4,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
   const dotN=el("circle",{r:4,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
-  const hit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent"},svg);
-  hit.addEventListener("pointermove",e=>{
+  const hit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent",style:"cursor:crosshair; touch-action:none"},svg);
+
+  const uFromEvent=e=>{
     const bb=svg.getBoundingClientRect();
     const relX=(e.clientX-bb.left)/bb.width*W;
-    let u=Math.round((relX-mL)/plotW*U/10)*10;
-    u=Math.max(10,Math.min(U,u));
+    return U0+(relX-mL)/plotW*span;
+  };
+  let drag=null;
+  hit.addEventListener("pointerdown",e=>{
+    drag={startClientX:e.clientX, startX0:U0, moved:false};
+    hit.setPointerCapture(e.pointerId);
+  });
+  hit.addEventListener("pointerup",()=>{drag=null;});
+  hit.addEventListener("pointercancel",()=>{drag=null;});
+  hit.addEventListener("dblclick",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
+  hit.addEventListener("wheel",e=>{
+    e.preventDefault();
+    curveZoom(e.deltaY<0?0.75:1.33, uFromEvent(e));
+  },{passive:false});
+  hit.addEventListener("pointermove",e=>{
+    if(drag){
+      const bb=svg.getBoundingClientRect();
+      const du=-(e.clientX-drag.startClientX)/bb.width*W/plotW*span;
+      if(Math.abs(e.clientX-drag.startClientX)>2) drag.moved=true;
+      let nx0=Math.max(0,Math.min(CURVE_MAX-span,drag.startX0+du));
+      if(nx0!==curveView.x0){
+        curveView.x0=nx0; curveView.x1=nx0+span;
+        tip.style.display="none";
+        renderCurve();
+      }
+      return;
+    }
+    let u=Math.round(uFromEvent(e));
+    u=Math.max(1,Math.min(CURVE_MAX,u));
     const ov=oldAt(u), nv=newAt(u), d=nv-ov;
+    const mo=u>1?(oldAt(u)-oldAt(u-1))*100:0;
+    const mn=u>1?(newAt(u)-newAt(u-1))*100:0;
     cross.setAttribute("x1",x(u)); cross.setAttribute("x2",x(u)); cross.setAttribute("visibility","visible");
     dotO.setAttribute("cx",x(u)); dotO.setAttribute("cy",y(ov)); dotO.setAttribute("visibility","visible");
     dotN.setAttribute("cx",x(u)); dotN.setAttribute("cy",y(nv)); dotN.setAttribute("visibility","visible");
-    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)}<br>Baharu: ${fmtRM(nv)}<br>${d<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(d))}`;
+    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(+${mo.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(+${mn.toFixed(1)} sen/kWj)</span><br>${d<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(d))}`;
     tip.style.display="block";
     const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
     let px=e.clientX+pad, py=e.clientY-h-10;
@@ -898,6 +971,10 @@ function drawCurve(uNow, withTax, protOn, noFuel, afaRate){
     for(const n of [cross,dotO,dotN]) n.setAttribute("visibility","hidden");
   });
 }
+
+$("#zIn").addEventListener("click",()=>curveZoom(0.6));
+$("#zOut").addEventListener("click",()=>curveZoom(1.6));
+$("#zReset").addEventListener("click",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
 
 /* ================= KEMAS KINI ================= */
 function buildAfaSelect(){
