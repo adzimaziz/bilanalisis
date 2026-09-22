@@ -196,7 +196,9 @@ select{
 .scroller{overflow-x:auto}
 svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
-.zoombar{display:flex; align-items:center; gap:6px; margin:0 0 10px}
+.zoombar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:0 0 10px}
+.zoombar .toggle{margin-left:auto; font-size:13px}
+@media (max-width:640px){ .zoombar .toggle{margin-left:0; width:100%} }
 .zoombar button{
   font:700 14px/1 "Plus Jakarta Sans",system-ui,sans-serif; color:var(--chip-ink);
   background:var(--chip); border:1px solid transparent; border-radius:8px;
@@ -402,6 +404,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <button id="zOut" type="button" aria-label="Zum keluar">&minus;</button>
       <button id="zReset" type="button">Reset</button>
       <span class="zoominfo" id="zInfo"></span>
+      <span class="toggle"><input id="fuelTgl2" type="checkbox"> Kecualikan ICPT / AFA</span>
     </div>
     <svg id="curveChart" viewBox="0 0 960 380" role="img" aria-label="Carta garis: jumlah bil (RM) melawan penggunaan (kWj) bagi tarif lama dan baharu" style="width:100%"></svg>
     <div class="legend">
@@ -1062,12 +1065,11 @@ function initCurveInteract(svg){
     let u=Math.round(uFromEvent(e));
     u=Math.max(1,Math.min(CURVE_MAX,u));
     const ov=oldAt(u), nv=newAt(u), dv=nv-ov;
-    const mo=u>1?(ov-oldAt(u-1))*100:0;
-    const mn=u>1?(nv-newAt(u-1))*100:0;
+    const ao=ov/u*100, an=nv/u*100; // purata sen/kWj = jumlah bil / penggunaan
     cvCross.setAttribute("x1",x(u)); cvCross.setAttribute("x2",x(u)); cvCross.setAttribute("visibility","visible");
     cvDotO.setAttribute("cx",x(u)); cvDotO.setAttribute("cy",y(ov)); cvDotO.setAttribute("visibility","visible");
     cvDotN.setAttribute("cx",x(u)); cvDotN.setAttribute("cy",y(nv)); cvDotN.setAttribute("visibility","visible");
-    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(+${mo.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(+${mn.toFixed(1)} sen/kWj)</span><br>${dv<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(dv))}`;
+    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(purata ${ao.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(purata ${an.toFixed(1)} sen/kWj)</span><br>${dv<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(dv))}`;
     tip.style.display="block";
     const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
     let px=e.clientX+pad, py=e.clientY-h-10;
@@ -1093,6 +1095,11 @@ function setCurveMode(m){
 }
 $("#mBox").addEventListener("click",()=>setCurveMode("box"));
 $("#mPan").addEventListener("click",()=>setCurveMode("pan"));
+// toggle bahan api pendua di carta — sentiasa selari dengan togol utama
+$("#fuelTgl2").addEventListener("change",e=>{
+  $("#fuelTgl").checked=e.target.checked;
+  update();
+});
 
 /* ================= KEMAS KINI ================= */
 function buildAfaSelect(){
@@ -1164,6 +1171,7 @@ function update(){
   fillNewTbl(n,u);
   drawCurve(u, withTax, protTgl.checked && protMonthOk, noFuel, afaRate);
   $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
+  $("#fuelTgl2").checked=noFuel;
 
   // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
   const selV=$("#afaSel").value;
