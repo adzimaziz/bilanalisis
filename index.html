@@ -1106,6 +1106,16 @@ function initCurveInteract(svg){
 
 window.addEventListener("resize",()=>scheduleCurveRender());
 
+// tooltip jangan tertinggal terapung: sembunyi bila scroll atau sentuh di luar kawasan carta
+const hideCurveTip=()=>{
+  tip.style.display="none";
+  for(const n of [cvCross,cvDotO,cvDotN]) if(n) n.setAttribute("visibility","hidden");
+};
+window.addEventListener("scroll",hideCurveTip,{passive:true});
+document.addEventListener("pointerdown",e=>{
+  if(!(e.target.closest&&e.target.closest(".chart-card"))) hideCurveTip();
+},true);
+
 $("#zIn").addEventListener("click",()=>curveZoom(0.6));
 $("#zOut").addEventListener("click",()=>curveZoom(1.6));
 $("#zReset").addEventListener("click",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
