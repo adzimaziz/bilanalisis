@@ -201,7 +201,8 @@ svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 #curveChart{touch-action:none; -webkit-user-select:none; user-select:none}
 .zoombar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:0 0 10px}
-.zoombar .toggle{margin-left:auto; font-size:13px}
+.zoombar .toggle{margin-left:14px; font-size:13px}
+.zoombar .toggle:first-of-type{margin-left:auto}
 @media (max-width:640px){
   .zoombar .toggle{margin-left:0; width:100%}
   #mBox,#mPan{display:none} /* di skrin sentuh: satu jari = tooltip, cubit = zoom */
@@ -414,6 +415,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <button id="zOut" type="button" aria-label="Zum keluar">&minus;</button>
       <button id="zReset" type="button">Reset</button>
       <span class="zoominfo" id="zInfo"></span>
+      <span class="toggle" id="protWrap2"><input id="protTgl2" type="checkbox"> Had 800 kWj (Sep&ndash;Dis 26)</span>
       <span class="toggle"><input id="fuelTgl2" type="checkbox"> Kecualikan ICPT / AFA</span>
     </div>
     <svg id="curveChart" viewBox="0 0 960 380" role="img" aria-label="Carta garis: jumlah bil (RM) melawan penggunaan (kWj) bagi tarif lama dan baharu" style="width:100%"></svg>
@@ -1127,9 +1129,13 @@ function setCurveMode(m){
 }
 $("#mBox").addEventListener("click",()=>setCurveMode("box"));
 $("#mPan").addEventListener("click",()=>setCurveMode("pan"));
-// toggle bahan api pendua di carta — sentiasa selari dengan togol utama
+// toggle pendua di carta — sentiasa selari dengan togol utama
 $("#fuelTgl2").addEventListener("change",e=>{
   $("#fuelTgl").checked=e.target.checked;
+  update();
+});
+$("#protTgl2").addEventListener("change",e=>{
+  $("#protTgl").checked=e.target.checked;
   update();
 });
 
@@ -1204,6 +1210,11 @@ function update(){
   drawCurve(u, withTax, protTgl.checked && protMonthOk, noFuel, afaRate);
   $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
   $("#fuelTgl2").checked=noFuel;
+  const protTgl2=$("#protTgl2"), protWrap2=$("#protWrap2");
+  protTgl2.checked=protTgl.checked;
+  protTgl2.disabled=protTgl.disabled;
+  protWrap2.style.opacity=protTgl.disabled?"0.45":"";
+  protWrap2.title=protWrap.title;
 
   // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
   const selV=$("#afaSel").value;
