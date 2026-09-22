@@ -377,6 +377,24 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
 </section>
 
 <section>
+  <h2>Lengkung bil: RM pada setiap paras kWj</h2>
+  <div class="rule"></div>
+  <p class="sec-sub">Bagaimana bil berubah mengikut penggunaan, dari 0 hingga 2,000 kWj &mdash; dikira dengan tetapan
+  semasa anda (kadar AFA, cukai, perlindungan 800 kWj, kecualian bahan api). Perhatikan &ldquo;tangga&rdquo; pada
+  garis bil baharu: Insentif Cekap Tenaga mengecil berperingkat, dan caj tambahan bermula selepas had pengecualian.</p>
+  <div class="chart-card">
+    <h3>Bil lama vs bil baharu &middot; <span id="curveAfaLbl"></span></h3>
+    <p class="chart-note">Tuding pada carta untuk banding nilai pada mana-mana kWj &middot; garis menegak = penggunaan anda sekarang</p>
+    <div class="scroller"><svg id="curveChart" viewBox="0 0 960 380" style="min-width:640px" role="img" aria-label="Carta garis: jumlah bil (RM) melawan penggunaan (kWj) bagi tarif lama dan baharu"></svg></div>
+    <div class="legend">
+      <span class="key"><span class="sw line" style="background:var(--blk4)"></span>Bil lama (blok + ICPT)</span>
+      <span class="key"><span class="sw line" style="background:var(--c-eei)"></span>Bil baharu (RP4)</span>
+      <span class="key"><span class="sw line" style="background:repeating-linear-gradient(90deg,var(--muted) 0 5px,transparent 5px 9px)"></span>Penggunaan semasa anda</span>
+    </div>
+  </div>
+</section>
+
+<section>
   <h2>ICPT vs AFA: trend pelarasan bahan api</h2>
   <div class="rule"></div>
   <p class="sec-sub">Dulu, ICPT disemak setiap 6 bulan (domestik &le;600 kWj menikmati rebat tetap 2 sen/kWj sehingga Jun 2025;
@@ -807,6 +825,80 @@ function drawAfa(){
     + AFA_FORECAST.months.map(d=>`<tr><td>${d.m} <span style='color:var(--muted)'>(unjuran)</span></td><td class="num ${d.v<0?"neg":"pos-sur"}">${fmtSen(d.v)}</td></tr>`).join("");
 }
 
+/* ================= LENGKUNG BIL ================= */
+function drawCurve(uNow, withTax, protOn, noFuel, afaRate){
+  const svg=$("#curveChart"); svg.innerHTML="";
+  const W=960,H=380,mL=60,mR=88,mT=16,mB=44;
+  const plotW=W-mL-mR, plotH=H-mT-mB;
+  const U=2000;
+
+  const xs=[];
+  for(let u=10;u<=U;u+=10) xs.push(u);
+  for(const b of [301,601,801,901,1001,1501]) if(!xs.includes(b)) xs.push(b);
+  xs.sort((a,b)=>a-b);
+
+  const oldAt=u=>calcOld(u,withTax,noFuel).total;
+  const newAt=u=>{const lim=(protOn&&u<=800)?800:600; return calcNew(u,afaRate,withTax,lim,noFuel).total;};
+  const oldPts=xs.map(u=>({u,v:oldAt(u)}));
+  const newPts=xs.map(u=>({u,v:newAt(u)}));
+  const yMax=Math.max(...oldPts.map(p=>p.v),...newPts.map(p=>p.v))*1.06;
+  const x=u=>mL+u/U*plotW;
+  const y=v=>mT+(1-v/yMax)*plotH;
+
+  for(const t of niceTicks(0,yMax,6)){
+    el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
+    el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent="RM"+t.toLocaleString("en-MY");
+  }
+  for(let u=0;u<=U;u+=250){
+    el("line",{x1:x(u),x2:x(u),y1:H-mB,y2:H-mB+4,stroke:"var(--axis)","stroke-width":1},svg);
+    el("text",{x:x(u),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent=u.toLocaleString("en-MY");
+  }
+  el("text",{x:mL+plotW/2,y:H-6,"text-anchor":"middle","font-size":11,"font-weight":600,fill:"var(--ink-2)"},svg).textContent="Penggunaan (kWj)";
+
+  const path=pts=>pts.map((p,k)=>(k?"L":"M")+x(p.u).toFixed(1)+" "+y(p.v).toFixed(1)).join(" ");
+  el("path",{d:path(oldPts),fill:"none",stroke:"var(--blk4)","stroke-width":2,"stroke-linejoin":"round"},svg);
+  el("path",{d:path(newPts),fill:"none",stroke:"var(--c-eei)","stroke-width":2,"stroke-linejoin":"round"},svg);
+
+  // label hujung garis
+  const endOld=oldPts[oldPts.length-1], endNew=newPts[newPts.length-1];
+  const eLbl=(p,txt)=>el("text",{x:x(p.u)+8,y:y(p.v)+4,"font-size":11.5,"font-weight":700,fill:"var(--ink)",
+    stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},svg).textContent=txt;
+  eLbl(endOld,"Lama"); eLbl(endNew,"Baharu");
+
+  // penanda penggunaan semasa
+  const um=Math.min(uNow,U);
+  el("line",{x1:x(um),x2:x(um),y1:mT,y2:H-mB,stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"},svg);
+  el("circle",{cx:x(um),cy:y(oldAt(um)),r:4.5,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2},svg);
+  el("circle",{cx:x(um),cy:y(newAt(um)),r:4.5,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2},svg);
+
+  // lapisan hover: crosshair + tooltip
+  const cross=el("line",{x1:0,x2:0,y1:mT,y2:H-mB,stroke:"var(--axis)","stroke-width":1,visibility:"hidden"},svg);
+  const dotO=el("circle",{r:4,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
+  const dotN=el("circle",{r:4,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
+  const hit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent"},svg);
+  hit.addEventListener("pointermove",e=>{
+    const bb=svg.getBoundingClientRect();
+    const relX=(e.clientX-bb.left)/bb.width*W;
+    let u=Math.round((relX-mL)/plotW*U/10)*10;
+    u=Math.max(10,Math.min(U,u));
+    const ov=oldAt(u), nv=newAt(u), d=nv-ov;
+    cross.setAttribute("x1",x(u)); cross.setAttribute("x2",x(u)); cross.setAttribute("visibility","visible");
+    dotO.setAttribute("cx",x(u)); dotO.setAttribute("cy",y(ov)); dotO.setAttribute("visibility","visible");
+    dotN.setAttribute("cx",x(u)); dotN.setAttribute("cy",y(nv)); dotN.setAttribute("visibility","visible");
+    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)}<br>Baharu: ${fmtRM(nv)}<br>${d<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(d))}`;
+    tip.style.display="block";
+    const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+    let px=e.clientX+pad, py=e.clientY-h-10;
+    if(px+w>innerWidth-8) px=e.clientX-w-pad;
+    if(py<8) py=e.clientY+pad;
+    tip.style.left=px+"px"; tip.style.top=py+"px";
+  });
+  hit.addEventListener("pointerleave",()=>{
+    tip.style.display="none";
+    for(const n of [cross,dotO,dotN]) n.setAttribute("visibility","hidden");
+  });
+}
+
 /* ================= KEMAS KINI ================= */
 function buildAfaSelect(){
   const sel=$("#afaSel");
@@ -875,6 +967,8 @@ function update(){
   drawCompare(o,n,u);
   fillOldTbl(o,u);
   fillNewTbl(n,u);
+  drawCurve(u, withTax, protTgl.checked && protMonthOk, noFuel, afaRate);
+  $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
 
   // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
   const selV=$("#afaSel").value;
