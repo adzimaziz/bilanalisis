@@ -186,6 +186,20 @@ td.pos-sur{color:var(--bad-text)}
 }
 #tip b{font-weight:700}
 
+.guide{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); gap:22px; align-items:start}
+@media (max-width:760px){ .guide{grid-template-columns:1fr} }
+.guide figure{margin:0; background:var(--surface); border:1px solid var(--hairline); border-radius:18px;
+  padding:14px; box-shadow:var(--shadow)}
+.guide figure img{width:100%; border-radius:10px; display:block}
+.guide figcaption{font-size:12.5px; color:var(--muted); margin-top:10px; text-align:center}
+.steps{display:flex; flex-direction:column; gap:14px}
+.step{display:flex; gap:14px; align-items:flex-start; background:var(--surface);
+  border:1px solid var(--hairline); border-radius:16px; padding:16px 18px; box-shadow:var(--shadow)}
+.step .n{flex:none; width:30px; height:30px; border-radius:50%; background:var(--grad); color:#fff;
+  font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center}
+.step b{display:block; font-size:14.5px}
+.step p{margin:2px 0 0; font-size:13.5px; color:var(--ink-2)}
+
 .notes{font-size:13px; color:var(--ink-2)}
 .notes ol{padding-left:20px; margin:8px 0}
 .notes li{margin-bottom:7px}
@@ -217,9 +231,9 @@ footer a{color:var(--accent); font-weight:600}
       </div>
     </div>
     <div class="ctl">
-      <label for="m2">Bulan kedua</label>
+      <label for="m2">Bulan kedua (automatik: bulan berikutnya)</label>
       <div class="pair">
-        <select id="m2"></select>
+        <select id="m2" aria-label="Bulan kedua, ditetapkan kepada bulan selepas bulan pertama"></select>
         <input id="kwh2" type="number" min="0" max="5000" step="1" value="208">
         <span class="unit">kWj</span>
       </div>
@@ -263,6 +277,28 @@ footer a{color:var(--accent); font-weight:600}
 </div>
 
 <section>
+  <h2>Panduan: cari pecahan AFA dalam bil anda</h2>
+  <div class="rule"></div>
+  <p class="sec-sub">Setiap bil TNB ada jadual <b>Pecahan Pengiraan Bil</b>. Di situlah anda jumpa dua baris AFA
+  yang menunjukkan pecahan kWj mengikut bulan &mdash; itulah nombor yang perlu dimasukkan di atas.</p>
+  <div class="guide">
+    <figure>
+      <img src="panduan-afa.png" alt="Contoh Pecahan Pengiraan Bil TNB dengan dua baris AFA ditandakan: AFA (508kWh, RM0.038/kWh) mulai 01/08/26 dan AFA (208kWh, RM0.0367/kWh) mulai 01/09/26" loading="lazy">
+      <figcaption>Contoh bil sebenar: dua baris AFA (dalam kotak merah) menunjukkan pecahan 508 kWj + 208 kWj.</figcaption>
+    </figure>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><b>Buka bil TNB / aplikasi myTNB</b>
+        <p>Cari jadual &ldquo;Pecahan Pengiraan Bil&rdquo; di bahagian bawah bil anda.</p></div></div>
+      <div class="step"><span class="n">2</span><div><b>Cari dua baris AFA di bawah Caj Penjanaan</b>
+        <p>Setiap baris tunjuk kWj dan tarikh &ldquo;mulai&rdquo; &mdash; contohnya <em>AFA (508kWh) mulai 01/08/26</em>
+        bermaksud 508 kWj dikenakan kadar AFA Ogos 2026.</p></div></div>
+      <div class="step"><span class="n">3</span><div><b>Masukkan dalam kalkulator</b>
+        <p>Pilih bulan pertama (bulan kedua terisi automatik) dan masukkan kWj setiap baris. Analisis terus dikemas kini.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
   <h2>Anatomi bil untuk jumlah <span id="chartKwh">716</span> kWj</h2>
   <div class="rule"></div>
   <p class="sec-sub">Kadar blok lama dan semua caj RP4 dikira ke atas jumlah penggunaan; hanya AFA dipecahkan mengikut
@@ -302,7 +338,8 @@ footer a{color:var(--accent); font-weight:600}
   </ol>
 </section>
 
-<footer>Dikemas kini September 2026 &middot; <a href="index.html">&larr; Kalkulator utama</a> &middot;
+<footer>Dikemas kini September 2026 &middot; Dihasilkan oleh <b>Adzim &amp; Abbas</b> &middot;
+<a href="index.html">&larr; Kalkulator utama</a> &middot;
 <a href="game.html">🏡 Kampung Kilowatt 2D</a> &middot; <a href="game-3d.html">🎮 Versi 3D</a></footer>
 </div>
 
@@ -533,16 +570,16 @@ function fillNewTbl(n){
 }
 
 /* ================= KEMAS KINI ================= */
-function buildMonthSelects(keepM2){
+function buildMonthSelects(){
   const m1=$("#m1"), m2=$("#m2");
   if(!m1.options.length){
     m1.innerHTML=AFA_MONTHS.slice(0,-1).map((d,i)=>`<option value="${i}">${d.m}</option>`).join("");
     m1.value=String(AFA_MONTHS.length-2); // Ogo 26
   }
-  const i1=+m1.value;
-  const prev=keepM2?+m2.value:NaN;
-  m2.innerHTML=AFA_MONTHS.map((d,i)=>i>i1?`<option value="${i}">${d.m}</option>`:"").join("");
-  m2.value = (prev>i1 && prev<AFA_MONTHS.length) ? String(prev) : String(i1+1);
+  // bulan kedua sentiasa bulan berikutnya — bil sebenar tidak melangkau bulan
+  const i2=+m1.value+1;
+  m2.innerHTML=`<option value="${i2}">${AFA_MONTHS[i2].m}</option>`;
+  m2.value=String(i2);
 }
 
 function update(){
@@ -576,15 +613,14 @@ function update(){
   fillNewTbl(n);
 }
 
-$("#m1").addEventListener("change",()=>{buildMonthSelects(true); update();});
-$("#m2").addEventListener("change",update);
+$("#m1").addEventListener("change",()=>{buildMonthSelects(); update();});
 $("#kwh1").addEventListener("input",update);
 $("#kwh2").addEventListener("input",update);
 $("#taxTgl").addEventListener("change",update);
 $("#protTgl").addEventListener("change",update);
 $("#fuelTgl").addEventListener("change",update);
 
-buildMonthSelects(false);
+buildMonthSelects();
 update();
 </script>
 </body>
