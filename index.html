@@ -848,13 +848,14 @@ function update(){
   if(protSelV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(2));
   else if(protSelV.startsWith("fm:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(3));
   const protTgl=$("#protTgl");
-  protTgl.disabled=!protMonthOk;
+  const protOk=protMonthOk && u<=800;
+  protTgl.disabled=!protOk;
   const protWrap=protTgl.closest(".toggle");
-  protWrap.style.opacity=protMonthOk?"":"0.45";
-  protWrap.title=protMonthOk
-    ? (u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, Sep–Dis 2026")
-    : "Hanya untuk bulan Sep–Dis 2026 — bulan AFA yang dipilih di luar tempoh ini";
-  const lim=(protTgl.checked && protMonthOk && u<=800) ? 800 : 600;
+  protWrap.style.opacity=protOk?"":"0.45";
+  protWrap.title=!protMonthOk
+    ? "Hanya untuk bulan Sep–Dis 2026 — bulan AFA yang dipilih di luar tempoh ini"
+    : (u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, Sep–Dis 2026");
+  const lim=(protTgl.checked && protOk) ? 800 : 600;
   const noFuel=$("#fuelTgl").checked;
   const afaRate=currentAfaRate();
   const o=calcOld(u,withTax,noFuel), n=calcNew(u,afaRate,withTax,lim,noFuel);
