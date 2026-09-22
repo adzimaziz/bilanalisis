@@ -463,8 +463,9 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       Caj Kapasiti 4.55 sen, Caj Rangkaian 12.85 sen, Caj Peruncitan RM10/bulan (dikecualikan &le;600 kWj).</li>
     <li><b>Perlindungan diperluas (Sep&ndash;Dis 2026)</b>: had perlindungan dinaikkan daripada 600 kWj kepada
       <b>800 kWj</b> sebulan bagi penggunaan September&ndash;Disember 2026 &mdash; pengguna sehingga 800 kWj mendapat
-      pengecualian AFA, Caj Peruncitan &amp; SST. Aktifkan togol &ldquo;Perlindungan Sep&ndash;Dis 2026&rdquo; di panel
-      kawalan untuk melihat kesannya.</li>
+      pengecualian AFA, Caj Peruncitan &amp; SST. Togol &ldquo;Perlindungan Sep&ndash;Dis 2026&rdquo; hanya berkesan
+      jika bulan AFA yang dipilih berada dalam tempoh Sep&ndash;Dis 2026 <em>dan</em> penggunaan &le;800 kWj;
+      melebihi 800 kWj atau bulan di luar tempoh, bil dikira seperti biasa (had asal 600 kWj).</li>
     <li><b>Insentif Cekap Tenaga (EEI)</b>: rebat berperingkat 25.0 &rarr; 0.5 sen/kWj untuk penggunaan &le;1,000 kWj,
       dikenakan ke atas semua unit mengikut jumlah penggunaan bulan itu.</li>
     <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Pilihan lalai
@@ -840,7 +841,20 @@ function update(){
   $("#chartKwh").textContent=u;
 
   const withTax=$("#taxTgl").checked;
-  const lim=$("#protTgl").checked ? 800 : 600;
+  // Perlindungan hanya untuk bulan Sep–Dis 2026 DAN jumlah penggunaan ≤800 kWj
+  const PROT_MONTHS=["Sep 26","Okt 26","Nov 26","Dis 26"];
+  const selV=$("#afaSel").value;
+  let protMonthOk=true; // purata 6/12 bulan dianggap anggaran bil semasa (dalam tempoh)
+  if(selV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(selV.slice(2));
+  else if(selV.startsWith("fm:")) protMonthOk=PROT_MONTHS.includes(selV.slice(3));
+  const protTgl=$("#protTgl");
+  protTgl.disabled=!protMonthOk;
+  const protWrap=protTgl.closest(".toggle");
+  protWrap.style.opacity=protMonthOk?"":"0.45";
+  protWrap.title=protMonthOk
+    ? (u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, Sep–Dis 2026")
+    : "Hanya untuk bulan Sep–Dis 2026 — bulan AFA yang dipilih di luar tempoh ini";
+  const lim=(protTgl.checked && protMonthOk && u<=800) ? 800 : 600;
   const noFuel=$("#fuelTgl").checked;
   const afaRate=currentAfaRate();
   const o=calcOld(u,withTax,noFuel), n=calcNew(u,afaRate,withTax,lim,noFuel);

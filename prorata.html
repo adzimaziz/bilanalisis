@@ -328,8 +328,10 @@ footer a{color:var(--accent); font-weight:600}
   <div class="rule"></div>
   <ol>
     <li><b>AFA prorata</b>: bahagian kWj bulan pertama &times; kadar AFA bulan pertama + bahagian kWj bulan kedua &times;
-      kadar AFA bulan kedua, seperti format bil sebenar TNB. AFA dikecualikan jika jumlah penggunaan &le;600 kWj
-      (&le;800 kWj dengan togol perlindungan Sep&ndash;Dis 2026).</li>
+      kadar AFA bulan kedua, seperti format bil sebenar TNB. AFA dikecualikan jika jumlah penggunaan &le;600 kWj.</li>
+    <li><b>Perlindungan Sep&ndash;Dis 2026</b>: togol hanya berkesan jika <em>kedua-dua</em> bulan bil berada dalam
+      tempoh Sep&ndash;Dis 2026 dan jumlah penggunaan &le;800 kWj; jika tidak, bil dikira seperti biasa (had asal
+      600 kWj) dan togol dinyahaktifkan.</li>
     <li>Kadar blok lama, ICPT bertingkat (rebat 2 sen &le;600 kWj / tiada 601&ndash;1,500 kWj / surcaj 10 sen &gt;1,500 kWj),
       komponen RP4, Insentif Cekap Tenaga, KWTBB 1.6% (&gt;300 kWj) dan Cukai Perkhidmatan 8% sama seperti
       <a href="index.html">kalkulator utama</a>, termasuk togol perlindungan 800 kWj dan togol kecualikan ICPT/AFA.</li>
@@ -593,7 +595,17 @@ function update(){
   const u=Math.max(u1+u2,1);
   const mo1=AFA_MONTHS[+$("#m1").value], mo2=AFA_MONTHS[+$("#m2").value];
   const withTax=$("#taxTgl").checked;
-  const lim=$("#protTgl").checked ? 800 : 600;
+  // Perlindungan hanya jika KEDUA-DUA bulan bil dalam Sep–Dis 2026 dan jumlah ≤800 kWj
+  const PROT_MONTHS=["Sep 26","Okt 26","Nov 26","Dis 26"];
+  const protMonthOk=PROT_MONTHS.includes(mo1.m)&&PROT_MONTHS.includes(mo2.m);
+  const protTgl=$("#protTgl");
+  protTgl.disabled=!protMonthOk;
+  const protWrap=protTgl.closest(".toggle");
+  protWrap.style.opacity=protMonthOk?"":"0.45";
+  protWrap.title=protMonthOk
+    ? (u1+u2>800?"Jumlah penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, Sep–Dis 2026")
+    : "Hanya untuk bil dalam tempoh Sep–Dis 2026 — kedua-dua bulan mesti dalam tempoh ini";
+  const lim=(protTgl.checked && protMonthOk && (u1+u2)<=800) ? 800 : 600;
   const noFuel=$("#fuelTgl").checked;
 
   $("#chartKwh").textContent=u1+u2;
