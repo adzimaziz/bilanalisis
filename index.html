@@ -843,10 +843,10 @@ function update(){
   const withTax=$("#taxTgl").checked;
   // Perlindungan hanya untuk bulan Sep–Dis 2026 DAN jumlah penggunaan ≤800 kWj
   const PROT_MONTHS=["Sep 26","Okt 26","Nov 26","Dis 26"];
-  const selV=$("#afaSel").value;
+  const protSelV=$("#afaSel").value;
   let protMonthOk=true; // purata 6/12 bulan dianggap anggaran bil semasa (dalam tempoh)
-  if(selV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(selV.slice(2));
-  else if(selV.startsWith("fm:")) protMonthOk=PROT_MONTHS.includes(selV.slice(3));
+  if(protSelV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(2));
+  else if(protSelV.startsWith("fm:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(3));
   const protTgl=$("#protTgl");
   protTgl.disabled=!protMonthOk;
   const protWrap=protTgl.closest(".toggle");
