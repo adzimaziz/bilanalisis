@@ -397,7 +397,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <span class="key"><span class="sw" style="background:var(--sur)"></span>AFA &mdash; surcaj</span>
       <span class="key"><span class="sw line" style="background:var(--avg)"></span>Purata bergerak 6 bulan</span>
       <span class="key"><span class="sw line" style="background:repeating-linear-gradient(90deg,var(--fuel) 0 6px,transparent 6px 10px)"></span>Konsep ICPT (purata blok 6 bulan)</span>
-      <span class="key"><span class="sw" style="background:color-mix(in srgb, var(--fuel) 22%, transparent); border:1.5px dashed var(--fuel)"></span>Unjuran Okt&ndash;Dis 26 (julat rasmi)</span>
+      <span class="key"><span class="sw" style="background:color-mix(in srgb, var(--sur) 32%, transparent); border:1.5px dashed var(--sur)"></span>Unjuran bulanan Okt&ndash;Dis 26 (myTNB)</span>
     </div>
   </div>
   <div class="tiles" style="margin-top:18px">
@@ -469,9 +469,9 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       dikenakan ke atas semua unit mengikut jumlah penggunaan bulan itu.</li>
     <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Pilihan lalai
       kalkulator ialah purata 6 bulan terkini; anda boleh pilih mana-mana bulan sebenar dari senarai.</li>
-    <li><b>Unjuran AFA Okt&ndash;Dis 2026</b>: julat rasmi +2.81 hingga +5.48 sen/kWj (senario Base Case, unjuran TNB
-      melalui Single Buyer). Ini bukan kadar muktamad &mdash; kadar sebenar diumumkan awal setiap bulan. Pilihan
-      &ldquo;Unjuran&rdquo; dalam dropdown menggunakan titik tengah julat (~+4.15 sen) sebagai anggaran.</li>
+    <li><b>Unjuran AFA Okt&ndash;Dis 2026</b>: Unjuran 3-Bulan rasmi myTNB &mdash; Okt +3.36, Nov +2.81, Dis +5.48
+      sen/kWj (senario Base Case). Ini bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan. Bulan unjuran
+      boleh dipilih dalam dropdown untuk anggaran bil akan datang.</li>
     <li><b>KWTBB</b> 1.6% dikenakan jika penggunaan &gt;300 kWj; <b>Cukai Perkhidmatan</b> 8% dikenakan ke atas bahagian
       penggunaan melebihi 600 kWj (800 kWj bagi Sep&ndash;Dis 2026). Kedua-duanya anggaran &mdash; kaedah pengiraan penuh
       TNB mungkin berbeza sedikit.</li>
@@ -518,10 +518,10 @@ const AFA_BLOCKS = [ // blok 6 bulan (indeks dalam AFA_MONTHS)
   {label:"Jan–Jun 26", s:6, e:11},
   {label:"Jul–Sep 26", s:12, e:14, partial:true},
 ];
-const AFA_FORECAST = { // unjuran rasmi TNB (Single Buyer, senario Base Case)
-  months:["Okt 26","Nov 26","Dis 26"], lo:2.81, hi:5.48, label:"Okt–Dis 26"
+const AFA_FORECAST = { // Unjuran 3-Bulan Kadar AFA rasmi (myTNB)
+  label:"Okt–Dis 26",
+  months:[{m:"Okt 26",v:3.36},{m:"Nov 26",v:2.81},{m:"Dis 26",v:5.48}]
 };
-const AFA_FC_MID = (AFA_FORECAST.lo+AFA_FORECAST.hi)/2;
 const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const blockOf = j => AFA_BLOCKS.find(b=>j>=b.s&&j<=b.e);
 const blockAvg = b => avgOf(AFA_MONTHS.slice(b.s,b.e+1).map(d=>d.v));
@@ -746,21 +746,27 @@ function drawAfa(){
       el("text",{x:xC(i),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=d.m;
   });
 
-  // unjuran rasmi: jalur julat Okt–Dis 26
+  // unjuran rasmi myTNB: bar bulanan bergaya putus
   {
     const f=AFA_FORECAST;
-    const fx1=mL+band*TIMELINE.length, fx2=mL+band*slots-2;
+    const fx1=mL+band*TIMELINE.length;
     el("line",{x1:fx1,x2:fx1,y1:mT-14,y2:H-mB+6,stroke:"var(--axis)","stroke-width":1,"stroke-dasharray":"4 4"},svg);
     el("text",{x:fx1+6,y:mT-2,"text-anchor":"start","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent="UNJURAN";
-    const bandRect=el("rect",{x:fx1+4,y:y(f.hi),width:fx2-fx1-6,height:y(f.lo)-y(f.hi),fill:"var(--fuel)",opacity:.16,rx:4},svg);
-    el("rect",{x:fx1+4,y:y(f.hi),width:fx2-fx1-6,height:y(f.lo)-y(f.hi),fill:"none",stroke:"var(--fuel)","stroke-width":1.5,"stroke-dasharray":"6 4",rx:4},svg);
-    const ft=el("text",{x:(fx1+fx2)/2,y:(y(f.hi)+y(f.lo))/2+4,"text-anchor":"middle","font-size":10.5,"font-weight":700,
-      fill:"var(--ink-2)",stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke","font-variant-numeric":"tabular-nums"},svg);
-    ft.textContent="+2.81…+5.48";
-    const fHit=el("rect",{x:fx1,y:y(f.hi)-6,width:fx2-fx1,height:y(f.lo)-y(f.hi)+12,fill:"transparent"},svg);
-    bindTip(fHit,`<b>Unjuran AFA ${f.label}</b><br>Julat ${fmtSen(f.lo)} hingga ${fmtSen(f.hi)}/kWj<br><span style='opacity:.75'>Senario Base Case · sumber: TNB / Single Buyer, bukan kadar muktamad</span>`);
-    const lastFc=f.months.length-1;
-    el("text",{x:xC(TIMELINE.length+lastFc),y:H-mB+18,"text-anchor":"middle","font-size":10.5,"font-style":"italic",fill:"var(--muted)"},svg).textContent=f.months[lastFc];
+    f.months.forEach((d,k)=>{
+      const gi=TIMELINE.length+k;
+      const fill = d.v<0 ? "var(--reb)" : "var(--sur)";
+      const ry = d.v<0 ? y(0)+1 : y(d.v);
+      const rh = Math.max(Math.abs(y(d.v)-y(0))-1,2);
+      const r=el("rect",{x:xC(gi)-bw/2, y:ry, width:bw, height:rh, fill, opacity:.35, rx:3},svg);
+      el("rect",{x:xC(gi)-bw/2, y:ry, width:bw, height:rh, fill:"none", stroke:fill, "stroke-width":1.5, "stroke-dasharray":"5 3", rx:3, "pointer-events":"none"},svg);
+      bindTip(r,`<b>${d.m} — unjuran</b><br>AFA dijangka: ${fmtSen(d.v)}/kWj<br><span style='opacity:.75'>Unjuran 3-Bulan rasmi myTNB · bukan kadar muktamad</span>`);
+      if(k===f.months.length-1)
+        el("text",{x:xC(gi),y:H-mB+18,"text-anchor":"middle","font-size":10.5,"font-style":"italic",fill:"var(--muted)"},svg).textContent=d.m;
+    });
+    const hiIdx=f.months.reduce((a,d,k)=>d.v>f.months[a].v?k:a,0);
+    el("text",{x:xC(TIMELINE.length+hiIdx),y:y(f.months[hiIdx].v)+13,"text-anchor":"middle","font-size":10.5,"font-weight":700,
+      fill:"var(--ink-2)",stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke","font-variant-numeric":"tabular-nums"},svg)
+      .textContent=fmtSen(f.months[hiIdx].v);
   }
 
   const lbl=(i,v,dy)=>el("text",{x:xC(i),y:y(v)+dy,"text-anchor":"middle","font-size":11,"font-weight":700,fill:"var(--ink-2)","font-variant-numeric":"tabular-nums"},svg);
@@ -797,7 +803,7 @@ function drawAfa(){
 
   const tb=$("#afaTbl tbody");
   tb.innerHTML = TIMELINE.map(d=>`<tr><td>${d.m}${d.era==="icpt"?" <span style='color:var(--muted)'>(ICPT)</span>":""}</td><td class="num ${d.v<0?"neg":d.v>0?"pos-sur":""}">${fmtSen(d.v)}</td></tr>`).join("")
-    + `<tr><td>${AFA_FORECAST.label} <span style='color:var(--muted)'>(unjuran)</span></td><td class="num pos-sur">${fmtSen(AFA_FORECAST.lo)} – ${fmtSen(AFA_FORECAST.hi)}</td></tr>`;
+    + AFA_FORECAST.months.map(d=>`<tr><td>${d.m} <span style='color:var(--muted)'>(unjuran)</span></td><td class="num ${d.v<0?"neg":"pos-sur"}">${fmtSen(d.v)}</td></tr>`).join("");
 }
 
 /* ================= KEMAS KINI ================= */
@@ -806,8 +812,8 @@ function buildAfaSelect(){
   const opts=[
     {v:"avg6", t:`Purata 6 bulan terkini (${fmtSen(AFA_AVG6)})`},
     {v:"avg12", t:`Purata 12 bulan (${fmtSen(AFA_AVG12)})`},
-    {v:"fc", t:`Unjuran ${AFA_FORECAST.label} (~${fmtSen(AFA_FC_MID)}, julat ${fmtSen(AFA_FORECAST.lo)}…${fmtSen(AFA_FORECAST.hi)})`},
-  ].concat(AFA_MONTHS.slice().reverse().map(d=>({v:"m:"+d.m, t:`${d.m} (${fmtSen(d.v)})`})));
+  ].concat(AFA_FORECAST.months.slice().reverse().map(d=>({v:"fm:"+d.m, t:`${d.m} — unjuran (${fmtSen(d.v)})`})))
+   .concat(AFA_MONTHS.slice().reverse().map(d=>({v:"m:"+d.m, t:`${d.m} (${fmtSen(d.v)})`})));
   sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join("");
   sel.value="avg6";
 }
@@ -815,7 +821,10 @@ function currentAfaRate(){
   const v=$("#afaSel").value;
   if(v==="avg6") return AFA_AVG6;
   if(v==="avg12") return AFA_AVG12;
-  if(v==="fc") return AFA_FC_MID;
+  if(v.startsWith("fm:")){
+    const d=AFA_FORECAST.months.find(x=>x.m===v.slice(3));
+    return d?d.v:0;
+  }
   const m=v.slice(2);
   const d=AFA_MONTHS.find(x=>x.m===m);
   return d?d.v:0;

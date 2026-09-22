@@ -333,6 +333,8 @@ footer a{color:var(--accent); font-weight:600}
     <li>Kadar blok lama, ICPT bertingkat (rebat 2 sen &le;600 kWj / tiada 601&ndash;1,500 kWj / surcaj 10 sen &gt;1,500 kWj),
       komponen RP4, Insentif Cekap Tenaga, KWTBB 1.6% (&gt;300 kWj) dan Cukai Perkhidmatan 8% sama seperti
       <a href="index.html">kalkulator utama</a>, termasuk togol perlindungan 800 kWj dan togol kecualikan ICPT/AFA.</li>
+    <li><b>Bulan unjuran</b> (Okt&ndash;Dis 2026): kadar daripada Unjuran 3-Bulan rasmi myTNB &mdash; Okt +3.36,
+      Nov +2.81, Dis +5.48 sen/kWj. Bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan.</li>
     <li>Bil sebenar TNB turut memprorata blok/insentif mengikut bilangan hari bacaan meter; alat ini memudahkan
       dengan mengira ke atas jumlah kWj penuh. Angka mungkin berbeza sedikit daripada bil sebenar.</li>
   </ol>
@@ -367,8 +369,10 @@ const AFA_MONTHS = [
   ["Okt 25","01/10/25",-6.50],["Nov 25","01/11/25",-8.91],["Dis 25","01/12/25",-6.42],
   ["Jan 26","01/01/26",-4.99],["Feb 26","01/02/26",-2.77],["Mac 26","01/03/26",-2.15],
   ["Apr 26","01/04/26",-0.47],["Mei 26","01/05/26",1.38],["Jun 26","01/06/26",2.59],
-  ["Jul 26","01/07/26",3.59],["Ogo 26","01/08/26",3.80],["Sep 26","01/09/26",3.67]
-].map(([m,d,v])=>({m,d,v}));
+  ["Jul 26","01/07/26",3.59],["Ogo 26","01/08/26",3.80],["Sep 26","01/09/26",3.67],
+  // unjuran 3-bulan rasmi myTNB (bukan kadar muktamad)
+  ["Okt 26","01/10/26",3.36,true],["Nov 26","01/11/26",2.81,true],["Dis 26","01/12/26",5.48,true]
+].map(([m,d,v,fc])=>({m,d,v,fc:!!fc}));
 
 /* ================= KIRAAN ================= */
 function calcOld(u, withTax, noFuel=false){
@@ -555,8 +559,8 @@ function fillNewTbl(n){
     tr.innerHTML=cells; tb.appendChild(tr);};
   row(`<td><span class="dot" style="background:var(--c-tenaga)"></span>Caj Tenaga (${n.u} kWj)</td><td class="num">${n.tRate} sen</td><td class="num">${n.tenaga.toFixed(2)}</td>`);
   if(n.afaApplies){
-    row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA (${n.u1} kWj) mulai ${n.mo1.d}</td><td class="num">${fmtSen(n.mo1.v)}</td><td class="num ${n.afa1<0?"neg":n.afa1>0?"pos-sur":""}">${n.afa1.toFixed(2)}</td>`);
-    row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA (${n.u2} kWj) mulai ${n.mo2.d}</td><td class="num">${fmtSen(n.mo2.v)}</td><td class="num ${n.afa2<0?"neg":n.afa2>0?"pos-sur":""}">${n.afa2.toFixed(2)}</td>`);
+    row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA (${n.u1} kWj) mulai ${n.mo1.d}${n.mo1.fc?" <span style='color:var(--muted)'>— unjuran</span>":""}</td><td class="num">${fmtSen(n.mo1.v)}</td><td class="num ${n.afa1<0?"neg":n.afa1>0?"pos-sur":""}">${n.afa1.toFixed(2)}</td>`);
+    row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA (${n.u2} kWj) mulai ${n.mo2.d}${n.mo2.fc?" <span style='color:var(--muted)'>— unjuran</span>":""}</td><td class="num">${fmtSen(n.mo2.v)}</td><td class="num ${n.afa2<0?"neg":n.afa2>0?"pos-sur":""}">${n.afa2.toFixed(2)}</td>`);
   }else{
     row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA</td><td class="num">${n.noFuel?"dikecualikan (togol)":"dikecualikan (≤"+n.lim+" kWj)"}</td><td class="num">0.00</td>`);
   }
@@ -572,13 +576,14 @@ function fillNewTbl(n){
 /* ================= KEMAS KINI ================= */
 function buildMonthSelects(){
   const m1=$("#m1"), m2=$("#m2");
+  const optLabel=d=>d.m+(d.fc?" (unjuran)":"");
   if(!m1.options.length){
-    m1.innerHTML=AFA_MONTHS.slice(0,-1).map((d,i)=>`<option value="${i}">${d.m}</option>`).join("");
-    m1.value=String(AFA_MONTHS.length-2); // Ogo 26
+    m1.innerHTML=AFA_MONTHS.slice(0,-1).map((d,i)=>`<option value="${i}">${optLabel(d)}</option>`).join("");
+    m1.value=String(AFA_MONTHS.findIndex(d=>d.m==="Ogo 26"));
   }
   // bulan kedua sentiasa bulan berikutnya — bil sebenar tidak melangkau bulan
   const i2=+m1.value+1;
-  m2.innerHTML=`<option value="${i2}">${AFA_MONTHS[i2].m}</option>`;
+  m2.innerHTML=`<option value="${i2}">${optLabel(AFA_MONTHS[i2])}</option>`;
   m2.value=String(i2);
 }
 
@@ -599,7 +604,7 @@ function update(){
   $("#newVal").textContent=fmtRM(n.total);
   $("#oldEff").textContent=(o.total/u*100).toFixed(1)+" sen/kWj efektif";
   $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · "+
-    (noFuel?"AFA dikecualikan":n.afaApplies?("AFA "+mo1.m+" "+fmtSen(mo1.v)+" & "+mo2.m+" "+fmtSen(mo2.v)):"AFA dikecualikan (≤"+lim+" kWj)");
+    (noFuel?"AFA dikecualikan":n.afaApplies?("AFA "+mo1.m+(mo1.fc?"*":"")+" "+fmtSen(mo1.v)+" & "+mo2.m+(mo2.fc?"*":"")+" "+fmtSen(mo2.v)+((mo1.fc||mo2.fc)?" · *unjuran":"")):"AFA dikecualikan (≤"+lim+" kWj)");
 
   const d=n.total-o.total;
   const dv=$("#deltaVal");
