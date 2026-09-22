@@ -212,6 +212,49 @@ td.neg{color:var(--good-text); font-weight:700}
 td.pos-sur{color:var(--bad-text)}
 .tbl-stack{display:flex; flex-direction:column; gap:22px}
 
+/* ---------- announcement & cards ---------- */
+.announce{
+  display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px;
+  margin-top:22px; padding:18px 22px; border-radius:18px;
+  background:linear-gradient(var(--surface),var(--surface)) padding-box, var(--grad) border-box;
+  border:2px solid transparent; box-shadow:var(--shadow);
+}
+.announce .spark{font-size:26px; flex:none}
+.announce .txt{flex:1 1 320px; min-width:0}
+.announce .txt b{font-weight:800}
+.announce .txt p{margin:2px 0 0; color:var(--ink-2); font-size:13.5px}
+.badge-new{
+  display:inline-block; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+  background:var(--grad); color:#fff; padding:3px 9px; border-radius:999px; margin-right:8px; vertical-align:2px;
+}
+.btn-grad{
+  display:inline-block; font:700 14px "Plus Jakarta Sans",system-ui,sans-serif; color:#fff;
+  background:var(--grad); border-radius:999px; padding:11px 22px; text-decoration:none;
+  box-shadow:0 6px 16px -6px rgba(43,165,139,.55); transition:transform .12s ease;
+}
+.btn-grad:hover{transform:translateY(-2px)}
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px}
+a.card{
+  display:flex; flex-direction:column; gap:10px; text-decoration:none; color:var(--ink);
+  background:var(--surface); border:1px solid var(--hairline); border-radius:18px;
+  padding:22px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+a.card::after{
+  content:""; position:absolute; inset:0 0 auto 0; height:5px; background:var(--grad);
+  opacity:0; transition:opacity .15s ease;
+}
+a.card:hover{transform:translateY(-4px); box-shadow:0 16px 36px -14px rgba(14,23,38,.28)}
+a.card:hover::after{opacity:1}
+.card .ico{
+  width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:27px; background:var(--chip);
+}
+.card h3{margin:0; font-size:17px; font-weight:800; letter-spacing:-.01em}
+.card h3 .badge-new{font-size:9.5px; padding:2px 8px; margin:0 0 0 8px}
+.card p{margin:0; font-size:13.5px; color:var(--ink-2); flex:1}
+.card .go{font-weight:700; font-size:13.5px; color:var(--accent)}
+
 #tip{
   position:fixed; z-index:30; pointer-events:none; display:none;
   background:var(--tooltip-bg); color:var(--tooltip-ink);
@@ -298,6 +341,16 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   </div>
 </div>
 
+<div class="announce">
+  <span class="spark">🧾</span>
+  <div class="txt">
+    <span class="badge-new">Baru</span><b>Analisis Bil Sebenar &mdash; bil merentas 2 bulan</b>
+    <p>Bil TNB anda selalunya bermula pertengahan bulan dan berakhir pertengahan bulan berikutnya, jadi AFA dikira
+    <em>prorata</em> mengikut dua kadar berbeza. Pilih dua bulan, masukkan kWj setiap bulan &mdash; kami kira macam bil sebenar.</p>
+  </div>
+  <a class="btn-grad" href="prorata.html">Cuba sekarang &rarr;</a>
+</div>
+
 <section>
   <h2>Anatomi bil: kadar blok lama vs caj berkomponen baharu</h2>
   <div class="rule"></div>
@@ -372,6 +425,31 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <table id="afaTbl"><thead><tr><th>Bulan</th><th class="num">AFA (sen/kWj)</th></tr></thead><tbody></tbody></table>
     </div>
   </details>
+</section>
+
+<section>
+  <h2>Teroka lagi</h2>
+  <div class="rule"></div>
+  <div class="cards">
+    <a class="card" href="prorata.html">
+      <span class="ico">🧾</span>
+      <h3>Analisis Bil Sebenar<span class="badge-new">Baru</span></h3>
+      <p>Bil merentas 2 bulan? Pilih bulan, masukkan kWj setiap bulan &mdash; AFA dikira prorata macam bil sebenar TNB.</p>
+      <span class="go">Buka kalkulator &rarr;</span>
+    </a>
+    <a class="card" href="game.html">
+      <span class="ico">🏡</span>
+      <h3>Kampung Kilowatt 2D</h3>
+      <p>Bina kampung cekap tenaga anda sendiri dalam permainan 2D yang santai dan mendidik.</p>
+      <span class="go">Main sekarang &rarr;</span>
+    </a>
+    <a class="card" href="game-3d.html">
+      <span class="ico">🎮</span>
+      <h3>Kampung Kilowatt 3D</h3>
+      <p>Versi 3D penuh dengan muzik latar &mdash; jelajah kampung tenaga secara interaktif.</p>
+      <span class="go">Main sekarang &rarr;</span>
+    </a>
+  </div>
 </section>
 
 <section class="notes">
