@@ -203,6 +203,7 @@ svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
   min-width:30px; padding:6px 10px; cursor:pointer;
 }
 .zoombar button:hover{border-color:var(--axis)}
+.zoombar button[aria-pressed="true"]{background:var(--grad); color:#fff}
 .zoombar .zoominfo{font-size:12px; color:var(--muted); margin-left:6px; font-variant-numeric:tabular-nums}
 .legend{display:flex; flex-wrap:wrap; gap:7px 18px; margin-top:14px; font-size:12.5px; color:var(--ink-2); font-weight:500}
 .legend .key{display:inline-flex; align-items:center; gap:7px}
@@ -392,8 +393,11 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   garis bil baharu: Insentif Cekap Tenaga mengecil berperingkat, dan caj tambahan bermula selepas had pengecualian.</p>
   <div class="chart-card">
     <h3>Bil lama vs bil baharu &middot; <span id="curveAfaLbl"></span></h3>
-    <p class="chart-note">Tuding untuk banding nilai pada setiap 1 kWj &middot; scroll / seret untuk zoom &amp; pan &middot; dwiklik untuk reset &middot; garis menegak = penggunaan anda sekarang</p>
+    <p class="chart-note">Tuding untuk banding nilai pada setiap 1 kWj &middot; seret untuk zoom kotak (atau tukar mod Seret untuk pan) &middot; scroll roda = zoom &middot; dwiklik = reset</p>
     <div class="zoombar">
+      <button id="mBox" type="button" aria-pressed="true" title="Seret untuk lukis kotak &amp; zoom ke julat itu">&#9645; Kotak</button>
+      <button id="mPan" type="button" aria-pressed="false" title="Seret untuk gerakkan pandangan">&#9995; Seret</button>
+      <span style="width:8px"></span>
       <button id="zIn" type="button" aria-label="Zum masuk">+</button>
       <button id="zOut" type="button" aria-label="Zum keluar">&minus;</button>
       <button id="zReset" type="button">Reset</button>
@@ -920,34 +924,64 @@ function renderCurve(){
   const dotN=el("circle",{r:4,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
   const hit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent",style:"cursor:crosshair; touch-action:none"},svg);
 
+  const selFill=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"var(--accent)",opacity:.14,visibility:"hidden","pointer-events":"none"},svg);
+  const selEdge=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"none",stroke:"var(--accent)","stroke-width":1.5,"stroke-dasharray":"5 4",visibility:"hidden","pointer-events":"none"},svg);
+
   const uFromEvent=e=>{
     const bb=svg.getBoundingClientRect();
     const relX=(e.clientX-bb.left)/bb.width*W;
     return U0+(relX-mL)/plotW*span;
   };
+  const clampU=u=>Math.max(U0,Math.min(U1,u));
   let drag=null;
   hit.addEventListener("pointerdown",e=>{
-    drag={startClientX:e.clientX, startX0:U0, moved:false};
-    hit.setPointerCapture(e.pointerId);
+    drag={mode:curveMode, startClientX:e.clientX, startX0:U0, startU:clampU(uFromEvent(e)), endU:null};
+    try{ hit.setPointerCapture(e.pointerId); }catch(_){}
   });
-  hit.addEventListener("pointerup",()=>{drag=null;});
-  hit.addEventListener("pointercancel",()=>{drag=null;});
+  const endDrag=()=>{
+    if(drag&&drag.mode==="box"&&drag.endU!==null){
+      let a=Math.min(drag.startU,drag.endU), b=Math.max(drag.startU,drag.endU);
+      if(b-a>span*0.005){ // abaikan klik/seretan terlalu kecil
+        if(b-a<CURVE_MIN_SPAN){ const c=(a+b)/2; a=c-CURVE_MIN_SPAN/2; b=c+CURVE_MIN_SPAN/2; }
+        a=Math.max(0,a); b=Math.min(CURVE_MAX,Math.max(b,a+CURVE_MIN_SPAN));
+        curveView.x0=a; curveView.x1=b;
+        drag=null;
+        renderCurve();
+        return;
+      }
+    }
+    drag=null;
+    selFill.setAttribute("visibility","hidden");
+    selEdge.setAttribute("visibility","hidden");
+  };
+  hit.addEventListener("pointerup",endDrag);
+  hit.addEventListener("pointercancel",endDrag);
   hit.addEventListener("dblclick",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
   hit.addEventListener("wheel",e=>{
     e.preventDefault();
     curveZoom(e.deltaY<0?0.75:1.33, uFromEvent(e));
   },{passive:false});
   hit.addEventListener("pointermove",e=>{
-    if(drag){
+    if(drag&&drag.mode==="pan"){
       const bb=svg.getBoundingClientRect();
       const du=-(e.clientX-drag.startClientX)/bb.width*W/plotW*span;
-      if(Math.abs(e.clientX-drag.startClientX)>2) drag.moved=true;
       let nx0=Math.max(0,Math.min(CURVE_MAX-span,drag.startX0+du));
       if(nx0!==curveView.x0){
         curveView.x0=nx0; curveView.x1=nx0+span;
         tip.style.display="none";
         renderCurve();
       }
+      return;
+    }
+    if(drag&&drag.mode==="box"){
+      drag.endU=clampU(uFromEvent(e));
+      const xa=x(Math.min(drag.startU,drag.endU)), xb=x(Math.max(drag.startU,drag.endU));
+      for(const r of [selFill,selEdge]){
+        r.setAttribute("x",xa); r.setAttribute("width",Math.max(0,xb-xa));
+        r.setAttribute("visibility","visible");
+      }
+      tip.style.display="none";
+      for(const n of [cross,dotO,dotN]) n.setAttribute("visibility","hidden");
       return;
     }
     let u=Math.round(uFromEvent(e));
@@ -975,6 +1009,14 @@ function renderCurve(){
 $("#zIn").addEventListener("click",()=>curveZoom(0.6));
 $("#zOut").addEventListener("click",()=>curveZoom(1.6));
 $("#zReset").addEventListener("click",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
+let curveMode="box";
+function setCurveMode(m){
+  curveMode=m;
+  $("#mBox").setAttribute("aria-pressed",String(m==="box"));
+  $("#mPan").setAttribute("aria-pressed",String(m==="pan"));
+}
+$("#mBox").addEventListener("click",()=>setCurveMode("box"));
+$("#mPan").addEventListener("click",()=>setCurveMode("pan"));
 
 /* ================= KEMAS KINI ================= */
 function buildAfaSelect(){
