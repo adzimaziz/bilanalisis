@@ -848,9 +848,20 @@ const CURVE_MAX=2000, CURVE_MIN_SPAN=40;
 const curveView={x0:0, x1:CURVE_MAX};
 let curveArgs=null;
 
+let curveMode="box", curveScale=null, curveDrag=null;
+let cvHit=null, cvCross=null, cvDotO=null, cvDotN=null, cvSelF=null, cvSelE=null;
+const CV={W:960,H:380,mL:60,mR:88,mT:16,mB:44};
+CV.plotW=CV.W-CV.mL-CV.mR; CV.plotH=CV.H-CV.mT-CV.mB;
+
 function drawCurve(uNow, withTax, protOn, noFuel, afaRate){
   curveArgs={uNow, withTax, protOn, noFuel, afaRate};
   renderCurve();
+}
+
+let curveRAF=0;
+function scheduleCurveRender(){
+  if(curveRAF) return;
+  curveRAF=requestAnimationFrame(()=>{curveRAF=0; renderCurve();});
 }
 
 function curveZoom(factor, centerU){
@@ -860,22 +871,25 @@ function curveZoom(factor, centerU){
   let nx0=c-(c-curveView.x0)*ns/span;
   nx0=Math.max(0, Math.min(CURVE_MAX-ns, nx0));
   curveView.x0=nx0; curveView.x1=nx0+ns;
-  renderCurve();
+  scheduleCurveRender();
 }
 
 function renderCurve(){
   if(!curveArgs) return;
   const {uNow, withTax, protOn, noFuel, afaRate}=curveArgs;
-  const svg=$("#curveChart"); svg.innerHTML="";
-  const W=960,H=380,mL=60,mR=88,mT=16,mB=44;
-  const plotW=W-mL-mR, plotH=H-mT-mB;
+  const svg=$("#curveChart");
+  const {W,H,mL,mR,mT,mB,plotW,plotH}=CV;
+  // lapisan kandungan (dilukis semula) berasingan daripada lapisan interaksi (kekal)
+  let g=svg.querySelector("#curveG");
+  if(!g){ g=el("g",{id:"curveG"},svg); initCurveInteract(svg); }
+  g.innerHTML="";
   const U0=curveView.x0, U1=curveView.x1, span=U1-U0;
   $("#zInfo").textContent=Math.round(U0).toLocaleString("en-MY")+" – "+Math.round(U1).toLocaleString("en-MY")+" kWj";
 
   const oldAt=u=>calcOld(u,withTax,noFuel).total;
   const newAt=u=>{const lim=(protOn&&u<=800)?800:600; return calcNew(u,afaRate,withTax,lim,noFuel).total;};
 
-  // sampel setiap 1 kWj dalam julat kelihatan (dihadkan ~2000 titik)
+  // sampel setiap 1 kWj dalam julat kelihatan
   const step=Math.max(1, Math.ceil(span/2000));
   const xs=[];
   for(let u=Math.max(1,Math.floor(U0)); u<=Math.ceil(U1); u+=step) xs.push(u);
@@ -890,109 +904,125 @@ function renderCurve(){
   const y1v = vMax+(vMax-vMin)*0.06 || vMax*1.06 || 10;
   const x=u=>mL+(u-U0)/span*plotW;
   const y=v=>mT+(1-(v-y0)/(y1v-y0))*plotH;
+  curveScale={U0,U1,span,x,y,oldAt,newAt};
 
   for(const t of niceTicks(y0,y1v,6)){
-    el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
-    el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent="RM"+t.toLocaleString("en-MY");
+    el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},g);
+    el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},g).textContent="RM"+t.toLocaleString("en-MY");
   }
   for(const t of niceTicks(U0,U1,8)){
     if(t<U0-1e-9||t>U1+1e-9) continue;
-    el("line",{x1:x(t),x2:x(t),y1:H-mB,y2:H-mB+4,stroke:"var(--axis)","stroke-width":1},svg);
-    el("text",{x:x(t),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent=Math.round(t).toLocaleString("en-MY");
+    el("line",{x1:x(t),x2:x(t),y1:H-mB,y2:H-mB+4,stroke:"var(--axis)","stroke-width":1},g);
+    el("text",{x:x(t),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},g).textContent=Math.round(t).toLocaleString("en-MY");
   }
-  el("text",{x:mL+plotW/2,y:H-6,"text-anchor":"middle","font-size":11,"font-weight":600,fill:"var(--ink-2)"},svg).textContent="Penggunaan (kWj)";
+  el("text",{x:mL+plotW/2,y:H-6,"text-anchor":"middle","font-size":11,"font-weight":600,fill:"var(--ink-2)"},g).textContent="Penggunaan (kWj)";
 
   const path=pts=>pts.map((p,k)=>(k?"L":"M")+x(p.u).toFixed(1)+" "+y(p.v).toFixed(1)).join(" ");
-  el("path",{d:path(oldPts),fill:"none",stroke:"var(--blk4)","stroke-width":2,"stroke-linejoin":"round"},svg);
-  el("path",{d:path(newPts),fill:"none",stroke:"var(--c-eei)","stroke-width":2,"stroke-linejoin":"round"},svg);
+  el("path",{d:path(oldPts),fill:"none",stroke:"var(--blk4)","stroke-width":2,"stroke-linejoin":"round"},g);
+  el("path",{d:path(newPts),fill:"none",stroke:"var(--c-eei)","stroke-width":2,"stroke-linejoin":"round"},g);
 
   const endOld=oldPts[oldPts.length-1], endNew=newPts[newPts.length-1];
   const eLbl=(p,txt)=>el("text",{x:x(p.u)+8,y:y(p.v)+4,"font-size":11.5,"font-weight":700,fill:"var(--ink)",
-    stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},svg).textContent=txt;
+    stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},g).textContent=txt;
   eLbl(endOld,"Lama"); eLbl(endNew,"Baharu");
 
-  // penanda penggunaan semasa
+  // penanda penggunaan semasa (dari input kWj di atas)
   if(uNow>=U0&&uNow<=U1){
-    el("line",{x1:x(uNow),x2:x(uNow),y1:mT,y2:H-mB,stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"},svg);
-    el("circle",{cx:x(uNow),cy:y(oldAt(uNow)),r:4.5,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2},svg);
-    el("circle",{cx:x(uNow),cy:y(newAt(uNow)),r:4.5,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2},svg);
+    el("line",{x1:x(uNow),x2:x(uNow),y1:mT,y2:H-mB,stroke:"var(--muted)","stroke-width":1.5,"stroke-dasharray":"5 4"},g);
+    el("circle",{cx:x(uNow),cy:y(oldAt(uNow)),r:4.5,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2},g);
+    el("circle",{cx:x(uNow),cy:y(newAt(uNow)),r:4.5,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2},g);
+    const onRight=(uNow-U0)/span>0.75;
+    el("text",{x:x(uNow)+(onRight?-7:7),y:mT+13,"text-anchor":onRight?"end":"start","font-size":10.5,"font-weight":700,
+      fill:"var(--ink-2)",stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},g)
+      .textContent="Anda: "+uNow.toLocaleString("en-MY")+" kWj";
   }
 
-  // hover crosshair + tooltip (resolusi 1 kWj) & pan (seret) & zoom (roda)
-  const cross=el("line",{x1:0,x2:0,y1:mT,y2:H-mB,stroke:"var(--axis)","stroke-width":1,visibility:"hidden"},svg);
-  const dotO=el("circle",{r:4,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
-  const dotN=el("circle",{r:4,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden"},svg);
-  const hit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent",style:"cursor:crosshair; touch-action:none"},svg);
+  if(cvHit && !curveDrag) cvHit.style.cursor = curveMode==="pan" ? "grab" : "crosshair";
+}
 
-  const selFill=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"var(--accent)",opacity:.14,visibility:"hidden","pointer-events":"none"},svg);
-  const selEdge=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"none",stroke:"var(--accent)","stroke-width":1.5,"stroke-dasharray":"5 4",visibility:"hidden","pointer-events":"none"},svg);
+// lapisan interaksi kekal — dicipta SEKALI supaya seretan tidak terputus semasa lukis semula
+function initCurveInteract(svg){
+  const {W,H,mL,mT,mB,plotW,plotH}=CV;
+  cvSelF=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"var(--accent)",opacity:.14,visibility:"hidden","pointer-events":"none"},svg);
+  cvSelE=el("rect",{x:0,y:mT,width:0,height:plotH,fill:"none",stroke:"var(--accent)","stroke-width":1.5,"stroke-dasharray":"5 4",visibility:"hidden","pointer-events":"none"},svg);
+  cvCross=el("line",{x1:0,x2:0,y1:mT,y2:H-mB,stroke:"var(--axis)","stroke-width":1,visibility:"hidden","pointer-events":"none"},svg);
+  cvDotO=el("circle",{r:4,fill:"var(--blk4)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden","pointer-events":"none"},svg);
+  cvDotN=el("circle",{r:4,fill:"var(--c-eei)",stroke:"var(--surface)","stroke-width":2,visibility:"hidden","pointer-events":"none"},svg);
+  cvHit=el("rect",{x:mL,y:mT,width:plotW,height:plotH,fill:"transparent",style:"cursor:crosshair; touch-action:none"},svg);
 
   const uFromEvent=e=>{
     const bb=svg.getBoundingClientRect();
     const relX=(e.clientX-bb.left)/bb.width*W;
-    return U0+(relX-mL)/plotW*span;
+    return curveScale.U0+(relX-mL)/plotW*curveScale.span;
   };
-  const clampU=u=>Math.max(U0,Math.min(U1,u));
-  let drag=null;
-  hit.addEventListener("pointerdown",e=>{
-    drag={mode:curveMode, startClientX:e.clientX, startX0:U0, startU:clampU(uFromEvent(e)), endU:null};
-    try{ hit.setPointerCapture(e.pointerId); }catch(_){}
+  const clampU=u=>Math.max(curveScale.U0,Math.min(curveScale.U1,u));
+  const hideHover=()=>{for(const n of [cvCross,cvDotO,cvDotN]) n.setAttribute("visibility","hidden");};
+
+  cvHit.addEventListener("pointerdown",e=>{
+    if(!curveScale) return;
+    curveDrag={mode:curveMode, startClientX:e.clientX, startX0:curveScale.U0,
+               startSpan:curveScale.span, startU:clampU(uFromEvent(e)), endU:null};
+    if(curveMode==="pan") cvHit.style.cursor="grabbing";
+    try{ cvHit.setPointerCapture(e.pointerId); }catch(_){}
   });
   const endDrag=()=>{
-    if(drag&&drag.mode==="box"&&drag.endU!==null){
-      let a=Math.min(drag.startU,drag.endU), b=Math.max(drag.startU,drag.endU);
-      if(b-a>span*0.005){ // abaikan klik/seretan terlalu kecil
+    const d=curveDrag; curveDrag=null;
+    cvHit.style.cursor=curveMode==="pan"?"grab":"crosshair";
+    cvSelF.setAttribute("visibility","hidden");
+    cvSelE.setAttribute("visibility","hidden");
+    if(d&&d.mode==="box"&&d.endU!==null){
+      let a=Math.min(d.startU,d.endU), b=Math.max(d.startU,d.endU);
+      if(b-a>d.startSpan*0.005){ // abaikan klik/seretan terlalu kecil
         if(b-a<CURVE_MIN_SPAN){ const c=(a+b)/2; a=c-CURVE_MIN_SPAN/2; b=c+CURVE_MIN_SPAN/2; }
         a=Math.max(0,a); b=Math.min(CURVE_MAX,Math.max(b,a+CURVE_MIN_SPAN));
         curveView.x0=a; curveView.x1=b;
-        drag=null;
         renderCurve();
-        return;
       }
     }
-    drag=null;
-    selFill.setAttribute("visibility","hidden");
-    selEdge.setAttribute("visibility","hidden");
   };
-  hit.addEventListener("pointerup",endDrag);
-  hit.addEventListener("pointercancel",endDrag);
-  hit.addEventListener("dblclick",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
-  hit.addEventListener("wheel",e=>{
+  cvHit.addEventListener("pointerup",endDrag);
+  cvHit.addEventListener("pointercancel",endDrag);
+  cvHit.addEventListener("dblclick",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
+  cvHit.addEventListener("wheel",e=>{
+    if(!curveScale) return;
     e.preventDefault();
     curveZoom(e.deltaY<0?0.75:1.33, uFromEvent(e));
   },{passive:false});
-  hit.addEventListener("pointermove",e=>{
-    if(drag&&drag.mode==="pan"){
+
+  cvHit.addEventListener("pointermove",e=>{
+    if(!curveScale) return;
+    if(curveDrag&&curveDrag.mode==="pan"){
       const bb=svg.getBoundingClientRect();
-      const du=-(e.clientX-drag.startClientX)/bb.width*W/plotW*span;
-      let nx0=Math.max(0,Math.min(CURVE_MAX-span,drag.startX0+du));
+      const du=-(e.clientX-curveDrag.startClientX)/bb.width*W/plotW*curveDrag.startSpan;
+      const nx0=Math.max(0,Math.min(CURVE_MAX-curveDrag.startSpan,curveDrag.startX0+du));
       if(nx0!==curveView.x0){
-        curveView.x0=nx0; curveView.x1=nx0+span;
-        tip.style.display="none";
-        renderCurve();
+        curveView.x0=nx0; curveView.x1=nx0+curveDrag.startSpan;
+        tip.style.display="none"; hideHover();
+        scheduleCurveRender();
       }
       return;
     }
-    if(drag&&drag.mode==="box"){
-      drag.endU=clampU(uFromEvent(e));
-      const xa=x(Math.min(drag.startU,drag.endU)), xb=x(Math.max(drag.startU,drag.endU));
-      for(const r of [selFill,selEdge]){
+    if(curveDrag&&curveDrag.mode==="box"){
+      curveDrag.endU=clampU(uFromEvent(e));
+      const xa=curveScale.x(Math.min(curveDrag.startU,curveDrag.endU));
+      const xb=curveScale.x(Math.max(curveDrag.startU,curveDrag.endU));
+      for(const r of [cvSelF,cvSelE]){
         r.setAttribute("x",xa); r.setAttribute("width",Math.max(0,xb-xa));
         r.setAttribute("visibility","visible");
       }
-      tip.style.display="none";
-      for(const n of [cross,dotO,dotN]) n.setAttribute("visibility","hidden");
+      tip.style.display="none"; hideHover();
       return;
     }
+    const {x,y,oldAt,newAt}=curveScale;
     let u=Math.round(uFromEvent(e));
     u=Math.max(1,Math.min(CURVE_MAX,u));
-    const ov=oldAt(u), nv=newAt(u), d=nv-ov;
-    const mo=u>1?(oldAt(u)-oldAt(u-1))*100:0;
-    const mn=u>1?(newAt(u)-newAt(u-1))*100:0;
-    cross.setAttribute("x1",x(u)); cross.setAttribute("x2",x(u)); cross.setAttribute("visibility","visible");
-    dotO.setAttribute("cx",x(u)); dotO.setAttribute("cy",y(ov)); dotO.setAttribute("visibility","visible");
-    dotN.setAttribute("cx",x(u)); dotN.setAttribute("cy",y(nv)); dotN.setAttribute("visibility","visible");
-    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(+${mo.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(+${mn.toFixed(1)} sen/kWj)</span><br>${d<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(d))}`;
+    const ov=oldAt(u), nv=newAt(u), dv=nv-ov;
+    const mo=u>1?(ov-oldAt(u-1))*100:0;
+    const mn=u>1?(nv-newAt(u-1))*100:0;
+    cvCross.setAttribute("x1",x(u)); cvCross.setAttribute("x2",x(u)); cvCross.setAttribute("visibility","visible");
+    cvDotO.setAttribute("cx",x(u)); cvDotO.setAttribute("cy",y(ov)); cvDotO.setAttribute("visibility","visible");
+    cvDotN.setAttribute("cx",x(u)); cvDotN.setAttribute("cy",y(nv)); cvDotN.setAttribute("visibility","visible");
+    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(+${mo.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(+${mn.toFixed(1)} sen/kWj)</span><br>${dv<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(dv))}`;
     tip.style.display="block";
     const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
     let px=e.clientX+pad, py=e.clientY-h-10;
@@ -1000,20 +1030,19 @@ function renderCurve(){
     if(py<8) py=e.clientY+pad;
     tip.style.left=px+"px"; tip.style.top=py+"px";
   });
-  hit.addEventListener("pointerleave",()=>{
-    tip.style.display="none";
-    for(const n of [cross,dotO,dotN]) n.setAttribute("visibility","hidden");
+  cvHit.addEventListener("pointerleave",()=>{
+    tip.style.display="none"; hideHover();
   });
 }
 
 $("#zIn").addEventListener("click",()=>curveZoom(0.6));
 $("#zOut").addEventListener("click",()=>curveZoom(1.6));
 $("#zReset").addEventListener("click",()=>{curveView.x0=0; curveView.x1=CURVE_MAX; renderCurve();});
-let curveMode="box";
 function setCurveMode(m){
   curveMode=m;
   $("#mBox").setAttribute("aria-pressed",String(m==="box"));
   $("#mPan").setAttribute("aria-pressed",String(m==="pan"));
+  if(cvHit) cvHit.style.cursor = m==="pan" ? "grab" : "crosshair";
 }
 $("#mBox").addEventListener("click",()=>setCurveMode("box"));
 $("#mPan").addEventListener("click",()=>setCurveMode("pan"));
