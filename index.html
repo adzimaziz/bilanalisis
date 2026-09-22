@@ -198,7 +198,10 @@ svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 .zoombar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:0 0 10px}
 .zoombar .toggle{margin-left:auto; font-size:13px}
-@media (max-width:640px){ .zoombar .toggle{margin-left:0; width:100%} }
+@media (max-width:640px){
+  .zoombar .toggle{margin-left:0; width:100%}
+  #mBox,#mPan{display:none} /* di skrin sentuh: satu jari = tooltip, cubit = zoom */
+}
 .zoombar button{
   font:700 14px/1 "Plus Jakarta Sans",system-ui,sans-serif; color:var(--chip-ink);
   background:var(--chip); border:1px solid transparent; border-radius:8px;
@@ -395,7 +398,8 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   garis bil baharu: Insentif Cekap Tenaga mengecil berperingkat, dan caj tambahan bermula selepas had pengecualian.</p>
   <div class="chart-card">
     <h3>Bil lama vs bil baharu &middot; <span id="curveAfaLbl"></span></h3>
-    <p class="chart-note">Tuding untuk banding nilai pada setiap 1 kWj &middot; seret = zoom kotak (mod Seret untuk pan) &middot; roda tetikus / cubit dua jari = zoom &middot; dwiklik = reset</p>
+    <p class="chart-note">Tuding / sentuh untuk banding nilai pada setiap 1 kWj &middot; seret tetikus = zoom kotak (mod Seret untuk pan) &middot;
+    skrin sentuh: seret satu jari = lihat nilai, cubit dua jari = zoom &amp; pan &middot; dwiklik = reset</p>
     <div class="zoombar">
       <button id="mBox" type="button" aria-pressed="true" title="Seret untuk lukis kotak &amp; zoom ke julat itu">&#9645; Kotak</button>
       <button id="mPan" type="button" aria-pressed="false" title="Seret untuk gerakkan pandangan">&#9995; Seret</button>
@@ -970,6 +974,28 @@ function initCurveInteract(svg){
   const pointers=new Map();
   let pinch=null;
 
+  // paparan hover/scrub — dikongsi oleh tetikus (tuding) dan sentuhan (seret satu jari)
+  const showHoverAt=e=>{
+    const {x,y,oldAt,newAt}=curveScale;
+    let u=Math.round(uFromEvent(e));
+    u=Math.max(1,Math.min(CURVE_MAX,u));
+    const ov=oldAt(u), nv=newAt(u), dv=nv-ov;
+    const ao=ov/u*100, an=nv/u*100; // purata sen/kWj = jumlah bil / penggunaan
+    cvCross.setAttribute("x1",x(u)); cvCross.setAttribute("x2",x(u)); cvCross.setAttribute("visibility","visible");
+    cvDotO.setAttribute("cx",x(u)); cvDotO.setAttribute("cy",y(ov)); cvDotO.setAttribute("visibility","visible");
+    cvDotN.setAttribute("cx",x(u)); cvDotN.setAttribute("cy",y(nv)); cvDotN.setAttribute("visibility","visible");
+    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(purata ${ao.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(purata ${an.toFixed(1)} sen/kWj)</span><br>${dv<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(dv))}`;
+    tip.style.display="block";
+    const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
+    const touch=e.pointerType==="touch";
+    let px=touch ? e.clientX-w/2 : e.clientX+pad;
+    let py=touch ? e.clientY-h-30 : e.clientY-h-10;
+    px=Math.max(8,Math.min(innerWidth-w-8,px));
+    if(!touch && px+w>innerWidth-8) px=e.clientX-w-pad;
+    if(py<8) py=e.clientY+(touch?30:pad);
+    tip.style.left=px+"px"; tip.style.top=py+"px";
+  };
+
   cvHit.addEventListener("pointerdown",e=>{
     if(!curveScale) return;
     pointers.set(e.pointerId,e.clientX);
@@ -979,9 +1005,16 @@ function initCurveInteract(svg){
       pinch={d0:Math.max(Math.abs(a-b),1), span0:curveScale.span,
              midU:(uAtClientX(a)+uAtClientX(b))/2};
       curveDrag=null;
+      tip.style.display="none"; hideHover();
       cvSelF.setAttribute("visibility","hidden");
       cvSelE.setAttribute("visibility","hidden");
       const g=gEl(); if(g) g.removeAttribute("transform");
+      return;
+    }
+    if(e.pointerType==="touch"){
+      // mobile: satu jari = scrub tooltip (tiada kotak/pan satu jari)
+      curveDrag=null;
+      showHoverAt(e);
       return;
     }
     curveDrag={mode:curveMode, startClientX:e.clientX, startX0:curveScale.U0,
@@ -1031,7 +1064,10 @@ function initCurveInteract(svg){
       const [a,b]=[...pointers.values()];
       const d=Math.max(Math.abs(a-b),1);
       let ns=Math.min(CURVE_MAX,Math.max(CURVE_MIN_SPAN,pinch.span0*pinch.d0/d));
-      let nx0=Math.max(0,Math.min(CURVE_MAX-ns,pinch.midU-ns/2));
+      // pan ikut titik tengah jari: kekalkan midU asal di bawah kedudukan tengah semasa
+      const bb=svg.getBoundingClientRect();
+      const midRel=(((a+b)/2-bb.left)/bb.width*CV.W-CV.mL)/CV.plotW;
+      let nx0=Math.max(0,Math.min(CURVE_MAX-ns,pinch.midU-Math.max(0,Math.min(1,midRel))*ns));
       curveView.x0=nx0; curveView.x1=nx0+ns;
       tip.style.display="none"; hideHover();
       scheduleCurveRender();
@@ -1061,21 +1097,7 @@ function initCurveInteract(svg){
       tip.style.display="none"; hideHover();
       return;
     }
-    const {x,y,oldAt,newAt}=curveScale;
-    let u=Math.round(uFromEvent(e));
-    u=Math.max(1,Math.min(CURVE_MAX,u));
-    const ov=oldAt(u), nv=newAt(u), dv=nv-ov;
-    const ao=ov/u*100, an=nv/u*100; // purata sen/kWj = jumlah bil / penggunaan
-    cvCross.setAttribute("x1",x(u)); cvCross.setAttribute("x2",x(u)); cvCross.setAttribute("visibility","visible");
-    cvDotO.setAttribute("cx",x(u)); cvDotO.setAttribute("cy",y(ov)); cvDotO.setAttribute("visibility","visible");
-    cvDotN.setAttribute("cx",x(u)); cvDotN.setAttribute("cy",y(nv)); cvDotN.setAttribute("visibility","visible");
-    tip.innerHTML=`<b>${u.toLocaleString("en-MY")} kWj</b><br>Lama: ${fmtRM(ov)} <span style='opacity:.7'>(purata ${ao.toFixed(1)} sen/kWj)</span><br>Baharu: ${fmtRM(nv)} <span style='opacity:.7'>(purata ${an.toFixed(1)} sen/kWj)</span><br>${dv<=0?"Jimat":"Naik"}: ${fmtRM(Math.abs(dv))}`;
-    tip.style.display="block";
-    const pad=14, w=tip.offsetWidth, h=tip.offsetHeight;
-    let px=e.clientX+pad, py=e.clientY-h-10;
-    if(px+w>innerWidth-8) px=e.clientX-w-pad;
-    if(py<8) py=e.clientY+pad;
-    tip.style.left=px+"px"; tip.style.top=py+"px";
+    showHoverAt(e);
   });
   cvHit.addEventListener("pointerleave",()=>{
     tip.style.display="none"; hideHover();
