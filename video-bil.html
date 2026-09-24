@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bil Elektrik Dijelaskan</title>
+<meta name="description" content="Video animasi JavaScript yang menerangkan caj tenaga, kapasiti, rangkaian, peruncitan, AFA dan insentif cekap tenaga dalam bil elektrik domestik Malaysia.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0c1522; --surface:#142033; --line:#22324a; --ink:#f3f1ea; --muted:#9aa7b8; --accent:#ffcc33;
+  --f-d:"Unbounded","Segoe UI",system-ui,sans-serif; --f-b:"Figtree","Segoe UI",system-ui,sans-serif; --f-m:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-b)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:grid;gap:18px}
+header h1{margin:0;font-family:var(--f-d);font-weight:700;font-size:clamp(22px,3.4vw,34px);letter-spacing:-.01em;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:68ch;line-height:1.5}
+.player{background:#000;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+canvas#stage{display:block;width:100%;height:auto;aspect-ratio:16/9;max-width:100%;cursor:pointer}
+.ctrl{display:grid;grid-template-columns:auto auto 1fr auto auto auto;gap:10px;align-items:center;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line)}
+.ctrl button{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:8px;height:34px;padding:0 12px;font:600 13px var(--f-b);cursor:pointer;white-space:nowrap}
+.ctrl button:hover{border-color:var(--muted)}
+.ctrl button.on{background:var(--accent);color:#1a1405;border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#play{width:44px;padding:0;font-size:15px}
+#time{font:500 13px var(--f-m);color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.scrub{position:relative;height:34px;display:flex;align-items:center}
+.scrub input{width:100%;margin:0;accent-color:var(--accent)}
+.marks{position:absolute;left:0;right:0;top:4px;height:6px;pointer-events:none}
+.marks i{position:absolute;top:0;width:2px;height:6px;background:var(--muted);opacity:.6}
+.chap{display:flex;flex-wrap:wrap;gap:6px}
+.chap button{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 12px;font:600 13px var(--f-b);cursor:pointer;display:flex;gap:8px;align-items:center}
+.chap button i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.chap button.on{border-color:var(--accent)}
+.chap button span{font:500 11px var(--f-m);color:var(--muted)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+summary{cursor:pointer;font-weight:700}
+.tr{display:grid;gap:6px;margin-top:10px;font-size:14px;line-height:1.5;color:var(--muted)}
+.tr div{display:grid;grid-template-columns:52px 1fr;gap:10px}
+.tr b{font:500 12px var(--f-m);color:var(--accent);padding-top:2px}
+.note{font-size:13px;color:var(--muted);line-height:1.5;max-width:75ch}
+.note a{color:var(--ink)}
+@media (max-width:640px){
+  .ctrl{grid-template-columns:auto 1fr auto;grid-template-areas:"p s t" "v f r"}
+  #play{grid-area:p} .scrub{grid-area:s} #time{grid-area:t} #voice{grid-area:v} #fs{grid-area:f} #rec{grid-area:r}
+}
+nav.site{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:600}
+nav.site a{color:var(--muted);text-decoration:none}
+nav.site a:hover{color:var(--ink)}
+nav.site .brand{color:var(--ink);font-weight:700}
+nav.site div{display:flex;gap:16px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="site" aria-label="Navigasi utama"><a class="brand" href="index.html">ϟ Banding Tarif TNB</a><div><a href="game.html">🏡 Game 2D</a><a href="game-3d.html">✦ Game 3D</a><a href="index.html">← Kalkulator bil</a></div></nav>
+  <header>
+    <h1>Ke mana perginya setiap ringgit bil elektrik anda?</h1>
+    <p>Video animasi 3 minit tentang struktur bil domestik baharu (berkuat kuasa 1 Julai 2025): caj tenaga, kapasiti, rangkaian, peruncitan, AFA dan Insentif Cekap Tenaga, dengan dua contoh kiraan bil.</p>
+  </header>
+
+  <div class="player">
+    <canvas id="stage" width="1280" height="720" aria-label="Video penerangan bil elektrik"></canvas>
+    <div class="ctrl">
+      <button id="play" aria-label="Main">▶</button>
+      <span id="time">0:00 / 0:00</span>
+      <div class="scrub"><div class="marks" id="marks"></div><input id="seek" type="range" min="0" max="176" step="0.05" value="0" aria-label="Kedudukan video"></div>
+      <button id="voice" title="Baca sari kata guna suara pelayar">Suara: tutup</button>
+      <button id="fs">Skrin penuh</button>
+      <button id="rec" hidden title="Rakam video ke fail .webm (hanya bila dibuka di komputer sendiri)">Rakam .webm</button>
+    </div>
+  </div>
+
+  <div class="chap" id="chap"></div>
+
+  <details>
+    <summary>Transkrip</summary>
+    <div class="tr" id="tr"></div>
+  </details>
+
+  <p class="note">Kadar: jadual tarif domestik RP4 Suruhanjaya Tenaga / TNB berkuat kuasa 1 Julai 2025. Kadar AFA Jan–Sep 2026 seperti diumumkan setiap bulan. KWTBB (1.6%) dan SST (8% atas bahagian melebihi 600 kWh) dianggarkan secara ringkas; bil sebenar mungkin berbeza beberapa sen. Pintasan papan kekunci: Space main/jeda, ← → lompat 5 saat.</p>
+</div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const cv = $('stage'), ctx = cv.getContext('2d');
+const VW = 1280, VH = 720;
+
+/* ---------- Data tarif ---------- */
+const EEI = [[200,25],[250,24.5],[300,22.5],[350,21],[400,17],[450,14.5],[500,12],[550,10.5],[600,9],[650,7.5],[700,5.5],[750,4.5],[800,4],[850,2.5],[900,1],[1000,0.5]];
+const eeiRate = k => { if (k<=0) return 0; for (const [m,r] of EEI) if (k<=m) return r; return 0; };
+const AFA = [['Jan',-4.99],['Feb',-2.77],['Mac',-2.15],['Apr',-0.47],['Mei',1.38],['Jun',2.59],['Jul',3.59],['Ogo',3.80],['Sep',3.67]];
+function kira(kwh, afa){
+  const kadar = kwh<=1500 ? 27.03 : 37.03;
+  const tenaga = kwh*kadar/100, kapasiti = kwh*4.55/100, rangkaian = kwh*12.85/100;
+  const runcit = kwh>600 ? 10 : 0, afaV = kwh>600 ? kwh*afa/100 : 0, eeiR = eeiRate(kwh), eei = -kwh*eeiR/100;
+  const sub = tenaga+kapasiti+rangkaian+runcit+afaV+eei, kwtbb = kwh>300 ? sub*0.016 : 0, sst = kwh>600 ? sub*((kwh-600)/kwh)*0.08 : 0;
+  return { kwh, kadar, tenaga, kapasiti, rangkaian, runcit, afaV, afa, eeiR, eei, kwtbb, sst, total: sub+kwtbb+sst };
+}
+const A = kira(500, 3.67), B = kira(900, 3.67);
+const rm = v => (v<0?'−':'')+'RM '+Math.abs(v).toFixed(2);
+
+/* ---------- Gaya ---------- */
+const C = { bg0:'#0c1522', bg1:'#132440', ink:'#f3f1ea', mute:'#9aa7b8', dim:'#51607a', line:'#2a3b57',
+  tenaga:'#f5a524', kap:'#a38bff', rang:'#2ec4b6', runcit:'#ff7aa8', afa:'#ff6b57', eei:'#7ed957', accent:'#ffcc33' };
+const FD = '"Unbounded", "Segoe UI", sans-serif', FB = '"Figtree", "Segoe UI", sans-serif', FM = '"JetBrains Mono", Consolas, monospace';
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const lerp = (a,b,t) => a+(b-a)*t;
+const E = { out:t=>1-Math.pow(1-t,3), io:t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, back:t=>{ const c1=1.70158, c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); } };
+const P = (lt, a, d=0.6) => clamp((lt-a)/d, 0, 1);
+function T(s, x, y, o={}){
+  ctx.save(); ctx.globalAlpha *= (o.a ?? 1);
+  ctx.font = `${o.w||600} ${o.s||28}px ${o.f||FB}`; ctx.fillStyle = o.c || C.ink; ctx.textAlign = o.al || 'left'; ctx.textBaseline = o.b || 'alphabetic';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = (o.ls||0)+'px';
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function fillRR(x,y,w,h,r,c,a=1){ ctx.save(); ctx.globalAlpha*=a; ctx.fillStyle=c; rr(x,y,w,h,r); ctx.fill(); ctx.restore(); }
+function strokeRR(x,y,w,h,r,c,lw=2,a=1){ ctx.save(); ctx.globalAlpha*=a; ctx.strokeStyle=c; ctx.lineWidth=lw; rr(x,y,w,h,r); ctx.stroke(); ctx.restore(); }
+function withA(a, fn){ ctx.save(); ctx.globalAlpha *= a; fn(); ctx.restore(); }
+function head(lt, kicker, title, col){
+  const p = E.out(P(lt,0.1,0.8));
+  withA(p, () => {
+    ctx.save(); ctx.translate((1-p)*-30, 0);
+    fillRR(90, 78, 10, 10, 5, col);
+    T(kicker.toUpperCase(), 112, 88, { s:15, w:700, c:col, ls:2.5 });
+    T(title, 88, 150, { s:46, w:700, f:FD });
+    ctx.restore();
+  });
+}
+function rateCard(x, y, w, big, small, col, a){
+  if (a<=0) return;
+  const s = E.back(clamp(a,0,1));
+  withA(clamp(a*1.5,0,1), () => {
+    ctx.save(); ctx.translate(x+w/2, y+60); ctx.scale(s,s); ctx.translate(-(x+w/2), -(y+60));
+    fillRR(x, y, w, 120, 18, col, 0.14); strokeRR(x, y, w, 120, 18, col, 2);
+    T(big, x+w/2, y+68, { s:44, w:700, f:FD, c:col, al:'center' });
+    T(small, x+w/2, y+100, { s:18, w:600, c:C.ink, al:'center' });
+    ctx.restore();
+  });
+}
+function glow(x,y,r,col,a=1){ ctx.save(); ctx.globalAlpha*=a; const g=ctx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,col); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+
+/* ---------- Ikon ---------- */
+function plant(x, y, s, t, col=C.tenaga){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  for (let k=0;k<5;k++){ const ph=((t*0.35)+k/5)%1; ctx.globalAlpha=(1-ph)*0.5; ctx.fillStyle='#c9d1dc'; ctx.beginPath(); ctx.arc(38+ph*30, -150-ph*90, 12+ph*22, 0, Math.PI*2); ctx.fill(); }
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#3a4a66'; ctx.fillRect(22,-150,30,110); ctx.fillStyle=C.afa; ctx.fillRect(22,-150,30,10);
+  ctx.fillStyle='#4c5f80'; ctx.fillRect(-70,-70,110,70); ctx.fillRect(40,-100,60,100);
+  ctx.fillStyle=col; for (let i=0;i<3;i++) ctx.fillRect(-58+i*34,-52,20,14);
+  ctx.fillStyle='#2a3650'; ctx.beginPath(); ctx.moveTo(-100,0); ctx.lineTo(-80,-24); ctx.lineTo(-56,0); ctx.fill();
+  ctx.restore();
+}
+function tower(x, y, h, col='#c9d1dc', a=1){
+  withA(a, () => {
+    ctx.strokeStyle=col; ctx.lineWidth=3; ctx.lineJoin='round';
+    const w = h*0.28;
+    ctx.beginPath(); ctx.moveTo(x-w,y); ctx.lineTo(x,y-h); ctx.lineTo(x+w,y); ctx.stroke();
+    for (let k=1;k<4;k++){ const yy=y-h*k/4, ww=w*(1-k/4); ctx.beginPath(); ctx.moveTo(x-ww,yy); ctx.lineTo(x+ww,yy); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(x-w*0.9,y-h*0.78); ctx.lineTo(x+w*0.9,y-h*0.78); ctx.stroke();
+  });
+}
+function house(x, y, s, lit=1){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle='#e9e4d6'; ctx.fillRect(-50,-60,100,60);
+  ctx.fillStyle='#c0503f'; ctx.beginPath(); ctx.moveTo(-62,-58); ctx.lineTo(0,-104); ctx.lineTo(62,-58); ctx.fill();
+  ctx.fillStyle='#6b4a33'; ctx.fillRect(-12,-34,24,34);
+  ctx.fillStyle = lit ? C.accent : '#39465e'; ctx.fillRect(-40,-46,20,16); ctx.fillRect(20,-46,20,16);
+  if (lit) { glow(-30,-38,26,'rgba(255,204,51,.45)'); glow(30,-38,26,'rgba(255,204,51,.45)'); }
+  ctx.restore();
+}
+function substation(x, y, s, col=C.rang){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle='#3a4a66'; ctx.fillRect(-60,-14,120,14);
+  for (let i=-1;i<=1;i++){ ctx.fillStyle='#5c6f90'; ctx.fillRect(i*38-14,-62,28,48); ctx.fillStyle=col; for (let k=0;k<4;k++) ctx.fillRect(i*38-18,-56+k*11,4,7); }
+  ctx.strokeStyle='#c9d1dc'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-54,-14); ctx.lineTo(-54,-86); ctx.lineTo(54,-86); ctx.lineTo(54,-14); ctx.stroke();
+  ctx.restore();
+}
+function meterIcon(x, y, s, val, col=C.runcit){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  fillRR(-60,-80,120,160,16,'#dfe5ec'); fillRR(-46,-62,92,40,6,'#1f3a1c');
+  T(val, 38, -34, { f:FM, s:24, w:700, c:'#b9f07a', al:'right' });
+  ctx.fillStyle=col; ctx.beginPath(); ctx.arc(0,20,20,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#8a96a8'; ctx.fillRect(-30,56,60,8);
+  ctx.restore();
+}
+function billIcon(x, y, s, a=1){
+  withA(a, () => { ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+    fillRR(-55,-75,110,150,10,'#f3f1ea'); ctx.fillStyle='#b8c0cc'; for (let k=0;k<5;k++) ctx.fillRect(-38,-48+k*18,k===4?40:76,6);
+    fillRR(-38,44,76,18,4,C.runcit); ctx.restore(); });
+}
+function counterIcon(x, y, s){
+  ctx.save(); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.fillStyle='#4c5f80'; ctx.fillRect(-70,-10,140,70); ctx.fillStyle='#e9e4d6'; ctx.beginPath(); ctx.arc(0,-40,22,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2ec4b6'; ctx.fillRect(-26,-18,52,20); ctx.strokeStyle='#e9e4d6'; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(0,-40,30,Math.PI*1.05,Math.PI*1.95); ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- Adegan ---------- */
+const SC = [];
+function scene(id, nm, col, dur, draw){ const start = SC.length ? SC[SC.length-1].start+SC[SC.length-1].dur : 0; SC.push({ id, nm, col, start, dur, draw }); }
+
+scene('intro', 'Pengenalan', C.accent, 9, (lt,t) => {
+  const p = E.out(P(lt,0.2,1.2));
+  withA(p, () => { ctx.save(); ctx.translate(900, 380 + (1-p)*60); ctx.rotate(-0.06);
+    fillRR(-150,-200,300,400,16,'#f3f1ea');
+    T('BIL ELEKTRIK', -120, -150, { s:18, w:700, c:'#1b2a3e', ls:2 });
+    ctx.fillStyle='#c9d0da'; for (let k=0;k<6;k++) ctx.fillRect(-120,-115+k*34,k%2?150:220,10);
+    T('Jumlah', -120, 120, { s:18, w:600, c:'#56657d' });
+    T('RM ???', 120, 160, { s:40, w:700, f:FD, c:'#1b2a3e', al:'right' });
+    ctx.restore(); });
+  glow(900, 380, 320, 'rgba(255,204,51,.10)');
+  const q = E.out(P(lt,0.6,1));
+  withA(q, () => {
+    T('TARIF BAHARU · 1 JULAI 2025', 90, 230, { s:16, w:700, c:C.accent, ls:3 });
+    T('Apa sebenarnya', 88, 310, { s:58, w:700, f:FD });
+    T('dalam bil', 88, 380, { s:58, w:700, f:FD });
+    T('elektrik anda?', 88, 450, { s:58, w:700, f:FD, c:C.accent });
+  });
+  const chips = [['Tenaga',C.tenaga],['Kapasiti',C.kap],['Rangkaian',C.rang],['Peruncitan',C.runcit],['AFA',C.afa],['Rebat',C.eei]];
+  chips.forEach(([n,c],i) => { const a = E.back(P(lt,4.6+i*0.25,0.5)); if (a<=0) return; withA(clamp(a,0,1), () => { const x=90+i*112; fillRR(x,500,102,36,18,c,0.18); strokeRR(x,500,102,36,18,c,1.5); T(n, x+51, 524, { s:15, w:700, c, al:'center' }); }); });
+});
+
+scene('rantai', 'Rantaian bekalan', C.rang, 17, (lt,t) => {
+  head(lt, 'Dari loji ke rumah', 'Empat peringkat, empat jenis kos', C.rang);
+  const X = [200, 480, 800, 1090], Y = 420;
+  const reveal = E.io(P(lt,1,3));
+  ctx.save(); ctx.strokeStyle='#c9d1dc'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(X[0]+40, Y-120); ctx.lineTo(lerp(X[0]+40, X[3]-40, reveal), Y-120); ctx.stroke(); ctx.restore();
+  withA(P(lt,0.8,0.6), () => plant(X[0], Y, 0.95, t));
+  withA(P(lt,1.8,0.6), () => { tower(X[1]-70, Y, 170); tower(X[1]+70, Y, 150); });
+  withA(P(lt,2.6,0.6), () => substation(X[2], Y, 1.1));
+  withA(P(lt,3.4,0.6), () => house(X[3], Y, 1.25, lt>4));
+  if (lt>4) for (let k=0;k<7;k++){ const ph=((t*0.22)+k/7)%1; glow(lerp(X[0]+40, X[3]-40, ph), Y-120, 16, 'rgba(255,204,51,.95)'); }
+  const labs = ['Penjanaan','Penghantaran','Pengagihan','Pengguna'];
+  labs.forEach((l,i) => withA(P(lt,1+i*0.8,0.6), () => T(l, X[i], Y+44, { s:22, w:700, al:'center' })));
+  const br = (x0,x1,txt,col,a) => { if (a<=0) return; withA(a, () => { ctx.strokeStyle=col; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x0,Y+70); ctx.lineTo(x0,Y+84); ctx.lineTo(x1,Y+84); ctx.lineTo(x1,Y+70); ctx.stroke(); T(txt, (x0+x1)/2, Y+118, { s:20, w:700, c:col, al:'center' }); }); };
+  br(100, 300, 'Caj Tenaga + Kapasiti', C.tenaga, P(lt,13,0.6));
+  withA(P(lt,13.3,0.6), () => T('+ AFA', 200, Y+146, { s:17, w:700, c:C.afa, al:'center' }));
+  br(380, 910, 'Caj Rangkaian', C.rang, P(lt,14.2,0.6));
+  br(1000, 1180, 'Caj Peruncitan', C.runcit, P(lt,15,0.6));
+});
+
+scene('tenaga', 'Caj Tenaga', C.tenaga, 18, (lt,t) => {
+  head(lt, 'Komponen 1 · Penjanaan', 'Caj Tenaga', C.tenaga);
+  withA(P(lt,0.5,0.6), () => { plant(300, 470, 1.25, t); T('Arang batu · gas · hidro · solar', 290, 520, { s:18, w:600, c:C.mute, al:'center' }); });
+  const k = Math.round(500*E.io(P(lt,8,4)));
+  withA(P(lt,2,0.6), () => { meterIcon(780, 360, 1.3, String(k).padStart(4,'0')); T('kWh', 780, 490, { s:18, w:700, c:C.mute, al:'center' }); });
+  rateCard(920, 250, 280, '27.03 sen', 'setiap kWh (≤ 1,500 kWh)', C.tenaga, P(lt,5,0.7));
+  withA(P(lt,9,0.6), () => { T(`${k} kWh × 27.03 sen`, 1060, 420, { s:22, w:600, f:FM, al:'center' }); T(rm(k*0.2703), 1060, 470, { s:40, w:700, f:FD, c:C.tenaga, al:'center' }); });
+  const b = P(lt,14,0.8);
+  if (b>0) withA(b, () => {
+    const x0=160, x1=1120, y=590, sc=(x1-x0)/2000, w=E.io(b);
+    fillRR(x0, y, 1500*sc*w, 30, 6, C.tenaga); if (w>0.75) fillRR(x0+1500*sc, y, 500*sc*(w-0.75)/0.25, 30, 6, C.afa);
+    T('0', x0, y+56, { s:15, c:C.mute, f:FM }); T('1,500 kWh', x0+1500*sc, y+56, { s:15, c:C.mute, f:FM, al:'center' });
+    T('27.03 sen', x0+12, y+21, { s:15, w:700, c:'#1a1405', f:FM });
+    if (w>0.9) T('37.03 sen', x0+1500*sc+12, y+21, { s:15, w:700, c:'#1a1405', f:FM });
+  });
+});
+
+scene('kapasiti', 'Caj Kapasiti', C.kap, 18, (lt,t) => {
+  head(lt, 'Komponen 2 · Penjanaan', 'Caj Kapasiti', C.kap);
+  const prof = [0.62,0.58,0.56,0.55,0.55,0.58,0.64,0.72,0.8,0.87,0.92,0.96,0.98,1.0,1.0,0.99,0.96,0.92,0.9,0.9,0.86,0.8,0.72,0.66];
+  const x0=110, x1=800, y0=600, y1=250, X=i=>x0+i/23*(x1-x0), Y=v=>y0-(v-0.4)/0.9*(y0-y1);
+  withA(P(lt,1,0.6), () => { ctx.strokeStyle=C.line; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y0); ctx.stroke();
+    [0,6,12,18,23].forEach(h => T(String(h).padStart(2,'0')+':00', X(h), y0+30, { s:14, c:C.mute, f:FM, al:'center' })); T('Permintaan elektrik negara, sehari', x0, y0+62, { s:16, c:C.mute }); });
+  const d = E.io(P(lt,2.5,4.5)), n = d*23;
+  ctx.save(); ctx.beginPath(); ctx.moveTo(X(0),y0);
+  for (let i=0;i<=Math.floor(n);i++) ctx.lineTo(X(i),Y(prof[i]));
+  if (n<23){ const i=Math.floor(n), f=n-i; ctx.lineTo(lerp(X(i),X(i+1),f), Y(lerp(prof[i],prof[i+1],f))); ctx.lineTo(lerp(X(i),X(i+1),f), y0); } else ctx.lineTo(X(23),y0);
+  ctx.closePath(); ctx.fillStyle='rgba(163,139,255,.28)'; ctx.fill(); ctx.strokeStyle=C.kap; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+  if (lt>6.5) withA(P(lt,6.5,0.5), () => { glow(X(13.5), Y(1), 30, 'rgba(255,204,51,.6)'); T('Puncak', X(13.5), Y(1)-22, { s:16, w:700, c:C.accent, al:'center' }); });
+  const cap = P(lt,8,1);
+  if (cap>0) withA(cap, () => {
+    const yc = Y(1.18); ctx.save(); ctx.setLineDash([10,8]); ctx.strokeStyle=C.ink; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(x0,yc); ctx.lineTo(lerp(x0,x1,E.io(cap)),yc); ctx.stroke(); ctx.restore();
+    T('Kapasiti loji + rizab', x0+6, yc-12, { s:16, w:700 });
+    ctx.save(); ctx.globalAlpha*=0.18; ctx.fillStyle=C.ink; ctx.fillRect(x0, yc, (x1-x0)*E.io(cap), Y(1)-yc); ctx.restore();
+  });
+  withA(P(lt,9.5,0.6), () => { T('Loji mesti sedia untuk', 870, 300, { s:22, w:600 }); T('waktu paling sibuk —', 870, 332, { s:22, w:600 }); T('seperti insurans bekalan.', 870, 364, { s:22, w:600, c:C.kap }); });
+  rateCard(870, 410, 300, '4.55 sen', 'setiap kWh', C.kap, P(lt,13,0.7));
+  withA(P(lt,14.5,0.6), () => T('500 kWh → RM 22.75', 1020, 580, { s:20, w:600, f:FM, al:'center', c:C.mute }));
+});
+
+scene('rangkaian', 'Caj Rangkaian', C.rang, 16, (lt,t) => {
+  head(lt, 'Komponen 3 · Grid', 'Caj Rangkaian', C.rang);
+  const steps = [['500 kV',200,190],['275 kV',175,300],['132 kV',150,410],['PMU',0,520],['33 kV',0,610],['11 kV',95,720],['PE',0,830],['230 V',0,1070]];
+  const Y = 470, rev = E.io(P(lt,1,7)), xEnd = lerp(150, 1070, rev);
+  ctx.save(); ctx.strokeStyle=C.rang; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(150, Y-150); ctx.lineTo(Math.min(xEnd, 410), lerp(Y-150, Y-110, clamp((xEnd-150)/260,0,1))); if (xEnd>410) ctx.lineTo(Math.min(xEnd,1070), Y-80); ctx.stroke(); ctx.restore();
+  steps.forEach(([lbl,h,x],i) => {
+    const a = P(lt, 1+i*0.85, 0.5); if (a<=0) return;
+    withA(a, () => {
+      if (lbl==='PMU'||lbl==='PE') substation(x, Y, lbl==='PMU'?0.9:0.6);
+      else if (lbl==='230 V') house(x, Y, 1.1, true);
+      else if (lbl==='11 kV'){ ctx.fillStyle='#c9d1dc'; ctx.fillRect(x-4, Y-h, 8, h); ctx.fillRect(x-26, Y-h+8, 52, 6); }
+      else if (lbl==='33 kV'){ ctx.fillStyle='#c9d1dc'; ctx.fillRect(x-5, Y-120, 10, 120); ctx.fillRect(x-32, Y-112, 64, 6); }
+      else tower(x, Y, h);
+      fillRR(x-50, Y+26, 100, 34, 17, C.rang, 0.16); T(lbl, x, Y+50, { s:17, w:700, f:FM, c:C.rang, al:'center' });
+    });
+  });
+  if (lt>8) for (let k=0;k<6;k++){ const ph=((t*0.2)+k/6)%1, x=lerp(150,1070,ph), y = x<410 ? lerp(Y-150,Y-110,(x-150)/260) : Y-80; glow(x, y, 13, 'rgba(46,196,182,.95)'); }
+  withA(P(lt,9,0.6), () => T('Voltan diturunkan berperingkat sebelum sampai ke soket.', 90, 600, { s:22, w:600, c:C.mute }));
+  const a2 = P(lt,10.5,0.7);
+  if (a2>0) withA(a2, () => { fillRR(90, 626, 540, 70, 14, C.rang, 0.14); strokeRR(90,626,540,70,14,C.rang,2); T('12.85 sen', 116, 673, { s:34, w:700, f:FD, c:C.rang }); T('setiap kWh · 500 kWh → RM 64.25', 340, 668, { s:18, w:600 }); });
+});
+
+scene('runcit', 'Caj Peruncitan', C.runcit, 14, (lt,t) => {
+  head(lt, 'Komponen 4 · Khidmat pelanggan', 'Caj Peruncitan', C.runcit);
+  withA(P(lt,0.8,0.5), () => { meterIcon(230, 380, 1, '0500'); T('Meter', 230, 490, { s:18, w:700, al:'center' }); });
+  withA(P(lt,1.4,0.5), () => { billIcon(430, 380, 1); T('Bil & bayaran', 430, 490, { s:18, w:700, al:'center' }); });
+  withA(P(lt,2,0.5), () => { counterIcon(650, 400, 1); T('Kaunter & aplikasi', 650, 490, { s:18, w:700, al:'center' }); });
+  rateCard(850, 300, 330, 'RM 10', 'sebulan, kadar tetap', C.runcit, P(lt,4.5,0.7));
+  const b = P(lt,8,0.8);
+  if (b>0) withA(b, () => {
+    const x0=130, x1=1150, y=575, sc=(x1-x0)/1200, w=E.io(b);
+    fillRR(x0, y, 600*sc*w, 28, 6, C.eei); if (w>0.5) fillRR(x0+600*sc, y, 600*sc*(w-0.5)/0.5, 28, 6, C.runcit);
+    T('0', x0, y+52, { s:15, c:C.mute, f:FM }); T('600 kWh', x0+600*sc, y+52, { s:15, c:C.mute, f:FM, al:'center' });
+    T('RM 0 — dikecualikan', x0+14, y+20, { s:16, w:700, c:'#10220a' });
+    if (w>0.8) T('RM 10', x0+600*sc+14, y+20, { s:16, w:700, c:'#2a0a17' });
+  });
+  const st = E.back(P(lt,9.5,0.5));
+  if (st>0) withA(clamp(st,0,1), () => { ctx.save(); ctx.translate(430, 610); ctx.rotate(-0.08); ctx.scale(st,st);
+    strokeRR(-150,-100,300,56,10,C.eei,4); T('≤ 600 kWh: PERCUMA', 0, -62, { s:20, w:700, f:FD, c:C.eei, al:'center' }); ctx.restore(); });
+});
+
+scene('afa', 'AFA', C.afa, 24, (lt,t) => {
+  head(lt, 'Pelarasan bulanan', 'AFA · Pelarasan Bahan Api Automatik', C.afa);
+  const ph1 = 1 - P(lt,12,0.8);
+  if (ph1>0) withA(ph1, () => {
+    const x0=110, x1=1170, yb=400, rev=E.io(P(lt,1.5,5));
+    const f = x => yb - (58*Math.sin(x*0.011+0.6) + 26*Math.sin(x*0.033+2));
+    for (let x=x0; x<lerp(x0,x1,rev); x+=3){ const y=f(x); ctx.fillStyle = y<yb ? 'rgba(255,107,87,.55)' : 'rgba(126,217,87,.55)'; ctx.fillRect(x, Math.min(y,yb), 3, Math.abs(y-yb)); }
+    ctx.save(); ctx.setLineDash([10,8]); ctx.strokeStyle=C.ink; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(x0,yb); ctx.lineTo(x1,yb); ctx.stroke(); ctx.restore();
+    T('Harga bahan api dalam tarif asas', x1, yb+30, { s:16, w:700, al:'right' });
+    ctx.strokeStyle=C.accent; ctx.lineWidth=3; ctx.beginPath(); for (let x=x0; x<lerp(x0,x1,rev); x+=3){ x===x0?ctx.moveTo(x,f(x)):ctx.lineTo(x,f(x)); } ctx.stroke();
+    T('Harga sebenar arang batu & gas', x0, 250, { s:16, w:700, c:C.accent });
+    withA(P(lt,6,0.6), () => { T('Lebih mahal → SURCAJ', 160, 560, { s:24, w:700, c:C.afa }); });
+    withA(P(lt,7.5,0.6), () => { T('Lebih murah → REBAT', 700, 560, { s:24, w:700, c:C.eei }); });
+    withA(P(lt,9,0.6), () => T('Ditetapkan setiap bulan oleh Suruhanjaya Tenaga', 160, 610, { s:18, w:600, c:C.mute }));
+  });
+  const ph2 = P(lt,12.5,0.8);
+  if (ph2>0) withA(ph2, () => {
+    const x0=150, x1=1130, y0=420, sc=30, bw=(x1-x0)/AFA.length;
+    ctx.strokeStyle=C.ink; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0-20,y0); ctx.lineTo(x1,y0); ctx.stroke();
+    ctx.save(); ctx.setLineDash([6,6]); ctx.lineWidth=1.5;
+    ctx.strokeStyle=C.afa; ctx.beginPath(); ctx.moveTo(x0-20,y0-3*sc); ctx.lineTo(x1,y0-3*sc); ctx.stroke();
+    ctx.strokeStyle=C.eei; ctx.beginPath(); ctx.moveTo(x0-20,y0+3*sc); ctx.lineTo(x1,y0+3*sc); ctx.stroke(); ctx.restore();
+    T('+3 sen', x1, y0-3*sc-8, { s:13, f:FM, c:C.afa, al:'right' }); T('−3 sen', x1, y0+3*sc+18, { s:13, f:FM, c:C.eei, al:'right' });
+    AFA.forEach(([m,v],i) => {
+      const g = E.out(P(lt, 13.5+i*0.45, 0.6)), x = x0+i*bw+bw*0.2, w = bw*0.6, h = v*sc*g;
+      fillRR(x, h>0?y0-h:y0, w, Math.max(2,Math.abs(h)), 5, v<0?C.eei:C.afa);
+      T(m, x+w/2, y0 + (v<0 ? -12 : 26), { s:14, w:700, c:C.mute, al:'center' });
+      if (g>0.9) T((v>0?'+':'')+v.toFixed(2), x+w/2, v<0 ? y0-h+22 : y0-h-10, { s:15, w:700, f:FM, al:'center' });
+    });
+    T('Kadar AFA 2026 (sen/kWh) · negatif = rebat', x0-20, 245, { s:17, w:700, c:C.mute });
+    withA(P(lt,19.5,0.6), () => { fillRR(150, 590, 980, 62, 14, C.eei, 0.14); T('Guna ≤ 600 kWh sebulan? AFA tidak dikenakan langsung.', 640, 630, { s:22, w:700, c:C.eei, al:'center' }); });
+  });
+});
+
+scene('eei', 'Insentif Cekap Tenaga', C.eei, 16, (lt,t) => {
+  head(lt, 'Rebat', 'Insentif Cekap Tenaga', C.eei);
+  const x0=130, x1=900, y0=590, y1=240, X=k=>x0+k/1100*(x1-x0), Y=r=>y0-r/25*(y0-y1);
+  const a = P(lt,1,0.6);
+  withA(a, () => {
+    ctx.strokeStyle=C.line; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0,y1-10); ctx.lineTo(x0,y0); ctx.lineTo(x1,y0); ctx.stroke();
+    [0,200,400,600,800,1000].forEach(k => T(String(k), X(k), y0+28, { s:14, f:FM, c:C.mute, al:'center' }));
+    [0,5,10,15,20,25].forEach(r => T(String(r), x0-12, Y(r)+5, { s:14, f:FM, c:C.mute, al:'right' }));
+    T('kWh sebulan', x1, y0+56, { s:15, c:C.mute, al:'right' }); T('sen/kWh rebat', x0, y1-24, { s:15, c:C.mute });
+  });
+  const d = E.io(P(lt,2,3.5));
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, 0, (x1-x0)*d, VH); ctx.clip();
+  ctx.beginPath(); ctx.moveTo(X(0), y0); let prev=0;
+  for (const [m,r] of EEI){ ctx.lineTo(X(prev), Y(r)); ctx.lineTo(X(m), Y(r)); prev=m; } ctx.lineTo(X(1000), y0); ctx.lineTo(X(1100), y0); ctx.closePath();
+  ctx.fillStyle='rgba(126,217,87,.25)'; ctx.fill(); ctx.strokeStyle=C.eei; ctx.lineWidth=3; ctx.stroke(); ctx.restore();
+  const m = P(lt,6,0.4);
+  if (m>0){ const k = Math.round(150 + 870*E.io(P(lt,6.5,7.5))), r = eeiRate(k);
+    withA(m, () => { ctx.strokeStyle=C.ink; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(X(k), y0); ctx.lineTo(X(k), Y(r)); ctx.stroke(); glow(X(k), Y(r), 20, 'rgba(255,255,255,.8)');
+      fillRR(940, 300, 250, 170, 18, C.eei, 0.14); strokeRR(940,300,250,170,18,C.eei,2);
+      T(k+' kWh', 1065, 350, { s:24, w:700, f:FM, al:'center' }); T(r ? '−'+r+' sen' : 'Tiada rebat', 1065, 405, { s:34, w:700, f:FD, c:r?C.eei:C.afa, al:'center' });
+      T(r ? 'setiap kWh' : '> 1,000 kWh', 1065, 440, { s:17, w:600, c:C.mute, al:'center' }); }); }
+  withA(P(lt,9,0.6), () => { T('Makin jimat,', 940, 530, { s:22, w:700 }); T('makin besar rebat.', 940, 560, { s:22, w:700, c:C.eei }); });
+});
+
+function billCard(x, y, b, lt, t0, title, sub){
+  const w = 520; withA(P(lt,t0,0.6), () => {
+    fillRR(x, y, w, 425, 18, '#f3f1ea');
+    T(title, x+26, y+46, { s:24, w:700, f:FD, c:'#16233a' }); T(sub, x+26, y+74, { s:16, w:600, c:'#56657d' });
+  });
+  const rows = [
+    ['Caj Tenaga', `${b.kwh} × ${b.kadar}`, b.tenaga, C.tenaga],
+    ['Caj Kapasiti', `${b.kwh} × 4.55`, b.kapasiti, C.kap],
+    ['Caj Rangkaian', `${b.kwh} × 12.85`, b.rangkaian, C.rang],
+    ['Caj Peruncitan', b.runcit?'RM10 tetap':'≤600 kWh', b.runcit, C.runcit, !b.runcit],
+    ['AFA', b.afaV?`${b.kwh} × +${b.afa}`:'≤600 kWh', b.afaV, C.afa, !b.afaV],
+    ['Cekap Tenaga', b.eeiR?`${b.kwh} × −${b.eeiR}`:'—', b.eei, C.eei],
+    ['KWTBB 1.6%', '', b.kwtbb, '#8a96a8'],
+    ['SST 8%', b.sst?'bahagian >600':'≤600 kWh', b.sst, '#8a96a8', !b.sst],
+  ];
+  rows.forEach(([n,d,v,c,ex],i) => { const a = P(lt, t0+0.8+i*0.45, 0.4); if (a<=0) return; const yy = y+110+i*34;
+    withA(a, () => { fillRR(x+26, yy-14, 8, 16, 3, c); T(n, x+44, yy, { s:17, w:700, c:'#16233a' }); T(d, x+228, yy, { s:14, f:FM, c:'#6b788d' });
+      T(ex ? 'dikecualikan' : rm(v), x+w-26, yy, { s:17, w:700, f:FM, c: ex ? '#8a96a8' : v<0 ? '#2e8a2e' : '#16233a', al:'right' }); }); });
+  const at = P(lt, t0+0.8+rows.length*0.45, 0.6);
+  if (at>0) withA(at, () => { ctx.fillStyle='#16233a'; ctx.fillRect(x+26, y+372, w-52, 2); T('Jumlah', x+26, y+404, { s:20, w:700, c:'#16233a' }); T(rm(b.total), x+w-26, y+406, { s:30, w:700, f:FD, c:'#16233a', al:'right' }); });
+}
+scene('contoh', 'Contoh bil', C.accent, 30, (lt,t) => {
+  const shift = E.io(P(lt,21,1));
+  if (shift<1) withA(1-shift, () => {
+    head(lt, 'Kira bersama', 'Dua rumah, dua bil', C.accent);
+    billCard(90, 185, A, lt, 2.5, 'Rumah A · 500 kWh', 'Tiada caj peruncitan, AFA & SST');
+    billCard(670, 185, B, lt, 9.5, 'Rumah B · 900 kWh', 'September 2026 · AFA +3.67 sen');
+  });
+  if (shift>0) withA(shift, () => {
+    head(lt-21, 'Perbandingan', 'Beza 400 kWh, beza besar', C.accent);
+    const x0=90, max=B.total, sc=1000/max;
+    [[A,'Rumah A · 500 kWh',260],[B,'Rumah B · 900 kWh',420]].forEach(([b,n,y],j) => {
+      T(n, x0, y-18, { s:20, w:700 });
+      const parts = [[b.tenaga,C.tenaga],[b.kapasiti,C.kap],[b.rangkaian,C.rang],[b.runcit,C.runcit],[b.afaV,C.afa],[b.kwtbb+b.sst,'#8a96a8']];
+      let x = x0, g = E.io(P(lt, 22+j*0.8, 1.2));
+      const eeiW = Math.abs(b.eei)*sc;
+      parts.forEach(([v,c]) => { if (v<=0) return; const w = v*sc*g; fillRR(x, y, Math.max(0,w-2), 56, 6, c); x += w; });
+      if (eeiW>0 && g>0.99) withA(P(lt,24,0.6), () => { ctx.save(); ctx.setLineDash([6,5]); ctx.strokeStyle=C.eei; ctx.lineWidth=2; rr(x-eeiW, y-6, eeiW, 68, 6); ctx.stroke(); ctx.restore(); T('rebat −'+rm(Math.abs(b.eei)).slice(1), x-eeiW/2, y+88, { s:14, w:700, c:C.eei, al:'center' }); });
+      withA(P(lt,23+j*0.8,0.5), () => T(rm(b.total), x+16, y+40, { s:30, w:700, f:FD }));
+    });
+    withA(P(lt,25.5,0.6), () => T(`≈ ${(B.total/A.total).toFixed(1)}× ganda — walaupun penggunaan hanya ${(900/500).toFixed(1)}× lebih.`, x0, 590, { s:26, w:700, c:C.accent }));
+  });
+});
+
+scene('ringkas', 'Ringkasan', C.eei, 14, (lt,t) => {
+  head(lt, 'Ringkasan', 'Enam perkara dalam bil anda', C.eei);
+  const items = [['Caj Tenaga','27.03 sen/kWh',C.tenaga],['Caj Kapasiti','4.55 sen/kWh',C.kap],['Caj Rangkaian','12.85 sen/kWh',C.rang],['Caj Peruncitan','RM10 · bebas ≤600 kWh',C.runcit],['AFA','± bulanan · bebas ≤600 kWh',C.afa],['Cekap Tenaga','rebat sehingga 25 sen',C.eei]];
+  items.forEach(([n,v,c],i) => { const a = E.back(P(lt,0.8+i*0.3,0.5)); if (a<=0) return; const col=i%3, row=(i/3)|0, x=90+col*370, y=210+row*140;
+    withA(clamp(a,0,1), () => { fillRR(x, y, 350, 118, 16, c, 0.13); strokeRR(x,y,350,118,16,c,2); T(n, x+22, y+48, { s:22, w:700, c }); T(v, x+22, y+86, { s:19, w:600, f:FM }); }); });
+  withA(P(lt,5,0.6), () => { T('Kekal ≤ 600 kWh', 90, 540, { s:28, w:700, f:FD, c:C.accent }); T('→ tiada caj peruncitan, AFA dan SST', 440, 538, { s:22, w:600 }); });
+  withA(P(lt,7,0.6), () => { T('Kekal ≤ 1,000 kWh', 90, 590, { s:28, w:700, f:FD, c:C.eei }); T('→ layak rebat cekap tenaga', 470, 588, { s:22, w:600 }); });
+  withA(P(lt,9.5,0.8), () => T('Jimat elektrik, jimat bil.', 640, 668, { s:30, w:700, f:FD, al:'center' }));
+});
+const TOTAL = SC[SC.length-1].start + SC[SC.length-1].dur;
+
+/* ---------- Sari kata ---------- */
+const CAP = [
+  [0.5,'Setiap bulan, bil elektrik sampai. Tapi apa sebenarnya yang kita bayar?'],
+  [4.8,'Mulai 1 Julai 2025, bil domestik dipecahkan kepada beberapa caj yang lebih jelas.'],
+  [9.5,'Elektrik melalui empat peringkat sebelum sampai ke rumah anda.'],
+  [13.5,'Ia dijana di loji, dihantar melalui grid, diagihkan di pencawang, dan dibilkan kepada anda.'],
+  [19,'Setiap peringkat ada cajnya sendiri dalam bil.'],
+  [22,'Penjanaan: caj tenaga dan kapasiti. Grid: caj rangkaian. Khidmat pelanggan: caj peruncitan.'],
+  [26.5,'Pertama, caj tenaga — kos menjana setiap kWh elektrik di loji.'],
+  [31,'Kadarnya 27.03 sen setiap kWh, untuk penggunaan sehingga 1,500 kWh sebulan.'],
+  [35.5,'Guna 500 kWh? Caj tenaga anda RM135.15.'],
+  [40,'Jika penggunaan melebihi 1,500 kWh, kadarnya 37.03 sen.'],
+  [44.5,'Kedua, caj kapasiti.'],
+  [47,'Permintaan elektrik naik turun sepanjang hari, dan memuncak pada waktu petang.'],
+  [52,'Negara perlu cukup loji untuk waktu puncak, ditambah rizab — walaupun jarang digunakan sepenuhnya.'],
+  [57.5,'Kos kesediaan ini ialah caj kapasiti: 4.55 sen setiap kWh.'],
+  [62.5,'Ketiga, caj rangkaian.'],
+  [65,'Voltan diturunkan berperingkat: dari 500 kilovolt di talian penghantaran, hingga 230 volt di soket rumah.'],
+  [71.5,'Tiang, kabel, pencawang dan penyelenggaraannya dibiayai caj rangkaian: 12.85 sen setiap kWh.'],
+  [78.5,'Keempat, caj peruncitan — kos meter, bil dan khidmat pelanggan.'],
+  [83,'Ia caj tetap RM10 sebulan…'],
+  [86.5,'…tetapi dikecualikan sepenuhnya jika anda guna 600 kWh atau kurang.'],
+  [92.5,'Seterusnya, AFA — Pelarasan Bahan Api Automatik.'],
+  [96.5,'Tarif asas mengandaikan satu harga arang batu dan gas. Harga sebenar berubah setiap bulan.'],
+  [102,'Bila kos bahan api lebih tinggi, AFA menjadi surcaj. Bila lebih rendah, AFA menjadi rebat.'],
+  [106.5,'Tahun 2026 bermula dengan rebat 4.99 sen, dan menjadi surcaj 3.67 sen pada September.'],
+  [112,'Pengguna domestik yang guna 600 kWh atau kurang tidak dikenakan AFA.'],
+  [116.5,'Akhir sekali, Insentif Cekap Tenaga.'],
+  [119.5,'Isi rumah yang guna 1,000 kWh atau kurang mendapat rebat, sehingga 25 sen setiap kWh.'],
+  [125.5,'Semakin rendah penggunaan, semakin besar rebatnya.'],
+  [132.5,'Jom kira dua contoh bil.'],
+  [135.5,'Rumah A guna 500 kWh. Tiada caj peruncitan, tiada AFA, dan dapat rebat 12 sen setiap kWh.'],
+  [142,'Rumah B guna 900 kWh pada September 2026. Caj peruncitan, AFA dan SST mula dikenakan.'],
+  [149,'Rebat cekap tenaganya pula hanya 1 sen.'],
+  [153.5,'Penggunaan hampir dua kali ganda — tetapi bilnya hampir tiga kali ganda.'],
+  [162.5,'Kesimpulannya: kekal di bawah 600 kWh untuk elak caj peruncitan, AFA dan SST…'],
+  [168,'…dan di bawah 1,000 kWh untuk menikmati rebat cekap tenaga.'],
+  [172,'Jimat elektrik, jimat bil.'],
+];
+function capAt(t){ let c=null; for (let i=0;i<CAP.length;i++){ if (CAP[i][0]<=t) c=i; else break; } if (c==null) return null; const end = c+1<CAP.length ? CAP[c+1][0]-0.25 : TOTAL; return t<end ? c : null; }
+function wrap(text, maxW){ const words=text.split(' '), lines=[]; let cur=''; for (const w of words){ const tt = cur?cur+' '+w:w; if (ctx.measureText(tt).width>maxW && cur){ lines.push(cur); cur=w; } else cur=tt; } if (cur) lines.push(cur); return lines; }
+function drawCaption(t){
+  const c = capAt(t); if (c==null) return;
+  ctx.save(); ctx.font = `600 25px ${FB}`; const lines = wrap(CAP[c][1], 1040);
+  const lh = 34, h = lines.length*lh + 18, w = Math.max(...lines.map(l=>ctx.measureText(l).width)) + 40;
+  fillRR(VW/2-w/2, VH-28-h, w, h, 10, 'rgba(6,10,18,.78)');
+  lines.forEach((l,i) => T(l, VW/2, VH-28-h+ 9 + lh*(i+1) - 8, { s:25, w:600, al:'center' }));
+  ctx.restore();
+}
+
+/* ---------- Render ---------- */
+function bg(t){
+  const g = ctx.createLinearGradient(0,0,VW,VH); g.addColorStop(0,C.bg1); g.addColorStop(1,C.bg0); ctx.fillStyle=g; ctx.fillRect(0,0,VW,VH);
+  ctx.fillStyle='rgba(255,255,255,.035)'; for (let y=24;y<VH;y+=36) for (let x=24;x<VW;x+=36) ctx.fillRect(x,y,2,2);
+}
+function sceneAt(t){ for (let i=SC.length-1;i>=0;i--) if (t>=SC[i].start) return i; return 0; }
+function render(t){
+  bg(t);
+  const i = sceneAt(t), s = SC[i], lt = t - s.start;
+  const a = Math.min(P(lt,0,0.45), 1-P(lt,s.dur-0.45,0.45));
+  withA(i===SC.length-1 ? Math.min(1,P(lt,0,0.45)) : a, () => s.draw(lt, t));
+  T('Tarif domestik · 1 Julai 2025', VW-40, 44, { s:14, w:600, c:C.dim, al:'right', f:FM });
+  drawCaption(t);
+  ctx.fillStyle=s.col; ctx.fillRect(0, VH-5, VW*t/TOTAL, 5);
+}
+
+/* ---------- Pemain ---------- */
+let time = 0, playing = false, lastNow = 0, voice = false, lastCap = -1, rec = null;
+function setupCanvas(){ const dpr = rec ? 1 : Math.min(2, window.devicePixelRatio||1); cv.width = VW*dpr; cv.height = VH*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
+setupCanvas();
+const fmt = s => Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+const seek = $('seek'); seek.max = TOTAL;
+$('marks').innerHTML = SC.map(s => `<i style="left:${s.start/TOTAL*100}%"></i>`).join('');
+$('chap').innerHTML = SC.map((s,i) => `<button data-i="${i}" style="--c:${s.col}"><i></i>${s.nm}<span>${fmt(s.start)}</span></button>`).join('');
+$('tr').innerHTML = CAP.map(([t,x]) => `<div><b>${fmt(t)}</b><span>${x}</span></div>`).join('');
+function ui(){
+  $('play').textContent = playing ? '❚❚' : '▶'; $('play').setAttribute('aria-label', playing?'Jeda':'Main');
+  $('time').textContent = fmt(time)+' / '+fmt(TOTAL); seek.value = time;
+  const ci = sceneAt(time); document.querySelectorAll('#chap button').forEach((b,i)=>b.classList.toggle('on', i===ci));
+}
+function speakCap(){
+  if (!voice || !playing || !('speechSynthesis' in window)) return;
+  const c = capAt(time); if (c==null || c===lastCap) return; lastCap = c;
+  const u = new SpeechSynthesisUtterance(CAP[c][1].replace(/kWh/g,'kilowatt-jam').replace(/RM(\d)/g,'RM $1'));
+  const vs = speechSynthesis.getVoices(); const v = vs.find(v=>/^ms/i.test(v.lang)) || vs.find(v=>/^id/i.test(v.lang));
+  if (v){ u.voice = v; u.lang = v.lang; } else u.lang = 'ms-MY';
+  u.rate = 1.08; speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function jump(t){ time = clamp(t, 0, TOTAL); lastCap = -1; if ('speechSynthesis' in window) speechSynthesis.cancel(); render(time); ui(); }
+function toggle(){ if (time>=TOTAL) time = 0; playing = !playing; lastNow = performance.now(); if (!playing && 'speechSynthesis' in window) speechSynthesis.cancel(); lastCap=-1; ui(); }
+$('play').onclick = toggle; cv.onclick = toggle;
+seek.oninput = () => jump(+seek.value);
+$('chap').onclick = e => { const b = e.target.closest('[data-i]'); if (b){ jump(SC[+b.dataset.i].start); if (!playing) toggle(); } };
+$('voice').onclick = () => { voice = !voice; $('voice').textContent = 'Suara: '+(voice?'buka':'tutup'); $('voice').classList.toggle('on', voice); if (!voice && 'speechSynthesis' in window) speechSynthesis.cancel(); lastCap=-1; };
+$('fs').onclick = () => { const el = cv.parentElement; (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.())?.catch?.(()=>{}); };
+addEventListener('keydown', e => { if (e.target.tagName==='INPUT' && e.key!==' ') return;
+  if (e.key===' '){ e.preventDefault(); toggle(); } else if (e.key==='ArrowRight') jump(time+5); else if (e.key==='ArrowLeft') jump(time-5); });
+
+// Rakaman — hanya bila fail dibuka di komputer sendiri
+const local = location.protocol==='file:' || ['localhost','127.0.0.1'].includes(location.hostname);
+if (local && window.MediaRecorder && cv.captureStream) $('rec').hidden = false;
+$('rec').onclick = () => {
+  if (rec){ rec.stop(); return; }
+  const chunks = []; rec = new MediaRecorder(cv.captureStream(30), { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: 6e6 });
+  setupCanvas(); rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(chunks, { type:'video/webm' })); a.download = 'bil-elektrik-dijelaskan.webm'; a.click(); rec = null; setupCanvas(); $('rec').textContent = 'Rakam .webm'; $('rec').classList.remove('on'); };
+  jump(0); rec.start(); $('rec').textContent = 'Henti rakaman'; $('rec').classList.add('on'); playing = true; lastNow = performance.now(); ui();
+};
+
+function frame(now){
+  if (playing){ time += (now-lastNow)/1000; if (time>=TOTAL){ time = TOTAL; playing = false; if (rec) rec.stop(); } speakCap(); }
+  lastNow = now; render(time); if (playing || rec) ui();
+  requestAnimationFrame(frame);
+}
+const fonts = document.fonts ? Promise.all([`700 40px ${FD}`,`600 20px ${FB}`,`700 20px ${FB}`,`700 20px ${FM}`].map(f=>document.fonts.load(f))).catch(()=>{}) : Promise.resolve();
+fonts.then(() => { jump(2.6); requestAnimationFrame(t => { lastNow = t; frame(t); }); });
+})();
+</script>
+</body>
+</html>
