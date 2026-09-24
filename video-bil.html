@@ -45,11 +45,10 @@ summary{cursor:pointer;font-weight:700}
 .tr b{font:500 12px var(--f-m);color:var(--accent);padding-top:2px}
 .note{font-size:13px;color:var(--muted);line-height:1.5;max-width:75ch}
 .note a{color:var(--ink)}
-.note.warn{color:var(--accent);border-left:3px solid var(--accent);padding-left:10px;margin:0}
-#voiceNote{margin:0}
+.aud{display:flex;gap:6px}
 @media (max-width:640px){
   .ctrl{grid-template-columns:auto 1fr auto;grid-template-areas:"p s t" "v f r"}
-  #play{grid-area:p} .scrub{grid-area:s} #time{grid-area:t} #voice{grid-area:v} #fs{grid-area:f} #rec{grid-area:r}
+  #play{grid-area:p} .scrub{grid-area:s} #time{grid-area:t} .aud{grid-area:v} #fs{grid-area:f} #rec{grid-area:r}
 }
 nav.site{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;font-weight:600}
 nav.site a{color:var(--muted);text-decoration:none}
@@ -63,7 +62,7 @@ nav.site div{display:flex;gap:16px;flex-wrap:wrap}
   <nav class="site" aria-label="Navigasi utama"><a class="brand" href="index.html">ϟ Banding Tarif TNB</a><div><a href="game.html">🏡 Game 2D</a><a href="game-3d.html">✦ Game 3D</a><a href="index.html">← Kalkulator bil</a></div></nav>
   <header>
     <h1>Ke mana perginya setiap ringgit bil elektrik anda?</h1>
-    <p>Video animasi 3 minit tentang struktur bil domestik baharu (berkuat kuasa 1 Julai 2025): caj tenaga, kapasiti, rangkaian, peruncitan, AFA dan Insentif Cekap Tenaga, dengan dua contoh kiraan bil.</p>
+    <p>Video animasi 4 minit bersuara tentang struktur bil domestik baharu (berkuat kuasa 1 Julai 2025): caj tenaga, kapasiti, rangkaian, peruncitan, AFA dan Insentif Cekap Tenaga, dengan dua contoh kiraan bil.</p>
   </header>
 
   <div class="player">
@@ -72,13 +71,11 @@ nav.site div{display:flex;gap:16px;flex-wrap:wrap}
       <button id="play" aria-label="Main">▶</button>
       <span id="time">0:00 / 0:00</span>
       <div class="scrub"><div class="marks" id="marks"></div><input id="seek" type="range" min="0" max="176" step="0.05" value="0" aria-label="Kedudukan video"></div>
-      <button id="voice" title="Baca sari kata guna suara pelayar">Suara: tutup</button>
+      <span class="aud"><button id="voice" class="on" aria-pressed="true" title="Suara latar (voiceover)">Suara</button><button id="music" class="on" aria-pressed="true" title="Muzik latar">Muzik</button></span>
       <button id="fs">Skrin penuh</button>
       <button id="rec" hidden title="Rakam video ke fail .webm (hanya bila dibuka di komputer sendiri)">Rakam .webm</button>
     </div>
   </div>
-
-  <p class="note" id="voiceNote" hidden></p>
 
   <div class="chap" id="chap"></div>
 
@@ -512,93 +509,124 @@ function render(t){
 }
 
 /* ---------- Pemain ---------- */
-let time = 0, playing = false, lastNow = 0, voice = false, lastCap = -1, rec = null;
+// voiceover.mp3 ialah jam utama. VO[k] = saat dalam audio bila sari kata k mula dituturkan
+// (dijajarkan dengan transkripsi perkataan). Animasi direka pada masa CAP[k][0]; masa animasi
+// diregang secara linear antara titik-titik ini supaya setiap adegan kekal serentak dengan suara.
+const LEAD = 0.6, VO_DUR = 228.62;
+const VO = [0,5.99,13,17.95,24.65,27.12,35.16,41.65,50.94,58.04,66.93,69.22,75.54,82.18,89.58,92.91,101.68,112.5,117.68,120.6,127.72,132.77,138.27,146.02,156.38,163.81,166.82,175.97,179.59,181.77,191.67,202.44,206.22,211.2,220.32,226.22].map(s => s + LEAD);
+const END = LEAD + VO_DUR + 2;
+const ANC = [[0,0], ...CAP.map((c,k) => [c[0], VO[k]]), [TOTAL, END]];
+function warp(x, from, to){
+  for (let i=1; i<ANC.length; i++){ const a = ANC[i-1], b = ANC[i];
+    if (x <= b[from] || i === ANC.length-1){ const f = clamp((x-a[from])/(b[from]-a[from]), 0, 1); return a[to] + (b[to]-a[to])*f; } }
+  return x;
+}
+const toVideo = a => warp(a, 1, 0), toAudio = v => warp(v, 0, 1);
+
+let time = 0, playing = false, lastNow = 0, rec = null, poster = true;
 function setupCanvas(){ const dpr = rec ? 1 : Math.min(2, window.devicePixelRatio||1); cv.width = VW*dpr; cv.height = VH*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); }
 setupCanvas();
 const fmt = s => Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
-const seek = $('seek'); seek.max = TOTAL;
-$('marks').innerHTML = SC.map(s => `<i style="left:${s.start/TOTAL*100}%"></i>`).join('');
-$('chap').innerHTML = SC.map((s,i) => `<button data-i="${i}" style="--c:${s.col}"><i></i>${s.nm}<span>${fmt(s.start)}</span></button>`).join('');
-$('tr').innerHTML = CAP.map(([t,x]) => `<div><b>${fmt(t)}</b><span>${x}</span></div>`).join('');
+const seek = $('seek'); seek.max = END;
+$('marks').innerHTML = SC.map(s => `<i style="left:${toAudio(s.start)/END*100}%"></i>`).join('');
+$('chap').innerHTML = SC.map((s,i) => `<button data-i="${i}" style="--c:${s.col}"><i></i>${s.nm}<span>${fmt(toAudio(s.start))}</span></button>`).join('');
+$('tr').innerHTML = CAP.map(([,x],k) => `<div><b>${fmt(VO[k])}</b><span>${x}</span></div>`).join('');
 function ui(){
   $('play').textContent = playing ? '❚❚' : '▶'; $('play').setAttribute('aria-label', playing?'Jeda':'Main');
-  $('time').textContent = fmt(time)+' / '+fmt(TOTAL); seek.value = time;
-  const ci = sceneAt(time); document.querySelectorAll('#chap button').forEach((b,i)=>b.classList.toggle('on', i===ci));
+  $('time').textContent = fmt(time)+' / '+fmt(END); seek.value = time;
+  const ci = sceneAt(toVideo(time)); document.querySelectorAll('#chap button').forEach((b,i)=>b.classList.toggle('on', i===ci));
 }
-/* ---------- Suara ---------- */
-const TTS = 'speechSynthesis' in window;
-let voiceObj = null, voiceKind = 'none', speakId = 0, speaking = false, speakStart = 0, speakMax = 0;
-function pickVoice(){
-  const vs = TTS ? speechSynthesis.getVoices() : [];
-  const ms = vs.filter(v => /^ms([-_]|$)/i.test(v.lang) || /malay|melayu/i.test(v.name));
-  const rank = v => (/natural|neural|online|enhanced|premium/i.test(v.name)?2:0) + (/^ms[-_]MY/i.test(v.lang)?1:0);
-  if (ms.length){ voiceObj = ms.sort((a,b)=>rank(b)-rank(a))[0]; voiceKind = 'ms'; }
-  else { voiceObj = vs.find(v=>/^id([-_]|$)/i.test(v.lang)) || null; voiceKind = voiceObj ? 'id' : 'none'; }
-  voiceNote();
+
+/* ---------- Audio: voiceover + muzik latar ---------- */
+const vo = new Audio('voiceover.mp3'); vo.preload = 'auto';
+const bgm = new Audio('tenaga-music.m4a'); bgm.loop = true; bgm.preload = 'auto';
+const BGM_VOL = 0.12;
+bgm.volume = BGM_VOL;
+let voiceOn = true, musicOn = true, voBlocked = false, bgmBlocked = false;
+let actx = null, bgmGain = null, recDest = null;
+// iOS mengabaikan audio.volume, jadi muzik diperlahankan melalui WebAudio bila boleh.
+// Dilangkau untuk file:// kerana sumber media tanpa asal (origin) akan disenyapkan.
+function audioGraph(){
+  if (actx || location.protocol === 'file:') return;
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    bgmGain = actx.createGain(); bgmGain.gain.value = BGM_VOL;
+    actx.createMediaElementSource(bgm).connect(bgmGain).connect(actx.destination);
+    bgm.volume = 1;
+  } catch(e){ actx = null; bgm.volume = BGM_VOL; }
 }
-function voiceNote(){
-  const n = $('voiceNote'); n.hidden = !voice; if (!voice) return;
-  n.className = 'note' + (voiceKind==='ms' ? '' : ' warn');
-  n.textContent = !TTS ? 'Pelayar ini tidak menyokong suara. Sari kata tetap dipaparkan.'
-    : voiceKind==='ms' ? 'Suara: '+voiceObj.name
-    : 'Pelayar ini tiada suara Bahasa Melayu'+(voiceKind==='id' ? ', jadi suara Bahasa Indonesia digunakan buat sementara' : '')+'. Untuk suara Melayu, buka halaman ini dalam Microsoft Edge (suara Yasmin / Osman), atau pasang suara Bahasa Melayu dalam tetapan teks-ke-pertuturan telefon.';
+function recordAudio(){
+  audioGraph(); if (!actx) return [];
+  if (!recDest){
+    recDest = actx.createMediaStreamDestination();
+    const v = actx.createMediaElementSource(vo); v.connect(actx.destination); v.connect(recDest);
+    bgmGain.connect(recDest);
+  }
+  return recDest.stream.getAudioTracks();
 }
-if (TTS){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-// Sebutan: koma ribuan dibaca "koma" dalam BM, dan RM135.15 lebih asli sebagai ringgit + sen
-const sebut = s => s
-  .replace(/(\d),(\d{3})/g, '$1$2')
-  .replace(/RM\s?(\d+)\.(\d{2})/g, (_,r,c) => r+' ringgit'+(+c ? ' '+(+c)+' sen' : ''))
-  .replace(/RM\s?(\d+)/g, '$1 ringgit')
-  .replace(/kWh/g, 'kilowatt-jam');
-function stopSpeech(){ speakId++; speaking = false; if (TTS) speechSynthesis.cancel(); }
-function speakCap(){
-  if (!voice || !playing || !TTS) return;
-  const c = capAt(time); if (c==null || c===lastCap) return; lastCap = c;
-  const u = new SpeechSynthesisUtterance(sebut(CAP[c][1]));
-  if (voiceObj){ u.voice = voiceObj; u.lang = voiceObj.lang; } else u.lang = 'ms-MY';
-  u.rate = 1.05;
-  stopSpeech();
-  const id = speakId; speaking = true; speakStart = performance.now();
-  speakMax = 4000 + u.text.length*120/u.rate;   // jaring keselamatan jika pelayar tak hantar onend
-  u.onend = u.onerror = () => { if (id===speakId) speaking = false; };
-  speechSynthesis.speak(u);
+function syncAudio(){
+  const want = playing && !voBlocked && time >= LEAD && time < LEAD + (vo.duration || VO_DUR);
+  if (want){
+    if (vo.paused || Math.abs(vo.currentTime + LEAD - time) > 0.3){ try { vo.currentTime = time - LEAD; } catch(e){} }
+    if (vo.paused) vo.play().catch(() => { voBlocked = true; });
+  } else if (!vo.paused) vo.pause();
+  if (playing && musicOn && !bgmBlocked){ if (bgm.paused) bgm.play().catch(() => { bgmBlocked = true; }); }
+  else if (!bgm.paused) bgm.pause();
 }
-// Tahan garis masa pada hujung sari kata semasa suara masih bercakap, supaya ayat tak terpotong
-function holdForVoice(prev, t){
-  if (!voice || !speaking || lastCap<0) return t;
-  const el = performance.now() - speakStart;
-  if (el > speakMax || (el > 800 && !speechSynthesis.speaking && !speechSynthesis.pending)){ speaking = false; return t; }
-  const limit = (lastCap+1 < CAP.length ? CAP[lastCap+1][0] : TOTAL) - 0.3;
-  return t > limit ? Math.max(prev, limit) : t;
+
+function jump(t){
+  time = clamp(t, 0, END); poster = false; voBlocked = bgmBlocked = false;
+  if (!playing){ try { vo.currentTime = Math.max(0, time - LEAD); } catch(e){} }
+  syncAudio(); render(toVideo(time)); ui();
 }
-function jump(t){ time = clamp(t, 0, TOTAL); lastCap = -1; stopSpeech(); render(time); ui(); }
-function toggle(){ if (time>=TOTAL) time = 0; playing = !playing; lastNow = performance.now(); if (!playing) stopSpeech(); lastCap=-1; ui(); }
+function toggle(){
+  if (time >= END) time = 0;
+  playing = !playing; poster = false; lastNow = performance.now(); voBlocked = bgmBlocked = false;
+  if (playing){ audioGraph(); actx?.resume?.(); }
+  syncAudio(); ui();
+}
 $('play').onclick = toggle; cv.onclick = toggle;
 seek.oninput = () => jump(+seek.value);
-$('chap').onclick = e => { const b = e.target.closest('[data-i]'); if (b){ jump(SC[+b.dataset.i].start); if (!playing) toggle(); } };
-$('voice').onclick = () => { voice = !voice; $('voice').textContent = 'Suara: '+(voice?'buka':'tutup'); $('voice').classList.toggle('on', voice); if (!voice) stopSpeech(); else if (TTS) pickVoice(); lastCap=-1; voiceNote(); };
+$('chap').onclick = e => { const b = e.target.closest('[data-i]'); if (b){ jump(toAudio(SC[+b.dataset.i].start)); if (!playing) toggle(); } };
+function setBtn(id, on){ $(id).classList.toggle('on', on); $(id).setAttribute('aria-pressed', String(on)); }
+$('voice').onclick = () => { voiceOn = !voiceOn; vo.muted = !voiceOn; setBtn('voice', voiceOn); };
+$('music').onclick = () => { musicOn = !musicOn; bgmBlocked = false; setBtn('music', musicOn); syncAudio(); };
 $('fs').onclick = () => { const el = cv.parentElement; (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.())?.catch?.(()=>{}); };
 addEventListener('keydown', e => { if (e.target.tagName==='INPUT' && e.key!==' ') return;
   if (e.key===' '){ e.preventDefault(); toggle(); } else if (e.key==='ArrowRight') jump(time+5); else if (e.key==='ArrowLeft') jump(time-5); });
+// Pelayar dalam app (Facebook/WhatsApp) biarkan halaman hidup di latar — jeda bila disembunyikan
+document.addEventListener('visibilitychange', () => { if (document.hidden && playing) toggle(); });
+addEventListener('pagehide', () => { if (playing) toggle(); });
 
 // Rakaman — hanya bila fail dibuka di komputer sendiri
 const local = location.protocol==='file:' || ['localhost','127.0.0.1'].includes(location.hostname);
 if (local && window.MediaRecorder && cv.captureStream) $('rec').hidden = false;
 $('rec').onclick = () => {
   if (rec){ rec.stop(); return; }
-  const chunks = []; rec = new MediaRecorder(cv.captureStream(30), { mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm', videoBitsPerSecond: 6e6 });
+  const chunks = [], stream = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...recordAudio()]);
+  const mimeType = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6e6 });
   setupCanvas(); rec.ondataavailable = e => e.data.size && chunks.push(e.data);
   rec.onstop = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(chunks, { type:'video/webm' })); a.download = 'bil-elektrik-dijelaskan.webm'; a.click(); rec = null; setupCanvas(); $('rec').textContent = 'Rakam .webm'; $('rec').classList.remove('on'); };
-  jump(0); rec.start(); $('rec').textContent = 'Henti rakaman'; $('rec').classList.add('on'); playing = true; lastNow = performance.now(); ui();
+  if (playing) toggle();
+  jump(0); rec.start(); $('rec').textContent = 'Henti rakaman'; $('rec').classList.add('on'); toggle();
 };
 
 function frame(now){
-  if (playing){ time = holdForVoice(time, time + (now-lastNow)/1000); if (time>=TOTAL){ time = TOTAL; playing = false; if (rec) rec.stop(); } speakCap(); }
-  lastNow = now; render(time); if (playing || rec) ui();
+  if (playing){
+    time += (now-lastNow)/1000;
+    if (!vo.paused && !vo.seeking){
+      const a = vo.currentTime + LEAD;
+      if (vo.readyState < 3 || Math.abs(a - time) > 0.12) time = a;   // audio menimbal atau hanyut: ikut audio
+    }
+    if (time >= END){ time = END; playing = false; if (rec) rec.stop(); ui(); }
+    syncAudio();
+  }
+  lastNow = now; render(poster ? 2.6 : toVideo(time)); if (playing || rec) ui();
   requestAnimationFrame(frame);
 }
 const fonts = document.fonts ? Promise.all([`700 40px ${FD}`,`600 20px ${FB}`,`700 20px ${FB}`,`700 20px ${FM}`].map(f=>document.fonts.load(f))).catch(()=>{}) : Promise.resolve();
-fonts.then(() => { jump(2.6); requestAnimationFrame(t => { lastNow = t; frame(t); }); });
+fonts.then(() => { ui(); requestAnimationFrame(t => { lastNow = t; frame(t); }); });
 })();
 </script>
 </body>
