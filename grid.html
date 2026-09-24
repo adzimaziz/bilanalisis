@@ -1,0 +1,1227 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grid Titiwangsa</title>
+<meta name="description" content="Game bina grid elektrik 3D — bina loji janakuasa, talian penghantaran, pencawang pengagihan dan kedai tenaga untuk membekal bandar, dengan muka bumi dan tarif sebenar Malaysia.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗼</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#0b1419; --panel:rgba(12,23,29,.93); --panel2:#12232b; --line:#24404a; --line2:#1a3038;
+  --text:#e4eee9; --muted:#8fa7a3; --amber:#f5b82e; --cyan:#4fd1c5; --red:#e5484d; --green:#6fcf7a;
+  --f-d:"Chakra Petch","Segoe UI",system-ui,sans-serif; --f-b:"Figtree","Segoe UI",system-ui,sans-serif; --f-m:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--f-b);font-size:14px}
+#app{position:fixed;inset:0}
+canvas#c{display:block;width:100%;height:100%;touch-action:none;outline:none}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.pnl{background:var(--panel);border:1px solid var(--line);border-radius:8px;backdrop-filter:blur(6px)}
+.lbl{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-m);font-variant-numeric:tabular-nums}
+
+#top{position:absolute;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:8px 12px}
+#brand{font-family:var(--f-d);font-weight:700;font-size:18px;letter-spacing:.04em;color:var(--amber);white-space:nowrap}
+#brand span{color:var(--cyan)}
+.stat{display:grid;gap:1px;min-width:0}
+.stat b{font-family:var(--f-m);font-weight:600;font-size:15px;white-space:nowrap}
+#speed{display:flex;gap:3px}
+#speed button{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-family:var(--f-m);font-size:12px}
+#speed button.on{background:var(--amber);color:#1a1405;border-color:var(--amber)}
+#top .sp{flex:1}
+#helpB{background:none;border:1px solid var(--line);border-radius:6px;width:30px;height:30px;font-family:var(--f-d);font-weight:700;color:var(--amber)}
+
+#pal{position:absolute;left:8px;top:calc(72px + env(safe-area-inset-top,0px));bottom:calc(8px + env(safe-area-inset-bottom,0px));width:224px;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:10px}
+.grp h4{margin:2px 4px 6px;font-family:var(--f-d);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:baseline}
+.grp h4 em{font-style:normal;color:var(--amber);font-family:var(--f-m)}
+.tools{display:grid;gap:4px}
+.tool{display:grid;grid-template-columns:12px 1fr;gap:1px 8px;align-items:center;text-align:left;background:transparent;border:1px solid transparent;border-radius:6px;padding:5px 7px}
+.tool:hover{background:var(--panel2)}
+.tool.on{background:#1b3440;border-color:var(--amber)}
+.tool i{width:12px;height:12px;border-radius:3px;background:var(--c);grid-row:span 2;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.tool .nm{font-weight:600;font-size:13px}
+.tool .mt{font-family:var(--f-m);font-size:10.5px;color:var(--muted);white-space:nowrap}
+
+#side{position:absolute;right:8px;top:calc(72px + env(safe-area-inset-top,0px));width:300px;max-height:calc(100% - 240px - env(safe-area-inset-top,0px));overflow:auto;padding:12px;display:grid;gap:12px;align-content:start}
+#side h3{margin:0;font-family:var(--f-d);font-weight:600;font-size:16px;text-wrap:balance}
+#side p{margin:0;line-height:1.45;color:var(--muted);font-size:13px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--line2)}
+.kv b{font-family:var(--f-m);font-weight:600;font-size:12.5px;text-align:right}
+.meter{height:6px;border-radius:3px;background:#0a1418;overflow:hidden;border:1px solid var(--line2)}
+.meter i{display:block;height:100%;background:var(--cyan)}
+.chk{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
+.chk li{display:grid;grid-template-columns:18px 1fr;gap:6px;color:var(--muted)}
+.chk li::before{content:"○";color:var(--muted);font-family:var(--f-m)}
+.chk li.ok{color:var(--text)}
+.chk li.ok::before{content:"●";color:var(--green)}
+.news{display:grid;gap:6px;font-size:12.5px;color:var(--muted)}
+.news div{border-left:2px solid var(--line);padding-left:8px;line-height:1.4}
+.news div.bad{border-color:var(--red)} .news div.good{border-color:var(--green)}
+.chip{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{color:var(--green);border-color:#2c5a35}.pill.warn{color:var(--amber);border-color:#6b5217}.pill.bad{color:var(--red);border-color:#6b2226}
+.btn{background:var(--amber);color:#1a1405;border:0;border-radius:6px;padding:7px 12px;font-weight:700;font-size:13px}
+.btn.alt{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.btn.red{background:#3a1416;color:#ffb3b5;border:1px solid #6b2226}
+
+#chartBox{position:absolute;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:300px;padding:10px 12px;display:grid;gap:6px}
+#chart{width:100%;height:120px;display:block}
+#legend{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;color:var(--muted)}
+#tip{position:absolute;pointer-events:none;padding:7px 10px;font-size:12.5px;max-width:260px;line-height:1.4;z-index:5}
+#tip b{color:var(--amber)} #tip .no{color:var(--red)} #tip .ok{color:var(--green)}
+#toasts{position:absolute;left:50%;transform:translateX(-50%);top:calc(78px + env(safe-area-inset-top,0px));display:grid;gap:6px;justify-items:center;z-index:6;width:min(460px,calc(100vw - 32px));pointer-events:none}
+.toast{padding:8px 14px;font-size:13px;text-align:center;pointer-events:auto;animation:tin .25s ease-out}
+.toast.bad{border-color:#6b2226} .toast.good{border-color:#2c5a35}
+.toast button{margin-left:8px}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+#mobToggle{display:none}
+
+/* modal */
+#mw{position:absolute;inset:0;background:rgba(3,8,10,.6);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:16px;box-sizing:border-box;z-index:20}
+#modal{width:min(820px,100%);max-height:100%;overflow:auto;background:#0f1d23;border:1px solid var(--line);border-radius:10px;box-sizing:border-box}
+#modal header{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;background:#0f1d23;border-bottom:1px solid var(--line);z-index:1}
+#modal h2{margin:0;font-family:var(--f-d);font-weight:700;font-size:20px;text-wrap:balance}
+#modal .x{background:none;border:1px solid var(--line);border-radius:6px;width:32px;height:32px}
+#mb{padding:14px 18px 20px;display:grid;gap:18px}
+#mb h3{margin:0 0 8px;font-family:var(--f-d);font-weight:600;font-size:15px;letter-spacing:.02em}
+#mb p{margin:0;line-height:1.5;color:var(--muted);max-width:70ch}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:left;vertical-align:top}
+th{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--f-m);font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:11.5px;line-height:1.35;margin-top:2px}
+tr.tot td{border-top:1px solid var(--muted);font-weight:700}
+.pos{color:var(--green)} .neg{color:var(--red)}
+
+/* title */
+#title{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:16px;box-sizing:border-box;background:radial-gradient(ellipse at 50% 40%,rgba(11,20,25,.35),rgba(11,20,25,.88));z-index:30;overflow:auto}
+#title .in{width:min(620px,100%);box-sizing:border-box;padding:24px;display:grid;gap:14px}
+#title h1{margin:0;font-family:var(--f-d);font-weight:700;font-size:clamp(36px,7vw,58px);line-height:.95;letter-spacing:.02em;color:var(--amber)}
+#title h1 small{display:block;font-size:.3em;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+#title p{margin:0;line-height:1.55}
+#title .chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--f-m);font-size:12px;color:var(--muted)}
+#title .chain span{padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--text)}
+#title ul{margin:0;padding-left:18px;line-height:1.6;color:var(--muted);font-size:13px}
+
+@media (max-width:820px){
+  #top{gap:4px 12px;padding:6px 10px}
+  #brand{font-size:15px}
+  .stat b{font-size:13px}
+  .stat.hm{display:none}
+  #pal{top:auto;left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));height:auto;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px;gap:10px}
+  .grp{flex:none}
+  .grp h4{margin:0 2px 4px;font-size:10px}
+  .tools{grid-auto-flow:column;grid-template-rows:auto}
+  .tool{width:112px}
+  #side{top:auto;bottom:calc(98px + env(safe-area-inset-bottom,0px));left:8px;right:8px;width:auto;max-height:38vh}
+  #side.hide{display:none}
+  #chartBox{display:none}
+  #chartBox.show{display:grid;left:8px;right:8px;width:auto;bottom:calc(98px + env(safe-area-inset-bottom,0px))}
+  #mobToggle{display:flex;gap:4px}
+  #mobToggle button{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px;font-size:12px}
+}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+#title .site{font-size:12px;color:var(--muted)}
+#title .site a{color:var(--cyan);text-decoration:none}
+#title .site a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="c" tabindex="0" aria-label="Peta grid 3D"></canvas>
+
+  <header id="top" class="pnl">
+    <div id="brand">GRID <span>TITIWANGSA</span></div>
+    <div class="stat"><span class="lbl" id="tDate">Jan 2026</span><b id="tClock">00:00</b></div>
+    <div id="speed" role="group" aria-label="Kelajuan masa">
+      <button data-s="0" title="Jeda (Space)">❚❚</button><button data-s="1">1×</button><button data-s="2">2×</button><button data-s="4">4×</button>
+    </div>
+    <div class="stat"><span class="lbl">Wang</span><b id="tMoney">—</b></div>
+    <div class="stat hm"><span class="lbl">Untung bulan lalu</span><b id="tProfit">—</b></div>
+    <div class="stat"><span class="lbl">Permintaan / bekalan</span><b id="tDem">—</b></div>
+    <div class="stat hm"><span class="lbl">Rizab kapasiti</span><b id="tRes">—</b></div>
+    <div class="stat hm"><span class="lbl">Tenaga boleh baharu</span><b id="tRE">—</b></div>
+    <div class="stat hm"><span class="lbl">AFA bulan ini</span><b id="tAFA">—</b></div>
+    <div class="sp"></div>
+    <div id="mobToggle"><button id="mInfo">Info</button><button id="mChart">Carta</button></div>
+    <button id="helpB" aria-label="Bantuan">?</button>
+  </header>
+
+  <nav id="pal" class="pnl" aria-label="Binaan"></nav>
+  <aside id="side" class="pnl" aria-live="polite"></aside>
+
+  <div id="chartBox" class="pnl">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="lbl">Agihan penjanaan 24 jam</span><span class="lbl" id="chartMax"></span></div>
+    <canvas id="chart"></canvas>
+    <div id="legend"></div>
+  </div>
+
+  <div id="tip" class="pnl" hidden></div>
+  <div id="toasts"></div>
+
+  <div id="mw" hidden><div id="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><header><h2 id="mt"></h2><button class="x" id="mx" aria-label="Tutup">✕</button></header><div id="mb"></div></div></div>
+
+  <div id="title">
+    <div class="in pnl">
+      <h1><small>Simulasi rantaian bekalan elektrik</small>Grid Titiwangsa</h1>
+      <div class="chain"><span>Penjanaan</span>→<span>Penghantaran 500/275/132 kV</span>→<span>PMU</span>→<span>Pengagihan 33 kV</span>→<span>PPU / PE</span>→<span>Peruncitan</span>→<span>Domestik · Komersial · Industri</span></div>
+      <p>Sebuah semenanjung dengan banjaran di tengah, sungai mengalir ke dua pantai, dan saluran paip gas dari terminal di pantai timur. Bina loji arang batu di pantai, empangan hidro di lembah tinggi, kitaran padu dekat paip gas, solar di tanah rata — kemudian bawa elektrik merentasi bukit ke setiap bandar.</p>
+      <ul>
+        <li>Klik alat di kiri, kemudian klik peta untuk bina. Talian: klik titik mula, kemudian titik akhir.</li>
+        <li>Seret untuk gerak peta · klik kanan + seret untuk putar · roda tetikus untuk zum · WASD / Q E juga boleh.</li>
+        <li>Satu hari dalam game = satu bulan (profil beban harian × 30). Bil dikira hujung setiap bulan guna tarif sebenar RP4.</li>
+      </ul>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="bNew">Mula grid baharu</button><button class="btn alt" id="bCont" hidden>Sambung simpanan</button></div>
+      <p class="site">Sebahagian daripada <a href="index.html">Banding Tarif TNB</a> &middot; <a href="video-bil.html">Video bil elektrik</a> &middot; <a href="game.html">Kampung Kilowatt 2D</a> &middot; <a href="game-3d.html">3D</a></p>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const $ = id => document.getElementById(id);
+
+/* ======================= TARIF (RP4, 1 Julai 2025) ======================= */
+const EEI = [[200,25],[250,24.5],[300,22.5],[350,21],[400,17],[450,14.5],[500,12],[550,10.5],[600,9],[650,7.5],[700,5.5],[750,4.5],[800,4],[850,2.5],[900,1],[1000,0.5]];
+const eeiRate = k => { if (k<=0) return 0; for (const [m,r] of EEI) if (k<=m) return r; return 0; };
+function bilDomestik(kwhIn, afaSen){
+  const kwh = Math.max(0, kwhIn), kadar = kwh<=1500 ? 27.03 : 37.03;
+  const tenaga = kwh*kadar/100, kapasiti = kwh*4.55/100, rangkaian = kwh*12.85/100;
+  const runcit = kwh>600 ? 10 : 0, afa = kwh>600 ? kwh*afaSen/100 : 0, eei = -kwh*eeiRate(kwh)/100;
+  return { kwh, kadar, tenaga, kapasiti, rangkaian, runcit, afa, eei, jumlah: tenaga+kapasiti+rangkaian+runcit+afa+eei };
+}
+const TK = { tenaga:27.03, kapasiti:8.83, rangkaian:14.82, runcit:20 };                 // Bukan domestik voltan rendah (sen/kWh, RM/bulan)
+const TI = { tenaga:29.83, kapasitiKW:29.43, rangkaianKW:59.84, runcit:200 };          // Voltan sederhana (sen/kWh, RM/kW kehendak maksimum)
+const AFA_REAL = [-4.99,-2.77,-2.15,-0.47,1.38,2.59,3.59,3.80,3.67];
+
+/* ======================= KATALOG BINAAN ======================= */
+const K = {
+  coal: { g:'gen', nm:'Arang batu', full:'Janakuasa Arang Batu', mw:1000, cost:1400, om:8, fuel:170, idx:'coal', co2:0.94, av:0.9, c:'#6b7075', rule:'Mesti di tepi pantai — arang batu diimport melalui jeti. Tanah rendah.', eg:'Contoh: Manjung (Perak), Jimah (N. Sembilan), Tanjung Bin (Johor)' },
+  ccgt: { g:'gen', nm:'Kitaran padu', full:'Kitaran Padu Gas (CCGT)', mw:700, cost:900, om:5, fuel:240, idx:'gas', co2:0.37, av:0.92, c:'#3b82c4', rule:'≤2 petak dari saluran paip gas. Tanah rendah, bukan sungai.', eg:'Contoh: Prai, Pasir Gudang, Tuanku Ja\'afar Port Dickson' },
+  ocgt: { g:'gen', nm:'Turbin gas', full:'Turbin Gas Kitaran Terbuka (OCGT)', mw:200, cost:220, om:1.5, fuel:380, idx:'gas', co2:0.55, av:0.95, c:'#9cc3e6', rule:'≤3 petak dari saluran paip gas. Loji puncak: mahal, tapi cepat.', eg:'Loji "peaker" untuk waktu permintaan tertinggi' },
+  hydro:{ g:'gen', nm:'Empangan hidro', full:'Empangan Hidro', mw:0, cost:0, om:3, fuel:0, co2:0, re:true, c:'#18a999', rule:'Di atas sungai di kawasan bukit / tanah tinggi. Makin tinggi lembah, makin besar MW. Air terhad ikut musim.', eg:'Contoh: Kenyir, Pergau, Temenggor, Ulu Jelai' },
+  mini: { g:'gen', nm:'Hidro kecil', full:'Hidro Kecil (larian sungai)', mw:20, cost:55, om:0.2, fuel:0, co2:0, re:true, c:'#7fded2', rule:'Di atas mana-mana sungai. Keluaran ikut aliran — tinggi masa monsun.', eg:'Projek hidro kecil di bawah skim FiT SEDA' },
+  solar:{ g:'gen', nm:'Solar LSS', full:'Solar Berskala Besar (LSS)', mw:50, cost:120, om:0.4, fuel:0, co2:0, re:true, c:'#f5b82e', rule:'Tanah rata rendah, bukan sungai. Jana waktu siang sahaja; berkurang bila mendung monsun.', eg:'Program LSS1–LSS5 Suruhanjaya Tenaga' },
+  bio:  { g:'gen', nm:'Biojisim sawit', full:'Biojisim Sawit', mw:30, cost:90, om:0.6, fuel:130, idx:null, co2:0.05, av:0.85, re:true, c:'#7aa844', rule:'≤2 petak dari ladang sawit — bahan api tandan kosong & sisa kilang.', eg:'Loji biojisim/biogas di kilang sawit' },
+  bess: { g:'gen', nm:'Bateri BESS', full:'Sistem Storan Tenaga Bateri', mw:100, mwh:400, cost:180, om:0.5, fuel:0, co2:0, c:'#b88be0', rule:'Mana-mana tanah bukan sungai. Cas waktu tengah hari & awal pagi, nyahcas 18:00–23:00.', eg:'Contoh: projek BESS 400 MWh Kapar' },
+  l500: { g:'tx', nm:'Talian 500 kV', cap:3000, per:5, om:0.02, c:'#f1ead6', h:1.35, rule:'Loji / BESS ↔ PMU, atau PMU ↔ PMU. Kapasiti 3,000 MW.' },
+  l275: { g:'tx', nm:'Talian 275 kV', cap:1000, per:2.5, om:0.012, c:'#d9d2bd', h:1.1, rule:'Loji / BESS ↔ PMU, atau PMU ↔ PMU. Kapasiti 1,000 MW.' },
+  l132: { g:'tx', nm:'Talian 132 kV', cap:300, per:1.2, om:0.006, c:'#bdb7a4', h:0.9, rule:'Loji / BESS ↔ PMU, atau PMU ↔ PMU. Kapasiti 300 MW.' },
+  pmu:  { g:'tx', nm:'PMU', full:'Pencawang Masuk Utama (PMU)', cap:500, cost:45, om:0.4, c:'#e07a5f', rule:'Menurunkan voltan penghantaran ke 33 kV. Titik pertemuan grid penghantaran & pengagihan. 500 MW.' },
+  l33:  { g:'dx', nm:'Talian 33 kV', cap:150, per:0.35, om:0.002, c:'#9aa39f', h:0.5, max:12, rule:'PMU ↔ PPU, atau PPU ↔ PPU. Maks 12 petak. Kapasiti 150 MW.' },
+  ppu:  { g:'dx', nm:'PPU + PE', full:'Pencawang Pembahagian Utama & PE', cap:120, cost:8, om:0.05, c:'#8bc48a', rule:'Mesti di dalam kawasan bandar/kampung. Membekal pengguna berdekatan melalui pencawang elektrik (PE) 11 kV / 415 V. 120 MW.' },
+  kedai:{ g:'rt', nm:'Kedai Tenaga', full:'Kedai Tenaga', cost:12, om:0.3, radius:9, c:'#d58fb8', rule:'Di dalam bandar. Bandar dalam radius 9 petak: kutipan bil 98% (tanpa: 86%) dan kepuasan pelanggan naik.' },
+};
+const GEN = ['coal','ccgt','ocgt','hydro','mini','solar','bio'];
+const TXL = ['l500','l275','l132'];
+const isLine = k => k==='l500'||k==='l275'||k==='l132'||k==='l33';
+const GROUPS = [
+  { id:'gen', n:'1', t:'Penjanaan', items:['coal','ccgt','ocgt','hydro','mini','solar','bio','bess'] },
+  { id:'tx',  n:'2', t:'Penghantaran', items:['l500','l275','l132','pmu'] },
+  { id:'dx',  n:'3', t:'Pengagihan', items:['l33','ppu'] },
+  { id:'rt',  n:'4', t:'Peruncitan', items:['kedai'] },
+  { id:'tl',  n:'', t:'Alat', items:['pilih','roboh'] },
+];
+const GEN_COL = { coal:'#6b7075', ccgt:'#3b82c4', ocgt:'#9cc3e6', hydro:'#18a999', mini:'#7fded2', solar:'#f5b82e', bio:'#7aa844', bess:'#b88be0' };
+
+/* ======================= PROFIL BEBAN ======================= */
+const PD = [0.55,0.5,0.47,0.45,0.45,0.5,0.6,0.62,0.6,0.6,0.62,0.66,0.7,0.72,0.72,0.7,0.7,0.75,0.85,0.95,1.0,1.0,0.9,0.72];
+const PK = [0.3,0.28,0.27,0.27,0.28,0.32,0.4,0.55,0.78,0.92,0.98,1.0,1.0,1.0,1.0,0.98,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.34];
+const PI = [0.82,0.8,0.8,0.8,0.8,0.82,0.86,0.92,0.97,1.0,1.0,1.0,0.98,1.0,1.0,1.0,0.98,0.95,0.92,0.9,0.88,0.86,0.85,0.83];
+const SUN = Array.from({length:24}, (_,h) => { const t=(h+0.5-6.8)/12.4; return t>0&&t<1 ? Math.pow(Math.sin(t*Math.PI),1.3) : 0; });
+const HW = PD.map((d,h) => Math.pow((d+PK[h]+PI[h])/3, 5));
+
+/* ======================= UTIL ======================= */
+const BULAN = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
+const namaBulan = m => BULAN[m%12]+' '+(2026+Math.floor(m/12));
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const sstep = (e0,e1,x) => { const t = clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); };
+const fRM = v => { const a=Math.abs(v); return (v<0?'−':'')+'RM '+(a>=100?Math.round(a).toLocaleString('en-MY'):a.toFixed(1))+' j'; };
+const fRMp = v => (v<0?'−':'')+'RM '+Math.abs(v).toFixed(2);
+const fMW = v => Math.round(v).toLocaleString('en-MY')+' MW';
+const fN = v => Math.round(v).toLocaleString('en-MY');
+const fSen = v => (v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(2)+' sen';
+function mulberry(a){ return () => { a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const hash2 = (x,z,s) => { let h = Math.imul(x|0,374761393) ^ Math.imul(z|0,668265263) ^ Math.imul(s|0,1442695041); h = Math.imul(h^(h>>>13),1274126177); return ((h^(h>>>16))>>>0)/4294967296; };
+function vnoise(x,z,s){ const xi=Math.floor(x), zi=Math.floor(z), xf=x-xi, zf=z-zi, u=xf*xf*(3-2*xf), v=zf*zf*(3-2*zf);
+  const a=hash2(xi,zi,s), b=hash2(xi+1,zi,s), c=hash2(xi,zi+1,s), d=hash2(xi+1,zi+1,s); return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; }
+function fbm(x,z,s){ let t=0, amp=0.5, f=1; for (let i=0;i<4;i++){ t+=amp*vnoise(x*f,z*f,s+i*17); f*=2; amp*=0.5; } return t/0.9375; }
+
+/* ======================= MUKA BUMI ======================= */
+const W=56, D=40, HS=0.55, SEED=11;
+const N = W*D, H = new Float32Array(N), CLS = new Uint8Array(N), RIVER = new Uint8Array(N), PIPE = new Uint8Array(N), SAWIT = new Uint8Array(N), FOREST = new Uint8Array(N), PDIST = new Uint8Array(N).fill(99);
+const ix = (x,z) => z*W+x, inb = (x,z) => x>=0&&z>=0&&x<W&&z<D;
+const CLS_NM = ['Laut','Pantai','Tanah rendah','Bukit','Tanah tinggi'];
+(function genTerrain(){
+  for (let z=0; z<D; z++) for (let x=0; x<W; x++){
+    const rx = 31 + 3*Math.sin(z*0.18) + 4*(fbm(z*0.08,1.3,SEED)-0.5);
+    const south = sstep(39, 28, z);
+    const ridge = 6.8*Math.exp(-((x-rx)**2)/(2*4.3*4.3))*(0.35+0.65*south)*(0.7+0.6*fbm(x*0.18,z*0.18,SEED+3));
+    const sx = 17 + 2*Math.cos(z*0.22);
+    const sec = 3.1*Math.exp(-((x-sx)**2)/(2*2.3*2.3))*sstep(33,12,z)*(0.6+0.8*fbm(x*0.25,z*0.25,SEED+5));
+    const base = 0.35 + 1.0*fbm(x*0.11,z*0.11,SEED+9);
+    const cw = 3.2 + 3*fbm(z*0.13,4.1,SEED+11), ce = 50.8 + 3*fbm(z*0.12,8.3,SEED+13);
+    const fall = sstep(cw-1, cw+3.5, x) * sstep(ce+1, ce-3.5, x);
+    H[ix(x,z)] = (base+ridge+sec)*fall - (1-fall)*1.2;
+  }
+  // Sungai
+  // Priority-flood: setiap petak darat dapat arah aliran menurun ke laut (tiada lembah tertutup)
+  const PAR = new Int32Array(N).fill(-1), done = new Uint8Array(N), heap = [];
+  const key = i => H[i] + fbm((i%W)*0.5, ((i/W)|0)*0.5, SEED+50)*0.9;
+  const push = (k,i) => { heap.push([k,i]); let c=heap.length-1; while (c>0){ const p=(c-1)>>1; if (heap[p][0]<=heap[c][0]) break; [heap[p],heap[c]]=[heap[c],heap[p]]; c=p; } };
+  const pop = () => { const top=heap[0], lastE=heap.pop(); if (heap.length){ heap[0]=lastE; let c=0; for(;;){ const l=2*c+1, r=l+1; let m=c; if (l<heap.length && heap[l][0]<heap[m][0]) m=l; if (r<heap.length && heap[r][0]<heap[m][0]) m=r; if (m===c) break; [heap[m],heap[c]]=[heap[c],heap[m]]; c=m; } } return top; };
+  for (let i=0;i<N;i++){ const x=i%W, z=(i/W)|0; if (H[i]<=0 || x===0 || x===W-1){ done[i]=1; push(key(i), i); } }
+  while (heap.length){ const [k,i] = pop(), x=i%W, z=(i/W)|0;
+    for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx, nz=z+dz; if (!inb(nx,nz)) continue; const j=ix(nx,nz); if (done[j]) continue; done[j]=1; PAR[j]=i; push(Math.max(key(j), k+0.001), j); } }
+  const cand = []; for (let i=0;i<N;i++) if (H[i]>3.0) cand.push(i);
+  cand.sort((a,b)=>H[b]-H[a]);
+  const src = [];
+  for (const i of cand){ const x=i%W, z=(i/W)|0; if (z<4 || z>D-5) continue; if (src.every(j=>Math.hypot(j%W-x,((j/W)|0)-z)>=7)) src.push(i); if (src.length>=9) break; }
+  for (const s0 of src){
+    let i = s0, hPrev = H[s0];
+    for (let step=0; step<300 && i>=0 && H[i]>0; step++){
+      if (RIVER[i] && step>0) break;
+      RIVER[i] = 1; if (H[i] > hPrev) H[i] = Math.max(0.12, hPrev); hPrev = H[i];
+      i = PAR[i];
+    }
+  }
+  for (let i=0;i<N;i++) if (RIVER[i] && H[i]>0) H[i] = Math.max(0.1, H[i]-0.12);
+  for (let i=0;i<N;i++){ const h=H[i]; if (h<=0){ CLS[i]=0; H[i]=-0.5; RIVER[i]=0; } else { if (h<0.08) H[i]=0.08; CLS[i] = h<1.6?2 : h<3.5?3 : 4; } }
+  for (let z=0; z<D; z++) for (let x=0; x<W; x++){ const i=ix(x,z); if (CLS[i]!==2) continue;
+    let sea=false; for (let dz=-1;dz<=1;dz++) for (let dx=-1;dx<=1;dx++){ const nx=x+dx,nz=z+dz; if (inb(nx,nz) && CLS[ix(nx,nz)]===0) sea=true; } if (sea) CLS[i]=1; }
+  for (let z=0; z<D; z++) for (let x=0; x<W; x++){ const i=ix(x,z);
+    if (CLS[i]===2 && !RIVER[i] && fbm(x*0.32,z*0.32,SEED+21)>0.6) SAWIT[i]=1;
+    if ((CLS[i]===3||CLS[i]===4) && !RIVER[i] && hash2(x,z,99)<0.78) FOREST[i]=1;
+    if (CLS[i]===2 && !RIVER[i] && !SAWIT[i] && fbm(x*0.4,z*0.4,SEED+33)>0.72) FOREST[i]=1;
+  }
+})();
+function snapLand(x,z,dir){ for (let k=0;k<14;k++){ const xx=x+dir*k; if (inb(xx,z) && (CLS[ix(xx,z)]===1||CLS[ix(xx,z)]===2) && !RIVER[ix(xx,z)]) return [xx,z]; } return [x,z]; }
+const PIPE_PTS = [snapLand(50,6,-1), snapLand(49,19,-1), snapLand(47,31,-1), [36,37], [24,37], snapLand(6,30,1), snapLand(6,17,1), snapLand(6,3,1)];
+(function genPipe(){
+  for (let s=0; s<PIPE_PTS.length-1; s++){ const [x0,z0]=PIPE_PTS[s], [x1,z1]=PIPE_PTS[s+1], L=Math.hypot(x1-x0,z1-z0);
+    for (let t=0; t<=L; t+=0.3){ const x=Math.round(x0+(x1-x0)*t/L), z=Math.round(z0+(z1-z0)*t/L); if (inb(x,z) && CLS[ix(x,z)]) PIPE[ix(x,z)]=1; } }
+  for (let i=0;i<N;i++) if (PIPE[i]){ const x=i%W, z=(i/W)|0; for (let dz=-4;dz<=4;dz++) for (let dx=-4;dx<=4;dx++){ const nx=x+dx,nz=z+dz; if (inb(nx,nz)){ const j=ix(nx,nz); PDIST[j]=Math.min(PDIST[j], Math.max(Math.abs(dx),Math.abs(dz))); } } }
+})();
+const nearSawit = (x,z,r) => { for (let dz=-r;dz<=r;dz++) for (let dx=-r;dx<=r;dx++){ const nx=x+dx,nz=z+dz; if (inb(nx,nz) && SAWIT[ix(nx,nz)]) return true; } return false; };
+const hydroMW = h => clamp(Math.round((60+h*78)/10)*10, 150, 600);
+function snapTown(x,z,high){
+  for (let r=0;r<10;r++) for (let dz=-r;dz<=r;dz++) for (let dx=-r;dx<=r;dx++){
+    if (Math.max(Math.abs(dx),Math.abs(dz))!==r) continue; const nx=x+dx,nz=z+dz; if (!inb(nx,nz)) continue; const i=ix(nx,nz);
+    if (!RIVER[i] && !PIPE[i] && (CLS[i]===1||CLS[i]===2||(high&&CLS[i]>=3))) return [nx,nz];
+  } return [x,z];
+}
+
+/* ======================= STATE ======================= */
+const TOWN_DEF = [
+  { nm:'Bandar Pelabuhan', at:[9,15],  dom:170, kom:110, ind:180 },
+  { nm:'Bandar Utara',     at:[10,5],  dom:80,  kom:45,  ind:50 },
+  { nm:'Kuala Timur',      at:[46,11], dom:70,  kom:35,  ind:110 },
+  { nm:'Bandar Selatan',   at:[18,33], dom:110, kom:65,  ind:130 },
+  { nm:'Pekan Tengah',     at:[22,21], dom:40,  kom:22,  ind:15 },
+  { nm:'Tanah Tinggi',     at:[30,11], dom:12,  kom:18,  ind:0, high:true },
+  { nm:'Kg. Sungai Baru',  at:[13,25], dom:9,   kom:2,   ind:0 },
+  { nm:'Kg. Pantai Timur', at:[46,29], dom:11,  kom:3,   ind:0 },
+  { nm:'Kg. Hulu',         at:[25,6],  dom:6,   kom:1,   ind:0, high:true },
+  { nm:'Kg. Bukit Batu',   at:[38,24], dom:7,   kom:1,   ind:0, high:true },
+];
+const NEW_NAMES = ['Seri Mutiara','Bukit Indah','Desa Aman','Bandar Baru Jaya','Taman Cahaya','Kota Permai','Sungai Emas','Seri Kenanga','Puncak Alam','Taman Suria','Bandar Damai','Seri Iskandar'];
+function newState(){
+  const towns = TOWN_DEF.map((t,i) => { const [x,z]=snapTown(t.at[0],t.at[1],t.high); return { id:'t'+i, nm:t.nm, x, z, dom:t.dom, kom:t.kom, ind:t.ind, sat:60, served:0, rel:null }; });
+  return { money:4000, month:0, hour:0, speed:0, nodes:[], lines:[], towns, nid:1, coalIdx:1, gasIdx:1, afa:AFA_REAL[0], afaCap:0,
+    wx:null, m:null, chart:[], reports:[], news:[], nameIdx:0, started:false };
+}
+let S = newState();
+const SAVE_KEY = 'grid-titiwangsa-v1';
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function loadSave(){ try{ const j=localStorage.getItem(SAVE_KEY); return j?JSON.parse(j):null; }catch(e){ return null; } }
+const townR = t => 0.8 + Math.sqrt(t.dom+t.kom+t.ind)/7;
+const townPeak = t => t.dom+t.kom+t.ind;
+function newMonthAcc(){ return { gen:{}, fuel:0, fuelBase:0, co2:0, uns:0, dem:0, town:{} }; }
+function newWeather(m){
+  const mm = m%12, mons = mm>=10 || mm<=1, r = Math.random();
+  return { mons, cloud: mons ? 0.6+0.12*r : 0.84+0.12*r, hydroCF: mons ? 0.5+0.1*r : 0.3+0.1*r, mini: mons ? 0.75 : 0.45 };
+}
+function afaFor(m){ return m < AFA_REAL.length ? AFA_REAL[m] : null; }
+
+/* ======================= THREE: ADEGAN ======================= */
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9fd3e8); scene.fog = new THREE.Fog(0x9fd3e8, 60, 130);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 400);
+const hemi = new THREE.HemisphereLight(0xe8f4ff, 0x4d6b3a, 1.0); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff1d8, 2.3); sun.castShadow = true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera, { left:-40, right:40, top:40, bottom:-40, near:1, far:160 }); sun.shadow.bias = -0.0008;
+scene.add(sun, sun.target);
+
+const MC = {};
+const mat = (c,o={}) => { const k=c+JSON.stringify(o); return MC[k] || (MC[k] = new THREE.MeshStandardMaterial(Object.assign({ color:c, roughness:.85, flatShading:true }, o))); };
+const GB = new THREE.BoxGeometry(1,1,1), GC = new THREE.CylinderGeometry(1,1,1,8), GCone = new THREE.ConeGeometry(1,1,4), GS = new THREE.SphereGeometry(1,8,6);
+function part(geo, m, sx,sy,sz, x,y,z, parent){ const o = new THREE.Mesh(geo, typeof m==='number'?mat(m):m); o.scale.set(sx,sy,sz); o.position.set(x,y,z); o.castShadow = true; o.receiveShadow = true; parent.add(o); return o; }
+
+// Ketinggian bucu
+const CH = new Float32Array((W+1)*(D+1));
+for (let j=0;j<=D;j++) for (let i=0;i<=W;i++){ let s=0,n=0; for (const [a,b] of [[i-1,j-1],[i,j-1],[i-1,j],[i,j]]) if (inb(a,b)){ s+=H[ix(a,b)]; n++; } CH[j*(W+1)+i] = (s/n)*HS; }
+function groundY(x,z){ x=clamp(x,0,W); z=clamp(z,0,D); const i=Math.min(W-1,Math.floor(x)), j=Math.min(D-1,Math.floor(z)), fx=x-i, fz=z-j;
+  const a=CH[j*(W+1)+i], b=CH[j*(W+1)+i+1], c=CH[(j+1)*(W+1)+i], d=CH[(j+1)*(W+1)+i+1]; return (a*(1-fx)+b*fx)*(1-fz) + (c*(1-fx)+d*fx)*fz; }
+const tileY = (x,z) => Math.max(0.02, groundY(x+0.5, z+0.5));
+
+// Mesh muka bumi
+let terrain;
+{
+  let g = new THREE.PlaneGeometry(W, D, W, D); g.rotateX(-Math.PI/2); g.translate(W/2, 0, D/2); g = g.toNonIndexed();
+  const pos = g.attributes.position, col = new Float32Array(pos.count*3), c = new THREE.Color();
+  for (let v=0; v<pos.count; v++){ const i=Math.round(pos.getX(v)), j=Math.round(pos.getZ(v)); pos.setY(v, CH[j*(W+1)+i]); }
+  for (let tri=0; tri<pos.count/3; tri++){
+    const cell = tri>>1, x = cell%W, z = (cell/W)|0, i = ix(x,z), h = H[i], v = 0.93 + hash2(x,z,5)*0.14;
+    if (CLS[i]===0) c.set(0x2a5d7a);
+    else if (RIVER[i]) c.set(0x3f8fc2);
+    else if (CLS[i]===1) c.set(0xd8c690);
+    else if (SAWIT[i]) c.set(0x4f8a3c);
+    else if (CLS[i]===2) c.setHSL(0.27-h*0.015, 0.38, 0.40+h*0.03);
+    else if (CLS[i]===3) c.setHSL(0.27, 0.36, 0.36);
+    else c.setHSL(0.17, 0.12, 0.34 + (h-3.5)*0.06);
+    if (PIPE[i] && !RIVER[i]) c.lerp(new THREE.Color(0xd9b45a), 0.35);
+    c.multiplyScalar(v);
+    for (let k=0;k<3;k++){ col[(tri*3+k)*3]=c.r; col[(tri*3+k)*3+1]=c.g; col[(tri*3+k)*3+2]=c.b; }
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col,3)); g.computeVertexNormals();
+  terrain = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors:true, flatShading:true, roughness:1 }));
+  terrain.receiveShadow = true; scene.add(terrain);
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(W+120, D+120), new THREE.MeshStandardMaterial({ color:0x1f6a93, roughness:.25, metalness:.1, transparent:true, opacity:.92 }));
+  sea.rotation.x = -Math.PI/2; sea.position.set(W/2, -0.07, D/2); scene.add(sea);
+}
+// Pokok & sawit (instanced)
+const treeInst = {}; // tile -> [[mesh, idx]]
+{
+  const forestTiles = [], palmTiles = [];
+  for (let i=0;i<N;i++){ if (FOREST[i]) forestTiles.push(i); if (SAWIT[i]) palmTiles.push(i); }
+  const tm = new THREE.InstancedMesh(new THREE.ConeGeometry(0.22,0.7,6), mat(0x2f6b34), forestTiles.length*2);
+  const tm2 = new THREE.InstancedMesh(new THREE.ConeGeometry(0.2,0.6,6), mat(0x3d7f3a), forestTiles.length*2);
+  const pc = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.16,0), mat(0x5c9a3f), palmTiles.length*3);
+  const pt = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.025,0.035,0.3,5), mat(0x7a5a38), palmTiles.length*3);
+  const M4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3();
+  let k=0;
+  for (const i of forestTiles){ const x=i%W, z=(i/W)|0; treeInst[i]=[];
+    for (let r=0;r<2;r++){ const ox=0.2+hash2(x,z,r*7+1)*0.6, oz=0.2+hash2(x,z,r*7+2)*0.6, s=0.7+hash2(x,z,r+9)*0.7;
+      p.set(x+ox, groundY(x+ox,z+oz)+0.33*s, z+oz); sc.set(s,s,s); M4.compose(p,q,sc); (r?tm2:tm).setMatrixAt(k,M4); treeInst[i].push([r?tm2:tm,k]); }
+    k++; }
+  k=0;
+  for (const i of palmTiles){ const x=i%W, z=(i/W)|0; treeInst[i]=[];
+    for (let r=0;r<3;r++){ const ox=0.2+hash2(x,z,r*5+3)*0.6, oz=0.2+hash2(x,z,r*5+4)*0.6, y=groundY(x+ox,z+oz);
+      p.set(x+ox,y+0.15,z+oz); sc.set(1,1,1); M4.compose(p,q,sc); pt.setMatrixAt(k,M4);
+      p.y = y+0.33; sc.set(1.3,0.55,1.3); M4.compose(p,q,sc); pc.setMatrixAt(k,M4); treeInst[i].push([pt,k],[pc,k]); k++; } }
+  for (const m of [tm,tm2,pc,pt]){ m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+}
+function hideTrees(i){ const L = treeInst[i]; if (!L) return; const z = new THREE.Matrix4().makeScale(0,0,0); for (const [m,k] of L){ m.setMatrixAt(k,z); m.instanceMatrix.needsUpdate = true; } }
+// Saluran paip gas
+{
+  const tiles = []; for (let i=0;i<N;i++) if (PIPE[i]) tiles.push(i);
+  const m = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05,0.05,0.28,6), mat(0xf2c230), tiles.length); const M4 = new THREE.Matrix4();
+  tiles.forEach((i,k) => { const x=i%W, z=(i/W)|0; M4.makeTranslation(x+0.5, tileY(x,z)+0.14, z+0.5); m.setMatrixAt(k,M4); }); scene.add(m);
+}
+
+// Label
+function makeLabel(lines, colors){
+  const cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+  const f1 = '600 30px "Chakra Petch", "Segoe UI", sans-serif', f2 = '500 22px "JetBrains Mono", monospace';
+  ctx.font=f1; let w = ctx.measureText(lines[0]).width; if (lines[1]){ ctx.font=f2; w=Math.max(w, ctx.measureText(lines[1]).width); }
+  w = Math.ceil(w)+28; const h = lines[1]?74:46; cv.width=w; cv.height=h;
+  ctx.fillStyle='rgba(10,20,25,.82)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(1,1,w-2,h-2,8) : ctx.rect(1,1,w-2,h-2); ctx.fill();
+  ctx.strokeStyle=colors?.[2]||'rgba(79,209,197,.5)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.textBaseline='top'; ctx.font=f1; ctx.fillStyle=colors?.[0]||'#e4eee9'; ctx.fillText(lines[0],14,8);
+  if (lines[1]){ ctx.font=f2; ctx.fillStyle=colors?.[1]||'#8fa7a3'; ctx.fillText(lines[1],14,42); }
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, depthWrite:false, depthTest:false, transparent:true }));
+  sp.scale.set(w/h*(lines[1]?1.15:0.72), lines[1]?1.15:0.72, 1); sp.renderOrder = 10; return sp;
+}
+{
+  const [gx,gz] = PIPE_PTS[0]; const l = makeLabel(['Terminal Gas'], ['#f5b82e',null,'rgba(245,184,46,.6)']); l.position.set(gx+0.5, tileY(gx,gz)+1.6, gz+0.5); scene.add(l);
+}
+
+/* ======================= VISUAL: BANDAR ======================= */
+const VIS = { towns:{}, nodes:{}, lines:{} };
+const townsG = new THREE.Group(), nodesG = new THREE.Group(), linesG = new THREE.Group(); scene.add(townsG, nodesG, linesG);
+const occ = new Map(); // tile -> nodeId
+function buildTown(t){
+  const old = VIS.towns[t.id]; if (old){ townsG.remove(old.g); }
+  const g = new THREE.Group(); townsG.add(g);
+  const mats = { dom:new THREE.MeshStandardMaterial({ color:0xefe6d2, emissive:0xffc877, emissiveIntensity:0, flatShading:true, roughness:.8 }),
+    kom:new THREE.MeshStandardMaterial({ color:0x9fb8c8, emissive:0xbfe3ff, emissiveIntensity:0, flatShading:true, roughness:.4, metalness:.2 }),
+    ind:new THREE.MeshStandardMaterial({ color:0xa7a9a6, emissive:0xffb35c, emissiveIntensity:0, flatShading:true, roughness:.8 }) };
+  const peak = townPeak(t), R = townR(t), n = clamp(Math.round(peak/5), 4, 120), rnd = mulberry(t.id.length*977 + t.x*31 + t.z*7 + 3);
+  const tot = t.dom+t.kom+t.ind;
+  for (let k=0;k<n;k++){
+    const a = rnd()*Math.PI*2, rr = R*Math.sqrt(rnd());
+    const x = t.x+0.5+Math.cos(a)*rr, z = t.z+0.5+Math.sin(a)*rr, tx=Math.floor(x), tz=Math.floor(z);
+    if (!inb(tx,tz)) continue; const i = ix(tx,tz); if (!CLS[i] || RIVER[i] || occ.has(i)) continue;
+    const y = groundY(x,z), rel = rr/R, u = rnd()*tot;
+    let type = u < t.ind ? 'ind' : u < t.ind+t.kom ? 'kom' : 'dom';
+    if (type==='ind' && rel<0.45 && t.dom>0) type='dom'; if (type==='kom' && rel>0.8) type='dom';
+    if (type==='dom'){ const s=0.14+rnd()*0.06; part(GB, mats.dom, s*1.4,s,s*1.2, x,y+s/2,z, g); const r=part(GCone, 0xa9483a, s*1.05,s*0.7,s*1.05, x,y+s+s*0.35,z, g); r.rotation.y=Math.PI/4; }
+    else if (type==='kom'){ const hgt = 0.3 + rnd()*(0.6 + Math.min(1.6, peak/250)) * (1-rel*0.6); part(GB, mats.kom, 0.26,hgt,0.26, x,y+hgt/2,z, g); }
+    else { part(GB, mats.ind, 0.55,0.22,0.38, x,y+0.11,z, g); part(GC, 0x8a8f8f, 0.035,0.45,0.035, x+0.18,y+0.3,z+0.1, g); }
+  }
+  const label = makeLabel([t.nm, fMW(peak)]); label.position.set(t.x+0.5, tileY(t.x,t.z)+1.9+R*0.2, t.z+0.5); g.add(label);
+  VIS.towns[t.id] = { g, mats, label, status:'', n, R };
+}
+function townStatus(t){ return !S.started ? 'idle' : t.served>=0.99 ? 'ok' : t.served>=0.9 ? 'warn' : 'dark'; }
+function refreshTownLabel(t){
+  const v = VIS.towns[t.id]; if (!v) return; const st = townStatus(t);
+  const key = st+'|'+Math.round(townPeak(t)); if (key === v.status) return; v.status = key;
+  v.g.remove(v.label); v.label.material.map.dispose();
+  const txt = st==='dark' ? (t.served<0.05 ? 'GELAP' : 'CATUAN '+Math.round(t.served*100)+'%') : st==='warn' ? 'Bekalan '+Math.round(t.served*100)+'%' : fMW(townPeak(t));
+  const col = st==='dark' ? ['#ffd0d1','#e5484d','rgba(229,72,77,.8)'] : st==='warn' ? ['#fff0cc','#f5b82e','rgba(245,184,46,.7)'] : st==='ok' ? ['#e4eee9','#6fcf7a','rgba(111,207,122,.6)'] : null;
+  v.label = makeLabel([t.nm, txt], col); v.label.position.set(t.x+0.5, tileY(t.x,t.z)+1.9+v.R*0.2, t.z+0.5); v.g.add(v.label);
+}
+
+/* ======================= VISUAL: NOD ======================= */
+let puffTex; { const cv=document.createElement('canvas'); cv.width=cv.height=64; const c=cv.getContext('2d'); const gr=c.createRadialGradient(32,32,2,32,32,30); gr.addColorStop(0,'rgba(235,235,235,.9)'); gr.addColorStop(1,'rgba(235,235,235,0)'); c.fillStyle=gr; c.fillRect(0,0,64,64); puffTex=new THREE.CanvasTexture(cv); }
+function buildNode(nd){
+  const g = new THREE.Group(), x = nd.x+0.5, z = nd.z+0.5, y = tileY(nd.x,nd.z); g.position.set(x,y,z); nodesG.add(g);
+  const stacks = [];
+  const plinth = (s,c=0xb9bfbd) => part(GB, c, s,0.12,s, 0,0.02,0, g);
+  switch (nd.kind){
+    case 'coal': plinth(0.95); part(GB,0xd4d6d2,0.6,0.42,0.42,-0.1,0.29,0.05,g); part(GB,0x9ea3a3,0.26,0.72,0.3,0.25,0.44,-0.1,g);
+      for (const ox of [-0.3,-0.1]){ part(GC,0xe3e0da,0.06,1.5,0.06,ox,0.8,-0.32,g); part(GC,0xc0392b,0.062,0.1,0.062,ox,1.45,-0.32,g); stacks.push(new THREE.Vector3(ox,1.6,-0.32)); }
+      part(GCone,0x222426,0.25,0.18,0.25,0.3,0.17,0.3,g); break;
+    case 'ccgt': plinth(0.9); part(GB,0xdfe5e8,0.55,0.32,0.36,-0.12,0.24,0.08,g); part(GB,0x9aa9b2,0.24,0.5,0.34,0.26,0.33,0.08,g);
+      part(GC,0xe8e8e8,0.05,0.95,0.05,0.3,0.55,-0.28,g); stacks.push(new THREE.Vector3(0.3,1.05,-0.28)); part(GC,0xf0f0f0,0.1,0.18,0.1,-0.3,0.17,-0.28,g); break;
+    case 'ocgt': plinth(0.7); part(GB,0xe2e7ea,0.42,0.26,0.3,0,0.21,0.05,g); part(GC,0xd8d8d8,0.05,0.55,0.05,0.14,0.36,-0.2,g); stacks.push(new THREE.Vector3(0.14,0.65,-0.2)); break;
+    case 'hydro': {
+      const alongX = (inb(nd.x-1,nd.z)&&RIVER[ix(nd.x-1,nd.z)]) || (inb(nd.x+1,nd.z)&&RIVER[ix(nd.x+1,nd.z)]);
+      const wall = part(GB,0xc9c6bd, alongX?0.22:1.2, 0.75, alongX?1.2:0.22, 0,0.3,0, g);
+      part(GB,0xdad7cf,0.3,0.2,0.3, alongX?0.35:0.3,0.1,alongX?0.3:0.35, g);
+      let up=null, uh=-1; for (const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=nd.x+dx, nz=nd.z+dz; if (inb(nx,nz) && RIVER[ix(nx,nz)] && H[ix(nx,nz)]>uh){ uh=H[ix(nx,nz)]; up=[dx,dz]; } }
+      if (up){ const res = new THREE.Mesh(new THREE.CircleGeometry(1.5,18), new THREE.MeshStandardMaterial({ color:0x2f7fb3, roughness:.2, metalness:.1 })); res.rotation.x=-Math.PI/2; res.position.set(up[0]*1.3, 0.55, up[1]*1.3); g.add(res); }
+      break; }
+    case 'mini': part(GB,0xe6e2d6,0.3,0.22,0.28,0.2,0.12,0.2,g); part(GC,0x6d7a7c,0.04,0.7,0.04,-0.1,0.25,-0.1,g).rotation.z=0.9; break;
+    case 'solar': for (let a=-1;a<=1;a++) for (let b=-1;b<=1;b++){ const p = part(GB, new THREE.MeshStandardMaterial({ color:0x1d3a6b, metalness:.6, roughness:.3 }), 0.26,0.02,0.2, a*0.29,0.14,b*0.27, g); p.rotation.x=-0.35; part(GB,0x8c9496,0.02,0.1,0.02,a*0.29,0.06,b*0.27,g); } break;
+    case 'bio': plinth(0.8); part(GB,0xd8d2bf,0.46,0.28,0.34,-0.08,0.2,0.06,g); part(GC,0x93a36a,0.12,0.5,0.12,0.25,0.29,0.18,g); part(GC,0xcfcfcf,0.04,0.7,0.04,0.2,0.4,-0.22,g); stacks.push(new THREE.Vector3(0.2,0.8,-0.22)); break;
+    case 'bess': plinth(0.85,0x9aa19e); for (let a=0;a<3;a++) for (let b=0;b<2;b++) part(GB,0xf2f2ee,0.22,0.16,0.34,-0.26+a*0.26,0.16,-0.18+b*0.38,g); break;
+    case 'pmu': plinth(0.95,0x8e948f); for (let a=-1;a<=1;a++) part(GB,0x4a5256,0.18,0.22,0.16,a*0.28,0.19,0.12,g);
+      for (const ox of [-0.35,0.35]) part(GB,0xb0b6b8,0.03,0.7,0.03,ox,0.4,-0.25,g); part(GB,0xb0b6b8,0.74,0.03,0.03,0,0.74,-0.25,g);
+      for (const s of [-1,1]){ part(GB,0x6b7275,0.95,0.12,0.015,0,0.12,s*0.47,g); part(GB,0x6b7275,0.015,0.12,0.95,s*0.47,0.12,0,g); } break;
+    case 'ppu': part(GB,0xe6dfcc,0.36,0.26,0.3,0,0.13,0,g); part(GB,0x5f8f62,0.14,0.16,0.12,0.3,0.08,0.22,g); part(GB,0x5f8f62,0.14,0.16,0.12,-0.3,0.08,-0.22,g); break;
+    case 'kedai': part(GB,0xf5f3ee,0.5,0.32,0.4,0,0.16,0,g); part(GB,0xd58fb8,0.52,0.06,0.42,0,0.34,0,g); part(GB,0xd58fb8,0.3,0.14,0.02,0,0.2,0.21,g); break;
+  }
+  g.traverse(o => o.userData.nodeId = nd.id);
+  const puffs = [];
+  for (const s of stacks) for (let k=0;k<4;k++){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:puffTex, transparent:true, depthWrite:false, opacity:0 })); sp.position.copy(s); sp.userData.base = s.clone(); sp.userData.ph = k/4; g.add(sp); puffs.push(sp); }
+  VIS.nodes[nd.id] = { g, puffs };
+}
+function removeNodeVis(id){ const v=VIS.nodes[id]; if (v){ nodesG.remove(v.g); delete VIS.nodes[id]; } }
+
+/* ======================= VISUAL: TALIAN ======================= */
+function nodePos(nd, top){ return new THREE.Vector3(nd.x+0.5, tileY(nd.x,nd.z)+top, nd.z+0.5); }
+function buildLine(l){
+  const a = nodeById(l.a), b = nodeById(l.b), k = K[l.kind], g = new THREE.Group(); linesG.add(g);
+  const tx = l.kind!=='l33', th = k.h, A = new THREE.Vector2(a.x+0.5,a.z+0.5), B = new THREE.Vector2(b.x+0.5,b.z+0.5), len = A.distanceTo(B);
+  const n = Math.max(1, Math.ceil(len/(tx?1.6:1.0)));
+  const cmat = new THREE.MeshBasicMaterial({ color:0x4fd1c5 });
+  const towerM = mat(tx?0x9aa3a6:0x8a7a66);
+  const tops = [];
+  const dir = new THREE.Vector2().subVectors(B,A).normalize(), perp = new THREE.Vector3(-dir.y,0,dir.x);
+  for (let i=0;i<=n;i++){
+    const t=i/n, x=A.x+(B.x-A.x)*t, z=A.y+(B.y-A.y)*t;
+    let y = Math.max(0, groundY(x,z));
+    if (i===0 || i===n){ tops.push(new THREE.Vector3(x, (i===0?tileY(a.x,a.z):tileY(b.x,b.z))+0.55, z)); continue; }
+    if (tx){ const tw = part(GCone, towerM, 0.14,th,0.14, x,y+th/2,z, g); tw.rotation.y = Math.atan2(dir.x,dir.y)+Math.PI/4;
+      const arm = part(GB, towerM, 0.5,0.03,0.03, x,y+th*0.82,z, g); arm.rotation.y = -Math.atan2(dir.y,dir.x)+Math.PI/2; }
+    else part(GC, towerM, 0.025,th,0.025, x,y+th/2,z, g);
+    tops.push(new THREE.Vector3(x, y+th*(tx?0.8:0.95), z));
+  }
+  const offs = tx ? [-0.2,0.2] : [0];
+  for (let i=0;i<tops.length-1;i++) for (const o of offs){
+    const p1 = tops[i].clone().addScaledVector(perp,o), p2 = tops[i+1].clone().addScaledVector(perp,o), L = p1.distanceTo(p2);
+    const s = new THREE.Mesh(GB, cmat); s.scale.set(tx?0.035:0.022, tx?0.035:0.022, L); s.position.copy(p1).lerp(p2,0.5); s.lookAt(p2); g.add(s);
+  }
+  const pulse = new THREE.Mesh(new THREE.SphereGeometry(tx?0.09:0.06,8,6), new THREE.MeshBasicMaterial({ color:0xfff3c4 })); pulse.visible=false; g.add(pulse);
+  g.traverse(o => o.userData.lineId = l.id);
+  VIS.lines[l.id] = { g, cmat, tops, pulse, t:Math.random() };
+}
+function removeLineVis(id){ const v=VIS.lines[id]; if (v){ linesG.remove(v.g); delete VIS.lines[id]; } }
+
+/* ======================= SEMAKAN BINAAN ======================= */
+const nodeById = id => S.nodes.find(n=>n.id===id);
+const townAt = (x,z,extra=0) => S.towns.find(t => Math.hypot(x-t.x, z-t.z) <= townR(t)+extra);
+function checkNode(kind, x, z, ignoreMoney){
+  if (!inb(x,z)) return { ok:false, reason:'Di luar peta' };
+  const i = ix(x,z), c = CLS[i], h = H[i], k = K[kind];
+  let mult = c===3?1.3 : c===4?1.7 : 1, mw = k.mw, cost = k.cost, reason = null;
+  if (c===0) reason = 'Tidak boleh bina di laut';
+  else if (occ.has(i)) reason = 'Petak ini sudah ada binaan';
+  else switch (kind){
+    case 'coal': if (c!==1) reason = 'Mesti di tepi pantai — arang batu dibawa kapal ke jeti'; break;
+    case 'ccgt': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (c>2) reason='Perlu tanah rendah yang rata'; else if (PDIST[i]>2) reason='Terlalu jauh dari saluran paip gas (maks 2 petak)'; break;
+    case 'ocgt': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (c===4) reason='Terlalu tinggi & curam'; else if (PDIST[i]>3) reason='Terlalu jauh dari saluran paip gas (maks 3 petak)'; break;
+    case 'hydro': if (!RIVER[i]) reason='Perlu di atas sungai'; else if (c<3) reason='Perlu lembah sungai di bukit / tanah tinggi untuk turus air'; mw = hydroMW(h); cost = Math.round(mw*1.9); mult = 1; break;
+    case 'mini': if (!RIVER[i]) reason='Perlu di atas sungai'; mult = 1; break;
+    case 'solar': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (c>2) reason='Perlu tanah rata rendah — cerun bukit & kabus kurangkan hasil'; break;
+    case 'bio': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (!nearSawit(x,z,2)) reason='Perlu dekat ladang sawit (≤2 petak)'; break;
+    case 'bess': case 'pmu': if (RIVER[i]) reason='Tidak boleh di atas sungai'; break;
+    case 'ppu': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (!townAt(x,z,0.3)) reason='Mesti di dalam kawasan bandar atau kampung'; break;
+    case 'kedai': if (RIVER[i]) reason='Tidak boleh di atas sungai'; else if (!townAt(x,z,0)) reason='Mesti di dalam bandar'; break;
+  }
+  cost = Math.round(cost*mult*10)/10;
+  if (!reason && !ignoreMoney && S.money < cost) reason = 'Wang tidak cukup';
+  return { ok:!reason, reason, cost, mw, mult };
+}
+function lineTerrain(a,b){
+  const A=[a.x+0.5,a.z+0.5], B=[b.x+0.5,b.z+0.5], len=Math.hypot(B[0]-A[0],B[1]-A[1]), n=Math.max(2,Math.ceil(len*2)); let s=0, sea=0, high=0;
+  for (let k=0;k<=n;k++){ const x=Math.floor(A[0]+(B[0]-A[0])*k/n), z=Math.floor(A[1]+(B[1]-A[1])*k/n), i=ix(clamp(x,0,W-1),clamp(z,0,D-1)), c=CLS[i];
+    const m = c===0?4 : c===4?2.2 : c===3?1.5 : 1; s += m + (RIVER[i]?0.4:0); if (c===0) sea++; if (c>=3) high++; }
+  return { len, mult:s/(n+1), sea, high };
+}
+function checkLine(kind, a, b, ignoreMoney){
+  const k = K[kind], tx = kind!=='l33'; let reason=null;
+  if (!a || !b) return { ok:false, reason:'Pilih dua titik' };
+  const tr = lineTerrain(a,b), cost = Math.round(tr.len*k.per*tr.mult*10)/10;
+  const endOK = n => tx ? (GEN.includes(n.kind)||n.kind==='bess'||n.kind==='pmu') : (n.kind==='pmu'||n.kind==='ppu');
+  if (a.id===b.id) reason='Pilih titik yang lain';
+  else if (!endOK(a)||!endOK(b)) reason = tx ? 'Talian penghantaran hanya antara loji/BESS dan PMU' : 'Talian 33 kV hanya antara PMU dan PPU';
+  else if (tx && a.kind!=='pmu' && b.kind!=='pmu') reason = 'Loji mesti disambung ke PMU, bukan terus ke loji lain';
+  else if (!tx && a.kind==='pmu' && b.kind==='pmu') reason = 'PMU ↔ PMU guna talian penghantaran';
+  else if (!tx && tr.len>k.max) reason = 'Terlalu panjang untuk 33 kV (maks '+k.max+' petak)';
+  else if (S.lines.some(l=>l.kind===kind && ((l.a===a.id&&l.b===b.id)||(l.a===b.id&&l.b===a.id)))) reason = 'Talian ini sudah ada';
+  if (!reason && !ignoreMoney && S.money<cost) reason = 'Wang tidak cukup';
+  return { ok:!reason, reason, cost, ...tr };
+}
+
+/* ======================= BINA / ROBOH ======================= */
+function nameFor(kind, x, z){
+  let best=null, bd=1e9; for (const t of S.towns){ const d=Math.hypot(t.x-x,t.z-z); if (d<bd){ bd=d; best=t; } }
+  const base = (K[kind].full||K[kind].nm).replace(/ \(.*\)/,''); const place = best ? best.nm.replace(/^(Bandar|Kg\.|Pekan|Kuala) /,'') : '';
+  const same = S.nodes.filter(n=>n.kind===kind && n.place===place).length;
+  return { nm: base+' '+place+(same?' '+(same+1):''), place };
+}
+function placeNode(kind, x, z){
+  const r = checkNode(kind, x, z); if (!r.ok){ toast(r.reason, 'bad'); return; }
+  const { nm, place } = nameFor(kind,x,z);
+  const nd = { id:'n'+(S.nid++), kind, x, z, mw:r.mw, cost:r.cost, nm, place, out:0, soc:0, budget:0, trip:0, built:S.month, load:0 };
+  if (kind==='hydro') nd.budget = nd.mw*24*(S.wx?.hydroCF||0.35);
+  S.money -= r.cost; S.nodes.push(nd); occ.set(ix(x,z), nd.id); hideTrees(ix(x,z)); buildNode(nd);
+  const t = townAt(x,z,0.5); if (t) buildTown(t), refreshTownLabel(t);
+  toast(nm+' dibina · '+fRM(r.cost), 'good'); logNews(nm+' siap dibina.', 'good');
+  select({ type:'node', id:nd.id }); refreshTut(); resim();
+}
+function placeLine(kind, a, b){
+  const r = checkLine(kind, a, b); if (!r.ok){ toast(r.reason, 'bad'); return false; }
+  const l = { id:'l'+(S.nid++), kind, a:a.id, b:b.id, len:r.len, cost:r.cost, flow:0 };
+  S.money -= r.cost; S.lines.push(l); buildLine(l);
+  toast(K[kind].nm+' '+r.len.toFixed(1)+' petak · '+fRM(r.cost)+(r.high?' (rentas bukit)':'')+(r.sea?' (kabel dasar laut)':''), 'good');
+  refreshTut(); resim(); return true;
+}
+function removeNode(id){
+  const nd = nodeById(id); if (!nd) return;
+  for (const l of S.lines.filter(l=>l.a===id||l.b===id)) removeLine(l.id, true);
+  S.nodes = S.nodes.filter(n=>n.id!==id); occ.delete(ix(nd.x,nd.z)); removeNodeVis(id);
+  S.money += nd.cost*0.25; toast(nd.nm+' dirobohkan · pulangan '+fRM(nd.cost*0.25)); const t=townAt(nd.x,nd.z,0.5); if (t){ buildTown(t); refreshTownLabel(t); }
+  if (sel?.id===id) select(null); refreshTut(); resim();
+}
+function removeLine(id, quiet){
+  const l = S.lines.find(l=>l.id===id); if (!l) return;
+  S.lines = S.lines.filter(x=>x.id!==id); removeLineVis(id); S.money += l.cost*0.25;
+  if (!quiet){ toast(K[l.kind].nm+' dirobohkan'); if (sel?.id===id) select(null); refreshTut(); resim(); }
+}
+
+/* ======================= MAX-FLOW ======================= */
+class Flow {
+  constructor(n){ this.n=n; this.head=new Int32Array(n).fill(-1); this.to=[]; this.cap=[]; this.orig=[]; this.nxt=[]; }
+  add(u,v,c){ const e=this.to.length; this.to.push(v,u); this.cap.push(c,0); this.orig.push(c,0); this.nxt.push(this.head[u],this.head[v]); this.head[u]=e; this.head[v]=e+1; return e; }
+  flow(e){ return this.orig[e]-this.cap[e]; }
+  run(s,t,allow){
+    const prev = new Int32Array(this.n); let total=0;
+    for (let guard=0; guard<5000; guard++){
+      prev.fill(-1); prev[s]=-2; const q=[s]; let qi=0;
+      while (qi<q.length && prev[t]===-1){ const u=q[qi++];
+        for (let e=this.head[u]; e!==-1; e=this.nxt[e]){ if (this.cap[e]<=1e-6) continue; const v=this.to[e]; if (prev[v]!==-1) continue; if (u===s && allow && !allow(e)) continue; prev[v]=e; q.push(v); } }
+      if (prev[t]===-1) break;
+      let f=Infinity; for (let v=t; v!==s; v=this.to[prev[v]^1]) f=Math.min(f,this.cap[prev[v]]);
+      for (let v=t; v!==s; v=this.to[prev[v]^1]){ this.cap[prev[v]]-=f; this.cap[prev[v]^1]+=f; }
+      total+=f;
+    }
+    return total;
+  }
+}
+
+/* ======================= SIMULASI ======================= */
+const townDemand = (t,h) => { const dom=t.dom*PD[h], kom=t.kom*PK[h], ind=t.ind*PI[h]; return { dom, kom, ind, tot:dom+kom+ind }; };
+const isDis = h => h>=18 && h<=22, isChg = h => (h>=10 && h<=14) || h<=4;
+function margCost(nd){
+  switch (nd.kind){ case 'solar': case 'mini': return 0; case 'hydro': return 1; case 'bess': return 5; case 'bio': return K.bio.fuel;
+    case 'coal': return K.coal.fuel*S.coalIdx; case 'ccgt': return K.ccgt.fuel*S.gasIdx; case 'ocgt': return K.ocgt.fuel*S.gasIdx; } return 0;
+}
+function avail(nd,h){
+  const k = K[nd.kind], trip = nd.trip ? 0.5 : 1;
+  switch (nd.kind){
+    case 'coal': case 'ccgt': case 'ocgt': case 'bio': return nd.mw*k.av*trip;
+    case 'mini': return nd.mw*S.wx.mini;
+    case 'solar': return nd.mw*SUN[h]*S.wx.cloud;
+    case 'hydro': { let rem=0; for (let k2=h;k2<24;k2++) rem+=HW[k2]; return Math.min(nd.mw, nd.budget*HW[h]/rem); }
+    case 'bess': return isDis(h) ? Math.min(k.mw, nd.soc) : 0;
+  } return 0;
+}
+let last = null; // keputusan agihan terkini
+function dispatch(h, commit){
+  const V = {}; let n = 2;
+  for (const nd of S.nodes){ if (nd.kind==='kedai') continue; if (nd.kind==='pmu'||nd.kind==='ppu'){ V[nd.id]=[n,n+1]; n+=2; } else { V[nd.id]=[n,n]; n++; } }
+  const TV = {}; for (const t of S.towns) TV[t.id] = n++;
+  const F = new Flow(n), subE = {};
+  for (const nd of S.nodes) if (nd.kind==='pmu'||nd.kind==='ppu') subE[nd.id] = F.add(V[nd.id][0], V[nd.id][1], K[nd.kind].cap);
+  const lineE = {};
+  for (const l of S.lines){ const a=V[l.a], b=V[l.b]; if (!a||!b) continue; const c=K[l.kind].cap; lineE[l.id] = [F.add(a[1],b[0],c), F.add(b[1],a[0],c)]; }
+  const townE = {}, dem = {};
+  for (const t of S.towns){ const d = townDemand(t,h); dem[t.id]=d; townE[t.id] = F.add(TV[t.id], 1, d.tot); }
+  for (const nd of S.nodes) if (nd.kind==='ppu') for (const t of S.towns) if (Math.hypot(nd.x-t.x, nd.z-t.z) <= townR(t)+1.2) F.add(V[nd.id][1], TV[t.id], 1e9);
+  const offers = [];
+  for (const nd of S.nodes){ if (!GEN.includes(nd.kind) && nd.kind!=='bess') continue; const av = avail(nd,h); if (av>0.01) offers.push({ nd, av, cost:margCost(nd) }); }
+  offers.sort((a,b)=>a.cost-b.cost);
+  for (const o of offers){ o.e = F.add(0, V[o.nd.id][0], o.av); F.run(0,1); }
+  const chg = [];
+  if (isChg(h)) for (const nd of S.nodes) if (nd.kind==='bess' && nd.soc < K.bess.mwh-0.5) chg.push([nd, F.add(V[nd.id][0], 1, Math.min(K.bess.mw, K.bess.mwh-nd.soc))]);
+  if (chg.length){ const cheap = new Set(offers.filter(o=>o.cost<=200).map(o=>o.e)); F.run(0,1, e=>cheap.has(e)); }
+  // Keputusan
+  const res = { gen:{}, dem:0, served:0, town:{}, offers, h };
+  for (const nd of S.nodes){ nd.out = 0; }
+  for (const o of offers){ o.nd.out = F.flow(o.e); res.gen[o.nd.kind] = (res.gen[o.nd.kind]||0) + o.nd.out; }
+  for (const [nd,e] of chg){ nd.charging = F.flow(e); }
+  for (const nd of S.nodes) if (subE[nd.id]!=null) nd.load = F.flow(subE[nd.id]);
+  for (const l of S.lines){ const e=lineE[l.id]; l.flow = e ? F.flow(e[0])-F.flow(e[1]) : 0; }
+  for (const t of S.towns){ const d=dem[t.id], f = d.tot>0 ? F.flow(townE[t.id])/d.tot : 1; t.served = f; t.dem = d; res.town[t.id]={ d, f }; res.dem += d.tot; res.served += d.tot*f; }
+  if (commit){
+    const m = S.m;
+    for (const o of offers){ const mwh = o.nd.out*30, k = K[o.nd.kind];
+      m.gen[o.nd.kind] = (m.gen[o.nd.kind]||0) + mwh;
+      if (k.fuel){ const idx = k.idx==='coal'?S.coalIdx : k.idx==='gas'?S.gasIdx : 1; m.fuel += mwh*k.fuel*idx/1e6; m.fuelBase += mwh*k.fuel/1e6; }
+      m.co2 += mwh*(k.co2||0);
+      if (o.nd.kind==='hydro') o.nd.budget = Math.max(0, o.nd.budget - o.nd.out);
+      if (o.nd.kind==='bess') o.nd.soc = Math.max(0, o.nd.soc - o.nd.out);
+    }
+    for (const [nd] of chg) nd.soc = Math.min(K.bess.mwh, nd.soc + nd.charging*0.88);
+    for (const t of S.towns){ const { d, f } = res.town[t.id]; const a = m.town[t.id] ||= { dom:0, kom:0, ind:0, indPeak:0, demE:0, servE:0 };
+      a.dom += d.dom*f*30; a.kom += d.kom*f*30; a.ind += d.ind*f*30; a.indPeak = Math.max(a.indPeak, d.ind*f); a.demE += d.tot*30; a.servE += d.tot*f*30; }
+    m.dem += res.dem*30; m.uns += (res.dem-res.served)*30;
+    S.chart[h] = { g:{...res.gen}, d:res.dem, u:res.dem-res.served };
+  }
+  last = res; return res;
+}
+function resim(){ if (S.wx) dispatch(S.hour, false); for (const t of S.towns) refreshTownLabel(t); updateLineColors(); hudDirty = true; renderSide(); }
+
+function stepHour(){
+  if (!S.wx){ S.wx = newWeather(S.month); S.m = newMonthAcc(); }
+  dispatch(S.hour, true);
+  for (const t of S.towns) refreshTownLabel(t);
+  updateLineColors();
+  S.hour++;
+  if (S.hour>=24){ monthEnd(); S.hour=0; }
+}
+
+/* ======================= HUJUNG BULAN ======================= */
+function monthEnd(){
+  const m = S.m, afa = S.afa, grace = S.month < 3;
+  const R = { tenaga:0, kapasiti:0, rangkaian:0, runcit:0, afa:0, eei:0 }, cls = { dom:0, kom:0, ind:0 }, kwh = { dom:0, kom:0, ind:0 };
+  let billed=0, bad=0, sampleBands=null;
+  for (const t of S.towns){
+    const a = m.town[t.id]; if (!a) continue;
+    const r = { tenaga:0, kapasiti:0, rangkaian:0, runcit:0, afa:0, eei:0 };
+    const Edom = a.dom*1000, Hh = Math.round(t.dom*1360);
+    if (Hh>0 && Edom>0){ const avg = Edom/Hh; const bands = [[0.5,0.55],[0.35,1.15],[0.15,2.55]]; const norm = bands.reduce((s,[w,mu])=>s+w*mu,0);
+      const bs = bands.map(([w,mu]) => { const b = bilDomestik(avg*mu/norm, afa); for (const k in r) r[k] += b[k]*Hh*w; return { w, b }; });
+      if (!sampleBands || t.dom > sampleBands.dom) sampleBands = { dom:t.dom, nm:t.nm, bs, avg };
+      cls.dom += bs.reduce((s,{w,b})=>s+b.jumlah*Hh*w,0); }
+    const Ek = a.kom*1000, Ck = Math.round(t.kom*250);
+    if (Ek>0){ const v = { tenaga:Ek*TK.tenaga/100, kapasiti:Ek*TK.kapasiti/100, rangkaian:Ek*TK.rangkaian/100, runcit:Ck*TK.runcit, afa:Ek*afa/100 }; for (const k in v) r[k]+=v[k]; cls.kom += Object.values(v).reduce((s,x)=>s+x,0); }
+    const Ei = a.ind*1000, kW = a.indPeak*1000, Ci = Math.max(1, Math.round(t.ind*2));
+    if (Ei>0){ const v = { tenaga:Ei*TI.tenaga/100, kapasiti:kW*TI.kapasitiKW, rangkaian:kW*TI.rangkaianKW, runcit:Ci*TI.runcit, afa:Ei*afa/100 }; for (const k in v) r[k]+=v[k]; cls.ind += Object.values(v).reduce((s,x)=>s+x,0); }
+    kwh.dom += Edom; kwh.kom += Ek; kwh.ind += Ei;
+    const tot = Object.values(r).reduce((s,x)=>s+x,0), cov = kedaiCovers(t), cr = cov ? 0.98 : 0.86;
+    billed += tot; bad += tot*(1-cr); for (const k in R) R[k] += r[k];
+    // Pertumbuhan bandar
+    const rel = a.demE>0 ? a.servE/a.demE : 1; t.rel = rel;
+    let gr;
+    if (rel>=0.995){ t.sat = Math.min(100, t.sat + 6 + (cov?3:0)); gr = 0.022 + Math.random()*0.02 + (cov?0.004:0); }
+    else if (rel>=0.97){ t.sat = Math.min(100, t.sat + 1); gr = 0.006; }
+    else { t.sat = Math.max(0, t.sat - (1-rel)*60); gr = grace ? 0 : -Math.min(0.03, (1-rel)*0.08); }
+    t.dom *= 1+gr; t.kom *= 1+gr*1.1; t.ind *= 1+(gr>0?gr*0.9:gr*1.5);
+    const v = VIS.towns[t.id]; if (v && Math.abs(clamp(Math.round(townPeak(t)/5),4,120) - v.n) >= 3) buildTown(t);
+  }
+  for (const k in R) R[k] /= 1e6; billed/=1e6; bad/=1e6; for (const k in cls) cls[k]/=1e6;
+  const soldKWh = (kwh.dom+kwh.kom+kwh.ind);
+  // O&M
+  const om = { gen:0, tx:0, dx:0, rt:0 };
+  for (const nd of S.nodes){ const k=K[nd.kind]; const g = k.g==='gen'?'gen':nd.kind==='pmu'?'tx':nd.kind==='ppu'?'dx':'rt'; om[g] += k.om; }
+  for (const l of S.lines){ om[l.kind==='l33'?'dx':'tx'] += K[l.kind].om*l.len; }
+  const penalty = grace ? 0 : m.uns*1000*0.3/1e6;
+  const seg = [
+    { id:'gen', nm:'Penjanaan', rev:R.tenaga+R.kapasiti+R.afa, cost:m.fuel+om.gen, rin:'Caj tenaga + caj kapasiti + AFA', cin:'Bahan api + operasi loji' },
+    { id:'tx', nm:'Penghantaran', rev:R.rangkaian*0.4, cost:om.tx, rin:'40% caj rangkaian', cin:'Operasi talian 500/275/132 kV & PMU' },
+    { id:'dx', nm:'Pengagihan', rev:R.rangkaian*0.6, cost:om.dx+penalty, rin:'60% caj rangkaian', cin:'Operasi 33 kV & PPU'+(penalty?' + penalti gangguan bekalan':'') },
+    { id:'rt', nm:'Peruncitan', rev:R.runcit+R.eei, cost:om.rt+bad, rin:'Caj peruncitan − rebat insentif cekap tenaga', cin:'Kedai Tenaga + bil tidak dikutip' },
+  ];
+  const rev = seg.reduce((s,x)=>s+x.rev,0), cost = seg.reduce((s,x)=>s+x.cost,0), profit = rev-cost;
+  S.money += profit;
+  // AFA bulan depan
+  const raw = soldKWh>0 ? (m.fuel-m.fuelBase)*1e6/soldKWh*100 : 0;
+  const nextReal = afaFor(S.month+1);
+  const capped = clamp(raw, -3, 3), absorbed = (raw-capped)*soldKWh/100/1e6;
+  const genTot = Object.values(m.gen).reduce((s,x)=>s+x,0), reGen = ['hydro','mini','solar','bio'].reduce((s,k)=>s+(m.gen[k]||0),0);
+  const rep = { month:S.month, R, cls, kwh, billed, bad, seg, rev, cost, profit, penalty, fuel:m.fuel, fuelBase:m.fuelBase, afaUsed:afa, afaRaw:raw, afaNext: nextReal ?? Math.round(capped*100)/100, afaAbs: nextReal==null ? absorbed : 0, afaIsReal: nextReal!=null,
+    gen:{...m.gen}, genTot, re: genTot? reGen/genTot : 0, co2:m.co2, uns:m.uns, dem:m.dem, sample:sampleBands, coalIdx:S.coalIdx, gasIdx:S.gasIdx };
+  if (rep.afaAbs) S.money -= Math.max(0, rep.afaAbs);
+  S.reports.push(rep); if (S.reports.length>36) S.reports.shift();
+  S.afa = rep.afaNext;
+  // Harga bahan api & peristiwa
+  const g = () => (Math.random()+Math.random()+Math.random()-1.5)*0.8;
+  S.coalIdx = clamp(S.coalIdx + (1-S.coalIdx)*0.15 + g()*0.09, 0.6, 1.9);
+  S.gasIdx = clamp(S.gasIdx + (1-S.gasIdx)*0.15 + g()*0.07, 0.6, 1.9);
+  if (Math.random()<0.06){ const up = Math.random()<0.6; if (Math.random()<0.5){ S.coalIdx = clamp(S.coalIdx*(up?1.35:0.75),0.6,1.9); logNews('Harga arang batu global '+(up?'melonjak':'jatuh')+' — kesan pada AFA bulan depan.', up?'bad':'good'); } else { S.gasIdx = clamp(S.gasIdx*(up?1.3:0.78),0.6,1.9); logNews('Harga gas '+(up?'naik mendadak':'turun')+'.', up?'bad':'good'); } }
+  for (const nd of S.nodes) nd.trip = 0;
+  const thermal = S.nodes.filter(n=>['coal','ccgt','ocgt'].includes(n.kind));
+  if (thermal.length && Math.random()<0.12){ const nd = thermal[Math.floor(Math.random()*thermal.length)]; nd.trip = 1; logNews(nd.nm+' trip — hanya 50% kapasiti bulan ini. Rizab kapasiti penting!', 'bad'); }
+  if (S.month>=3 && Math.random()<0.22) spawnTown();
+  // Bulan baharu
+  S.month++; S.wx = newWeather(S.month); S.m = newMonthAcc();
+  for (const nd of S.nodes) if (nd.kind==='hydro') nd.budget = nd.mw*24*S.wx.hydroCF;
+  if (S.wx.mons && S.month%12===10) logNews('Monsun Timur Laut bermula — empangan penuh, solar kurang.', '');
+  if (S.money<0) S.money *= 1.01;
+  save();
+  const pr = profit>=0;
+  toast(`Laporan ${namaBulan(rep.month)}: ${pr?'untung':'rugi'} ${fRM(profit)} · AFA bulan depan ${fSen(S.afa)}`, pr?'good':'bad', { label:'Lihat', fn:()=>openReport(S.reports.length-1) });
+  refreshTut();
+}
+function kedaiCovers(t){ return S.nodes.some(n=>n.kind==='kedai' && Math.hypot(n.x-t.x,n.z-t.z)<=K.kedai.radius); }
+function spawnTown(){
+  for (let tries=0; tries<80; tries++){
+    const x = 3+Math.floor(Math.random()*(W-6)), z = 2+Math.floor(Math.random()*(D-4)), i = ix(x,z);
+    if (!(CLS[i]===1||CLS[i]===2) || RIVER[i] || occ.has(i)) continue;
+    if (S.towns.some(t=>Math.hypot(t.x-x,t.z-z) < townR(t)+5)) continue;
+    const indZone = Math.random()<0.4 && (PDIST[i]<=4 || CLS[i]===1);
+    const base = NEW_NAMES[S.nameIdx++ % NEW_NAMES.length];
+    const t = { id:'t'+(S.nid++), nm: indZone ? 'Zon Industri '+base : 'Taman '+base, x, z, dom: indZone?6:26, kom: indZone?6:12, ind: indZone?120:0, sat:50, served:0, rel:null };
+    S.towns.push(t); buildTown(t); refreshTownLabel(t);
+    logNews((indZone?'Pelabur membuka ':'Pemaju membina ')+t.nm+' — perlukan '+fMW(townPeak(t))+'.', '');
+    return;
+  }
+}
+
+/* ======================= UI: PALET, PANEL, CARTA ======================= */
+let tool = 'pilih', lineStart = null, sel = null, hover = null, hudDirty = true;
+function renderPalette(){
+  const meta = k => {
+    if (k==='pilih') return 'Lihat maklumat'; if (k==='roboh') return 'Pulangan 25%';
+    const d = K[k]; if (isLine(k)) return fN(d.cap)+' MW · RM'+d.per+'j/petak';
+    if (k==='hydro') return '150–600 MW · ikut tinggi'; if (k==='kedai') return 'RM'+d.cost+'j · radius '+d.radius;
+    return (d.mw?fN(d.mw)+' MW · ':d.cap?fN(d.cap)+' MW · ':'')+'RM'+fN(d.cost)+'j';
+  };
+  $('pal').innerHTML = GROUPS.map(g => `<div class="grp"><h4>${g.n?`<em>${g.n}</em>`:''}${g.t}</h4><div class="tools">${g.items.map(k => {
+    const nm = k==='pilih'?'Pilih / info':k==='roboh'?'Roboh':K[k].nm, c = k==='pilih'?'#4fd1c5':k==='roboh'?'#e5484d':K[k].c;
+    return `<button class="tool ${tool===k?'on':''}" data-t="${k}"><i style="--c:${c}"></i><span class="nm">${nm}</span><span class="mt">${meta(k)}</span></button>`; }).join('')}</div></div>`).join('');
+}
+$('pal').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) setTool(b.dataset.t); });
+function setTool(t){ tool = t; lineStart = null; renderPalette(); updateOverlay(); renderSide(); updateStartRing(); canvas.focus(); }
+
+function select(s){ sel = s; renderSide(); updateSelRing(); }
+const kv = (k,v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+function meter(frac, col){ return `<div class="meter"><i style="width:${clamp(frac,0,1)*100}%;background:${col||'var(--cyan)'}"></i></div>`; }
+function renderSide(){
+  const el = $('side'); let h = '';
+  if (tool!=='pilih' && tool!=='roboh'){
+    const k = K[tool];
+    h += `<div><span class="lbl">Alat dipilih</span><h3><span class="chip" style="background:${k.c}"></span>${k.full||k.nm}</h3></div><p>${k.rule}</p>${k.eg?`<p>${k.eg}</p>`:''}`;
+    if (GEN.includes(tool)||tool==='bess'){ const c = margCost({kind:tool}); h += kv('Kos marginal', tool==='hydro'?'≈ 0 (air)':'RM '+fN(c)+'/MWh') + kv('CO₂', (k.co2||0)+' t/MWh') + kv('Operasi', fRM(k.om)+'/bulan'); }
+    if (isLine(tool)) h += `<p>${lineStart ? 'Titik mula: <b style="color:var(--amber)">'+nodeById(lineStart).nm+'</b>. Klik titik akhir. Esc untuk batal.' : 'Klik titik mula.'} Kos naik ×1.5 di bukit, ×2.2 di tanah tinggi, ×4 merentas laut.</p>`;
+    else h += `<p>Petak hijau pada peta = lokasi yang dibenarkan.</p>`;
+  } else if (sel?.type==='node'){
+    const nd = nodeById(sel.id); if (!nd){ sel=null; return renderSide(); } const k = K[nd.kind];
+    h += `<div><span class="lbl">${k.g==='gen'?'Penjanaan':k.g==='tx'?'Penghantaran':k.g==='dx'?'Pengagihan':'Peruncitan'}</span><h3><span class="chip" style="background:${k.c}"></span>${nd.nm}</h3></div>`;
+    if (GEN.includes(nd.kind)||nd.kind==='bess'){
+      h += kv('Kapasiti', fMW(nd.mw)) + kv('Keluaran sekarang', fMW(nd.out)+(nd.kind==='bess'&&nd.charging>0.5?' (mengecas '+fMW(nd.charging)+')':'')) + meter(nd.out/nd.mw, GEN_COL[nd.kind]);
+      h += kv('Kos marginal', nd.kind==='hydro'?'nilai air':'RM '+fN(margCost(nd))+'/MWh');
+      if (nd.kind==='hydro') h += kv('Baki air hari ini', fN(nd.budget)+' MWh');
+      if (nd.kind==='bess') h += kv('Cas bateri', fN(nd.soc)+' / '+K.bess.mwh+' MWh') + meter(nd.soc/K.bess.mwh, GEN_COL.bess);
+      if (nd.kind==='solar') h += kv('Faktor awan bulan ini', Math.round((S.wx?.cloud||0.9)*100)+'%');
+      if (nd.trip) h += `<p style="color:var(--red)">Loji trip bulan ini — 50% kapasiti.</p>`;
+      h += kv('CO₂', (k.co2||0)+' t/MWh') + kv('Operasi', fRM(k.om)+'/bulan');
+      const conn = S.lines.filter(l=>l.a===nd.id||l.b===nd.id).length; if (!conn) h += `<p style="color:var(--amber)">Belum disambung. Guna talian penghantaran ke PMU.</p>`;
+      h += `<p>${k.eg||''}</p>`;
+    } else if (nd.kind==='pmu'||nd.kind==='ppu'){
+      h += kv('Beban sekarang', fMW(nd.load)+' / '+fMW(k.cap)) + meter(nd.load/k.cap, nd.load/k.cap>0.95?'var(--red)':'var(--cyan)') + `<p>${k.rule}</p>`;
+      if (nd.load/k.cap>0.95) h += `<p style="color:var(--red)">Hampir penuh — bina ${nd.kind==='pmu'?'PMU':'PPU'} tambahan.</p>`;
+    } else h += `<p>${k.rule}</p>` + kv('Operasi', fRM(k.om)+'/bulan');
+    h += `<div><button class="btn red" data-a="rm:${nd.id}">Roboh (pulangan ${fRM(nd.cost*0.25)})</button></div>`;
+  } else if (sel?.type==='line'){
+    const l = S.lines.find(x=>x.id===sel.id); if (!l){ sel=null; return renderSide(); } const k = K[l.kind], a=nodeById(l.a), b=nodeById(l.b), u=Math.abs(l.flow)/k.cap;
+    h += `<div><span class="lbl">${l.kind==='l33'?'Pengagihan':'Penghantaran'}</span><h3>${k.nm}</h3></div><p>${a.nm} ↔ ${b.nm}</p>`;
+    h += kv('Aliran', fMW(Math.abs(l.flow))+' / '+fMW(k.cap)) + meter(u, u>0.9?'var(--red)':u>0.6?'var(--amber)':'var(--cyan)') + kv('Panjang', l.len.toFixed(1)+' petak') + kv('Kos bina', fRM(l.cost));
+    if (u>0.95) h += `<p style="color:var(--red)">Talian sesak — tambah talian selari atau voltan lebih tinggi.</p>`;
+    h += `<div><button class="btn red" data-a="rl:${l.id}">Roboh talian</button></div>`;
+  } else if (sel?.type==='town'){
+    const t = S.towns.find(x=>x.id===sel.id); const d = t.dem || townDemand(t, S.hour);
+    const st = townStatus(t);
+    h += `<div><span class="lbl">Pengguna</span><h3>${t.nm} <span class="pill ${st==='ok'?'ok':st==='warn'?'warn':st==='dark'?'bad':''}">${st==='ok'?'Bekalan penuh':st==='warn'?'Kurang bekalan':st==='dark'?'Gelap':'Belum mula'}</span></h3></div>`;
+    h += kv('Permintaan sekarang', fMW(d.tot)) + meter(t.served, st==='ok'?'var(--green)':st==='warn'?'var(--amber)':'var(--red)');
+    h += kv('Domestik (puncak)', fMW(t.dom)+' · '+fN(t.dom*1360)+' isi rumah') + kv('Komersial (puncak)', fMW(t.kom)+' · '+fN(t.kom*250)+' premis') + kv('Industri (puncak)', fMW(t.ind)+' · '+fN(Math.max(t.ind?1:0,t.ind*2))+' kilang');
+    h += kv('Kebolehpercayaan bulan lalu', t.rel==null?'—':(t.rel*100).toFixed(1)+'%') + kv('Kepuasan pelanggan', Math.round(t.sat)+'/100') + kv('Kedai Tenaga', kedaiCovers(t)?'Ada · kutipan 98%':'Tiada · kutipan 86%');
+    const ppus = S.nodes.filter(n=>n.kind==='ppu' && Math.hypot(n.x-t.x,n.z-t.z)<=townR(t)+1.2).length;
+    h += kv('PPU membekal', ppus+' × 120 MW');
+    if (ppus*120 < townPeak(t)) h += `<p style="color:var(--amber)">Kapasiti PPU (${ppus*120} MW) kurang dari permintaan puncak ${fMW(townPeak(t))}. Tambah PPU.</p>`;
+    h += `<p>Domestik memuncak 20:00–22:00; komersial siang; industri hampir rata 24 jam.</p>`;
+  } else if (sel?.type==='tile'){
+    const i = ix(sel.x,sel.z);
+    h += `<div><span class="lbl">Muka bumi</span><h3>${CLS_NM[CLS[i]]}${RIVER[i]?' · Sungai':''}</h3></div>`;
+    h += kv('Ketinggian', CLS[i]? fN(Math.max(0,H[i])*250)+' m' : 'aras laut') + (PIPE[i]?kv('Saluran paip gas','Ya'):kv('Jarak ke paip gas', PDIST[i]>4?'> 4 petak':PDIST[i]+' petak')) + (SAWIT[i]?kv('Ladang sawit','Ya'):'');
+    const ok = GEN.filter(k=>checkNode(k,sel.x,sel.z,true).ok).map(k=>K[k].nm);
+    h += `<p>Loji yang boleh dibina di sini: ${ok.length?ok.join(', '):'tiada'}.</p>`;
+    if (RIVER[i] && CLS[i]>=3) h += kv('Potensi hidro', fMW(hydroMW(H[i])));
+  } else {
+    h += tutHTML();
+  }
+  h += newsHTML();
+  el.innerHTML = h;
+}
+$('side').addEventListener('click', e => { const b=e.target.closest('[data-a]'); if (!b) return; const [a,id]=b.dataset.a.split(':'); if (a==='rm') removeNode(id); if (a==='rl') removeLine(id); if (a==='rep') openReport(S.reports.length-1); });
+function tutSteps(){
+  const has = k => S.nodes.some(n=>n.kind===k);
+  const genLinked = S.lines.some(l=>l.kind!=='l33' && [l.a,l.b].some(id=>GEN.includes(nodeById(id)?.kind)));
+  return [
+    ['Bina loji janakuasa — cuba Kitaran padu dekat saluran paip gas (tiang kuning)', S.nodes.some(n=>GEN.includes(n.kind))],
+    ['Bina PMU berhampiran bandar', has('pmu')],
+    ['Sambung loji ↔ PMU dengan talian 275 kV', genLinked],
+    ['Bina PPU + PE di dalam bandar', has('ppu')],
+    ['Sambung PMU ↔ PPU dengan talian 33 kV', S.lines.some(l=>l.kind==='l33')],
+    ['Tekan 1× untuk mulakan masa', S.speed>0 || S.started],
+    ['Bandar pertama menerima bekalan', S.towns.some(t=>t.served>0.5)],
+    ['Bina Kedai Tenaga untuk kutip bil', has('kedai')],
+  ];
+}
+function tutHTML(){
+  const st = tutSteps(), done = st.every(s=>s[1]);
+  const rep = S.reports[S.reports.length-1];
+  let h = `<div><span class="lbl">${done?'Objektif':'Langkah pertama'}</span><h3>${done?'Bekal semenanjung, capai 40% TBB':'Bina rantaian bekalan'}</h3></div>`;
+  if (!done) h += `<ul class="chk">${st.map(([t,ok])=>`<li class="${ok?'ok':''}">${t}</li>`).join('')}</ul>`;
+  else h += `<p>Sasaran peralihan tenaga negara: 40% kapasiti tenaga boleh baharu menjelang 2035. Jaga kebolehpercayaan ≥ 99.5% supaya bandar terus membesar.</p>`;
+  if (rep) h += `<div style="display:grid;gap:4px"><span class="lbl">Laporan ${namaBulan(rep.month)}</span>${kv('Hasil', fRM(rep.rev))}${kv('Kos', fRM(rep.cost))}${kv('Untung', `<span class="${rep.profit>=0?'pos':'neg'}">${fRM(rep.profit)}</span>`)}${kv('TBB (tenaga)', Math.round(rep.re*100)+'%')}<div><button class="btn alt" data-a="rep">Buka laporan penuh</button></div></div>`;
+  h += `<p>Klik bandar, loji, talian atau petak untuk maklumat. Semak <b>Kedai / Bil</b> dalam laporan bulanan untuk lihat caj tenaga, kapasiti, rangkaian, peruncitan dan AFA.</p>`;
+  return h;
+}
+let lastTut = '';
+function refreshTut(){ const key = tutSteps().map(s=>s[1]?1:0).join(''); if (key!==lastTut){ lastTut=key; if (!sel && (tool==='pilih'||tool==='roboh')) renderSide(); } }
+function logNews(msg, kind){ S.news.unshift({ m:S.month, msg, kind }); S.news = S.news.slice(0,6); if (!sel) renderSide(); }
+function newsHTML(){ if (!S.news.length) return ''; return `<div style="display:grid;gap:6px"><span class="lbl">Berita grid</span><div class="news">${S.news.slice(0,4).map(n=>`<div class="${n.kind}">${namaBulan(n.m)} · ${n.msg}</div>`).join('')}</div></div>`; }
+
+// Carta
+const chartC = $('chart'), cctx = chartC.getContext('2d');
+const ORDER = ['solar','mini','hydro','bio','coal','ccgt','bess','ocgt'];
+$('legend').innerHTML = ORDER.map(k=>`<span><span class="chip" style="background:${GEN_COL[k]}"></span>${K[k].nm}</span>`).join('') + `<span><span class="chip" style="background:#e5484d"></span>Tak dibekal</span>`;
+function drawChart(){
+  const dpr = Math.min(devicePixelRatio,2), w = chartC.clientWidth, h = chartC.clientHeight; if (!w) return;
+  if (chartC.width !== w*dpr){ chartC.width = w*dpr; chartC.height = h*dpr; }
+  cctx.setTransform(dpr,0,0,dpr,0,0); cctx.clearRect(0,0,w,h);
+  let mx = 100; for (const c of S.chart) if (c) mx = Math.max(mx, c.d, Object.values(c.g).reduce((s,x)=>s+x,0));
+  mx *= 1.1; $('chartMax').textContent = 'maks '+fMW(mx/1.1);
+  const X = i => i/23*(w-2)+1, Y = v => h-2-(v/mx)*(h-6);
+  cctx.strokeStyle='rgba(143,167,163,.15)'; cctx.lineWidth=1; for (let g=1;g<4;g++){ cctx.beginPath(); cctx.moveTo(0,Y(mx*g/4)); cctx.lineTo(w,Y(mx*g/4)); cctx.stroke(); }
+  const base = new Array(24).fill(0);
+  for (const k of [...ORDER,'__u']){
+    cctx.beginPath(); let started=false;
+    for (let i=0;i<24;i++){ const c=S.chart[i]; if (!c) continue; const v = k==='__u'?c.u:(c.g[k]||0); const y=Y(base[i]+v); if (!started){ cctx.moveTo(X(i),y); started=true; } else cctx.lineTo(X(i),y); }
+    for (let i=23;i>=0;i--){ const c=S.chart[i]; if (!c) continue; cctx.lineTo(X(i), Y(base[i])); }
+    for (let i=0;i<24;i++){ const c=S.chart[i]; if (c) base[i] += k==='__u'?c.u:(c.g[k]||0); }
+    if (started){ cctx.closePath(); cctx.fillStyle = k==='__u' ? 'rgba(229,72,77,.75)' : GEN_COL[k]; cctx.fill(); }
+  }
+  cctx.beginPath(); let st=false; cctx.strokeStyle='#e4eee9'; cctx.lineWidth=1.5; cctx.setLineDash([3,2]);
+  for (let i=0;i<24;i++){ const c=S.chart[i]; if (!c) continue; if (!st){ cctx.moveTo(X(i),Y(c.d)); st=true; } else cctx.lineTo(X(i),Y(c.d)); } cctx.stroke(); cctx.setLineDash([]);
+  const hx = X(Math.max(0,S.hour-1)); cctx.strokeStyle='rgba(245,184,46,.8)'; cctx.beginPath(); cctx.moveTo(hx,0); cctx.lineTo(hx,h); cctx.stroke();
+}
+
+// HUD
+function updateHUD(){
+  $('tDate').textContent = namaBulan(S.month) + (S.wx?.mons?' · monsun':'');
+  $('tClock').textContent = String(S.hour).padStart(2,'0')+':00';
+  $('tMoney').textContent = fRM(S.money); $('tMoney').style.color = S.money<0?'var(--red)':'';
+  const rep = S.reports[S.reports.length-1];
+  $('tProfit').innerHTML = rep ? `<span class="${rep.profit>=0?'pos':'neg'}">${fRM(rep.profit)}</span>` : '—';
+  const dem = last ? last.dem : S.towns.reduce((s,t)=>s+townDemand(t,S.hour).tot,0), sv = last ? last.served : 0;
+  $('tDem').innerHTML = `${fN(dem)} / <span class="${sv>=dem*0.995?'pos':'neg'}">${fN(sv)}</span> MW`;
+  const peak = S.towns.reduce((s,t)=>s+t.dom*1+t.kom*0.72+t.ind*0.9,0);
+  const firm = S.nodes.reduce((s,n)=>s + (['coal','ccgt','ocgt','bio'].includes(n.kind)?n.mw*K[n.kind].av : n.kind==='hydro'?n.mw*0.8 : n.kind==='bess'?n.mw : n.kind==='mini'?n.mw*0.4 : 0), 0);
+  const res = peak>0 ? (firm-peak)/peak : 0;
+  $('tRes').innerHTML = `<span class="${res>=0.15?'pos':res>=0?'':'neg'}">${Math.round(res*100)}%</span>`;
+  const cap = S.nodes.filter(n=>GEN.includes(n.kind)).reduce((s,n)=>s+n.mw,0), reCap = S.nodes.filter(n=>K[n.kind].re).reduce((s,n)=>s+n.mw,0);
+  $('tRE').textContent = cap ? Math.round(reCap/cap*100)+'% kapasiti' : '—';
+  $('tAFA').textContent = fSen(S.afa);
+  document.querySelectorAll('#speed button').forEach(b=>b.classList.toggle('on', +b.dataset.s===S.speed));
+}
+$('speed').addEventListener('click', e => { const b=e.target.closest('[data-s]'); if (b) setSpeed(+b.dataset.s); });
+function setSpeed(s){ S.speed = s; if (s>0 && !S.started){ S.started = true; if (!S.wx){ S.wx=newWeather(S.month); S.m=newMonthAcc(); for (const nd of S.nodes) if (nd.kind==='hydro') nd.budget=nd.mw*24*S.wx.hydroCF; } } hudDirty = true; refreshTut(); }
+
+// Toast & modal
+function toast(msg, kind='', action){
+  const el = document.createElement('div'); el.className='toast pnl '+kind; el.textContent = msg;
+  if (action){ const b=document.createElement('button'); b.className='btn alt'; b.textContent=action.label; b.onclick=()=>{ action.fn(); el.remove(); }; el.appendChild(b); }
+  const box=$('toasts'); box.appendChild(el); while (box.children.length>3) box.firstChild.remove();
+  setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, action?6000:2800);
+}
+let modalOpen=false, titleOpen=true, prevSpeed=0;
+function openModal(t, html){ $('mt').textContent=t; $('mb').innerHTML=html; $('mw').hidden=false; if (!modalOpen){ prevSpeed=S.speed; S.speed=0; } modalOpen=true; hudDirty=true; }
+function closeModal(){ $('mw').hidden=true; if (modalOpen) S.speed=prevSpeed; modalOpen=false; hudDirty=true; canvas.focus(); }
+$('mx').onclick = closeModal; $('mw').addEventListener('click', e => { if (e.target===$('mw')) closeModal(); const b=e.target.closest('[data-rep]'); if (b) openReport(+b.dataset.rep); });
+
+function billTable(b, title){
+  const r = (nm, d, v, off) => `<tr><td>${nm}<small>${d}</small></td><td class="n ${v<0?'pos':''}">${off||fRMp(v)}</td></tr>`;
+  return `<div class="tbl"><table><thead><tr><th>${title}</th><th class="n">RM</th></tr></thead><tbody>
+    ${r('Caj Tenaga', `${fN(b.kwh)} kWh × ${b.kadar} sen`, b.tenaga)}
+    ${r('Caj Kapasiti', `${fN(b.kwh)} kWh × 4.55 sen`, b.kapasiti)}
+    ${r('Caj Rangkaian', `${fN(b.kwh)} kWh × 12.85 sen`, b.rangkaian)}
+    ${r('Caj Peruncitan', 'RM10, dikecualikan ≤600 kWh', b.runcit, b.kwh<=600?'dikecualikan':null)}
+    ${r('AFA', 'Hanya jika >600 kWh', b.afa, b.kwh<=600?'dikecualikan':null)}
+    ${r('Insentif Cekap Tenaga', b.kwh<=1000?`−${eeiRate(b.kwh)} sen/kWh`:'Tidak layak (>1,000 kWh)', b.eei, b.kwh>1000?'—':null)}
+    <tr class="tot"><td>Jumlah (sebelum KWTBB & SST)</td><td class="n">${fRMp(b.jumlah)}</td></tr></tbody></table></div>`;
+}
+function openReport(i){
+  const r = S.reports[i]; if (!r) return;
+  const segRows = r.seg.map(s=>`<tr><td><b>${s.nm}</b><small>Hasil: ${s.rin}<br>Kos: ${s.cin}</small></td><td class="n">${fRM(s.rev)}</td><td class="n">${fRM(s.cost)}</td><td class="n ${s.rev-s.cost>=0?'pos':'neg'}">${fRM(s.rev-s.cost)}</td></tr>`).join('');
+  const genRows = ORDER.filter(k=>r.gen[k]).map(k=>`<tr><td><span class="chip" style="background:${GEN_COL[k]}"></span>${K[k].nm}</td><td class="n">${fN(r.gen[k]/1000)} GWh</td><td class="n">${Math.round(r.gen[k]/r.genTot*100)}%</td></tr>`).join('') || '<tr><td colspan="3">Tiada penjanaan</td></tr>';
+  const comp = [['Caj Tenaga',r.R.tenaga],['Caj Kapasiti',r.R.kapasiti],['Caj Rangkaian',r.R.rangkaian],['Caj Peruncitan',r.R.runcit],['AFA ('+fSen(r.afaUsed)+'/kWh)',r.R.afa],['Insentif Cekap Tenaga',r.R.eei]];
+  const smp = r.sample;
+  const nav = `<div style="display:flex;gap:6px;flex-wrap:wrap">${S.reports.map((x,j)=>`<button class="btn ${j===i?'':'alt'}" data-rep="${j}" style="padding:4px 8px;font-size:12px">${namaBulan(x.month)}</button>`).slice(-12).join('')}</div>`;
+  openModal('Laporan '+namaBulan(r.month), `${nav}
+    <div class="g2">
+      <div>${kv('Hasil (bil dikeluarkan)', fRM(r.rev))}${kv('Jumlah kos', fRM(r.cost))}${kv('Untung bersih', `<span class="${r.profit>=0?'pos':'neg'}">${fRM(r.profit)}</span>`)}${kv('Tenaga dijual', fN((r.kwh.dom+r.kwh.kom+r.kwh.ind)/1e6)+' GWh')}${kv('Tidak dibekal', fN(r.uns/1000)+' GWh')}${r.penalty?kv('Penalti gangguan', fRM(r.penalty)):''}</div>
+      <div>${kv('Domestik', fRM(r.cls.dom)+' · '+fN(r.kwh.dom/1e6)+' GWh')}${kv('Komersial', fRM(r.cls.kom)+' · '+fN(r.kwh.kom/1e6)+' GWh')}${kv('Industri', fRM(r.cls.ind)+' · '+fN(r.kwh.ind/1e6)+' GWh')}${kv('Tenaga boleh baharu', Math.round(r.re*100)+'% tenaga')}${kv('Pelepasan CO₂', fN(r.co2/1000)+' kt')}</div>
+    </div>
+    <div><h3>Rantaian nilai: siapa dapat apa</h3><div class="tbl"><table><thead><tr><th>Segmen</th><th class="n">Hasil</th><th class="n">Kos</th><th class="n">Bersih</th></tr></thead><tbody>${segRows}</tbody></table></div>
+      <p style="margin-top:8px">Setiap sen dalam bil ada tuannya: caj tenaga & kapasiti membayar loji, caj rangkaian membayar tiang, kabel & pencawang, caj peruncitan membayar meter, bil & kaunter.</p></div>
+    <div class="g2">
+      <div><h3>Komponen bil (semua pengguna)</h3><div class="tbl"><table><tbody>${comp.map(([n,v])=>`<tr><td>${n}</td><td class="n ${v<0?'pos':''}">${fRM(v)}</td></tr>`).join('')}</tbody></table></div></div>
+      <div><h3>Campuran penjanaan</h3><div class="tbl"><table><tbody>${genRows}</tbody></table></div></div>
+    </div>
+    <div><h3>AFA — Pelarasan Bahan Api Automatik</h3>
+      <div class="g2"><div>${kv('Kos bahan api sebenar', fRM(r.fuel))}${kv('Kos pada harga asas tarif', fRM(r.fuelBase))}${kv('Indeks arang batu / gas', r.coalIdx.toFixed(2)+' / '+r.gasIdx.toFixed(2))}${kv('Beza setiap kWh dijual', fSen(r.afaRaw))}</div>
+      <div>${kv('AFA bulan depan', fSen(r.afaNext)+'/kWh')}<p>${r.afaIsReal?'Bulan depan guna kadar AFA sebenar yang diumumkan Suruhanjaya Tenaga.':'Dikira dari beza kos bahan api, dihadkan ±3 sen/kWh secara automatik.'+(r.afaAbs>0?` Lebihan ${fRM(r.afaAbs)} di luar had ditanggung syarikat.`:'')} AFA negatif = rebat kepada pengguna. Isi rumah ≤600 kWh dikecualikan.</p></div></div></div>
+    ${smp?`<div><h3>Contoh bil isi rumah — ${smp.nm}</h3><p style="margin-bottom:8px">Purata ${fN(smp.avg)} kWh sebulan. Game membahagi isi rumah kepada tiga kumpulan penggunaan:</p><div class="g2">${smp.bs.map(({w,b})=>billTable(b, Math.round(w*100)+'% isi rumah · '+fN(b.kwh)+' kWh')).join('')}</div></div>`:''}
+    <p>Tarif: jadual RP4 berkuat kuasa 1 Julai 2025. Domestik 27.03 / 4.55 / 12.85 sen/kWh; bukan domestik voltan rendah 27.03 / 8.83 / 14.82 sen/kWh; voltan sederhana 29.83 sen/kWh + RM29.43/kW kapasiti + RM59.84/kW rangkaian. Caj peruncitan bukan domestik dan kos loji dalam game ini ialah anggaran.</p>`);
+}
+function openHelp(){
+  openModal('Panduan Grid Titiwangsa', `
+    <div class="g2">
+      <div><h3>Rantaian bekalan</h3><p><b>1 · Penjanaan</b> — loji menukar bahan api, air atau cahaya matahari kepada elektrik.<br><b>2 · Penghantaran</b> — talian 500/275/132 kV bawa kuasa pukal jarak jauh ke PMU.<br><b>3 · Pengagihan</b> — PMU turunkan ke 33 kV, PPU & PE ke 11 kV / 415 V untuk rumah dan kedai.<br><b>4 · Peruncitan</b> — meter, bil dan kutipan melalui Kedai Tenaga.</p></div>
+      <div><h3>Muka bumi</h3><p><b>Pantai</b>: arang batu (perlu jeti). <b>Dekat paip gas</b>: kitaran padu & turbin gas. <b>Lembah sungai tinggi</b>: empangan hidro (lebih tinggi = lebih MW). <b>Sungai</b>: hidro kecil. <b>Tanah rata</b>: solar. <b>Ladang sawit</b>: biojisim. Talian merentas bukit ×1.5, tanah tinggi ×2.2, laut ×4 kos.</p></div>
+    </div>
+    <div class="g2">
+      <div><h3>Agihan ikut merit</h3><p>Setiap jam, pengendali grid guna loji paling murah dulu: solar & hidro kecil → hidro → biojisim → arang batu → kitaran padu → bateri → turbin gas. Talian dan pencawang yang penuh menyekat aliran — bandar akan catuan.</p></div>
+      <div><h3>Kawalan</h3><p>Seret: gerak peta · Klik kanan + seret: putar · Roda: zum · WASD / anak panah: gerak · Q / E: putar · Space: jeda · Esc: batal alat.</p></div>
+    </div>
+    <div><h3>Masa</h3><p>Satu hari dalam game mewakili satu bulan: profil beban 24 jam didarab 30 hari. Bil, AFA, harga bahan api dan pertumbuhan bandar dikemas kini hujung setiap bulan. Tiga bulan pertama ialah tempoh tangguh — tiada penalti.</p></div>
+    <div><button class="btn" id="hClose">Faham</button></div>`);
+  $('hClose').onclick = closeModal;
+}
+$('helpB').onclick = openHelp;
+
+/* ======================= OVERLAY & PENANDA ======================= */
+const overlay = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.9,0.9).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color:0x6fcf7a, transparent:true, opacity:0.38, depthWrite:false }), N);
+overlay.visible = false; overlay.renderOrder = 2; scene.add(overlay);
+function updateOverlay(){
+  if (tool==='pilih'||tool==='roboh'||isLine(tool)){ overlay.visible=false; return; }
+  const M4 = new THREE.Matrix4(), Z = new THREE.Matrix4().makeScale(0,0,0);
+  for (let z=0;z<D;z++) for (let x=0;x<W;x++){ const i=ix(x,z); if (checkNode(tool,x,z,true).ok){ M4.makeTranslation(x+0.5, tileY(x,z)+0.12, z+0.5); overlay.setMatrixAt(i,M4); } else overlay.setMatrixAt(i,Z); }
+  overlay.instanceMatrix.needsUpdate = true; overlay.visible = true;
+}
+const hoverBox = new THREE.Mesh(new THREE.BoxGeometry(1,0.08,1), new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.35, depthWrite:false })); hoverBox.visible=false; scene.add(hoverBox);
+const ringGeo = new THREE.RingGeometry(0.6,0.72,32).rotateX(-Math.PI/2);
+const selRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color:0xf5b82e, transparent:true, opacity:0.9, depthWrite:false })); selRing.visible=false; scene.add(selRing);
+const startRing = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color:0x4fd1c5, depthWrite:false })); startRing.visible=false; scene.add(startRing);
+const ghostMat = new THREE.LineDashedMaterial({ color:0xf5b82e, dashSize:0.3, gapSize:0.2 });
+const ghost = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]), ghostMat); ghost.visible=false; scene.add(ghost);
+function updateSelRing(){
+  if (sel?.type==='node'){ const nd=nodeById(sel.id); if (nd){ selRing.position.set(nd.x+0.5, tileY(nd.x,nd.z)+0.08, nd.z+0.5); selRing.scale.setScalar(1); selRing.visible=true; return; } }
+  if (sel?.type==='town'){ const t=S.towns.find(x=>x.id===sel.id); selRing.position.set(t.x+0.5, tileY(t.x,t.z)+0.1, t.z+0.5); selRing.scale.setScalar(townR(t)/0.66); selRing.visible=true; return; }
+  selRing.visible=false;
+}
+function updateStartRing(){ const nd = lineStart && nodeById(lineStart); if (nd){ startRing.position.set(nd.x+0.5, tileY(nd.x,nd.z)+0.1, nd.z+0.5); startRing.visible=true; } else startRing.visible=false; }
+function updateLineColors(){
+  for (const l of S.lines){ const v=VIS.lines[l.id]; if (!v) continue; const u=Math.abs(l.flow)/K[l.kind].cap;
+    v.cmat.color.set(!S.started && l.flow===0 ? 0x9fb3b0 : u>0.95?0xe5484d : u>0.65?0xf5b82e : u>0.01?0x4fd1c5 : 0x6b7c7a); v.u = u; v.dir = Math.sign(l.flow); }
+}
+
+/* ======================= INPUT ======================= */
+const cam = { tx:W/2, tz:D/2+2, dist:46, yaw:0, pitch:0.92 };
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(cx, cy){
+  const r = canvas.getBoundingClientRect(); ndc.set((cx-r.left)/r.width*2-1, -((cy-r.top)/r.height)*2+1); ray.setFromCamera(ndc, camera);
+  const res = { tile:null, lineId:null, nodeId:null };
+  const hitN = ray.intersectObject(nodesG, true)[0]; if (hitN) res.nodeId = hitN.object.userData.nodeId;
+  const hitL = ray.intersectObject(linesG, true)[0]; if (hitL) res.lineId = hitL.object.userData.lineId;
+  const hitT = ray.intersectObject(terrain)[0]; if (hitT){ const x=Math.floor(hitT.point.x), z=Math.floor(hitT.point.z); if (inb(x,z)) res.tile={x,z}; res.dist=hitT.distance; }
+  if (!res.nodeId && res.tile && occ.has(ix(res.tile.x,res.tile.z))) res.nodeId = occ.get(ix(res.tile.x,res.tile.z));
+  if (hitL && hitT && hitL.distance > hitT.distance+0.5) res.lineId = null;
+  return res;
+}
+function onClick(cx,cy){
+  const p = pick(cx,cy);
+  if (isLine(tool)){
+    if (!p.nodeId){ toast('Klik pada loji, PMU atau PPU', 'bad'); return; }
+    if (!lineStart){ lineStart = p.nodeId; updateStartRing(); renderSide(); return; }
+    const ok = placeLine(tool, nodeById(lineStart), nodeById(p.nodeId));
+    if (ok){ lineStart = p.nodeId; updateStartRing(); renderSide(); }
+    return;
+  }
+  if (tool==='roboh'){ if (p.nodeId) removeNode(p.nodeId); else if (p.lineId) removeLine(p.lineId); else toast('Klik binaan atau talian untuk roboh'); return; }
+  if (tool==='pilih'){
+    if (p.nodeId) return select({ type:'node', id:p.nodeId });
+    if (p.lineId) return select({ type:'line', id:p.lineId });
+    if (p.tile){ const t = townAt(p.tile.x,p.tile.z); if (t) return select({ type:'town', id:t.id }); return select({ type:'tile', ...p.tile }); }
+    return select(null);
+  }
+  if (p.tile) placeNode(tool, p.tile.x, p.tile.z);
+}
+function onHover(cx,cy){
+  const tip = $('tip'); const p = pick(cx,cy); hover = p;
+  let html = null;
+  if (p.tile){ hoverBox.visible = true; hoverBox.position.set(p.tile.x+0.5, tileY(p.tile.x,p.tile.z)+0.06, p.tile.z+0.5); } else hoverBox.visible=false;
+  ghost.visible = false;
+  if (isLine(tool)){
+    if (lineStart){ const a=nodeById(lineStart), b=p.nodeId?nodeById(p.nodeId):null;
+      const end = b ? nodePos(b,0.6) : p.tile ? new THREE.Vector3(p.tile.x+0.5, tileY(p.tile.x,p.tile.z)+0.6, p.tile.z+0.5) : null;
+      if (end){ ghost.geometry.setFromPoints([nodePos(a,0.6), end]); ghost.computeLineDistances(); ghost.visible=true; }
+      if (b){ const r=checkLine(tool,a,b); html = `<b>${K[tool].nm}</b> → ${b.nm}<br>${r.len.toFixed(1)} petak · ${fRM(r.cost)}${r.high?' · rentas bukit':''}${r.sea?' · dasar laut':''}<br>${r.ok?'<span class="ok">Klik untuk bina</span>':'<span class="no">'+r.reason+'</span>'}`; }
+      else html = `Klik ${tool==='l33'?'PMU/PPU':'loji/PMU'} sebagai titik akhir`;
+    } else html = p.nodeId ? `Mula dari <b>${nodeById(p.nodeId).nm}</b>` : `Klik ${tool==='l33'?'PMU atau PPU':'loji, BESS atau PMU'} sebagai titik mula`;
+    hoverBox.material.color.set(0xffffff);
+  } else if (tool!=='pilih' && tool!=='roboh' && p.tile){
+    const r = checkNode(tool,p.tile.x,p.tile.z); hoverBox.material.color.set(r.ok?0x6fcf7a:0xe5484d);
+    html = `<b>${K[tool].full||K[tool].nm}</b>${r.mw?' · '+fMW(r.mw):''}<br>${fRM(r.cost)}${r.mult>1?' (tapak bukit ×'+r.mult+')':''}<br>${r.ok?'<span class="ok">Klik untuk bina</span>':'<span class="no">'+r.reason+'</span>'}`;
+  } else if (p.tile){
+    hoverBox.material.color.set(0xffffff);
+    const nd = p.nodeId && nodeById(p.nodeId), l = !nd && p.lineId && S.lines.find(x=>x.id===p.lineId), t = !nd && !l && townAt(p.tile.x,p.tile.z);
+    if (nd) html = `<b>${nd.nm}</b><br>${nd.mw?fMW(nd.out)+' / '+fMW(nd.mw):nd.kind==='pmu'||nd.kind==='ppu'?fMW(nd.load)+' / '+fMW(K[nd.kind].cap):''}`;
+    else if (l) html = `<b>${K[l.kind].nm}</b><br>${fMW(Math.abs(l.flow))} / ${fMW(K[l.kind].cap)}`;
+    else if (t) html = `<b>${t.nm}</b><br>${fMW(t.dem?.tot||0)} · bekalan ${Math.round(t.served*100)}%`;
+    else { const i=ix(p.tile.x,p.tile.z); html = `${CLS_NM[CLS[i]]}${RIVER[i]?' · sungai':''}${PIPE[i]?' · paip gas':''}${SAWIT[i]?' · sawit':''}<br><span style="color:var(--muted)">${CLS[i]?fN(Math.max(0,H[i])*250)+' m':'aras laut'}</span>`; }
+    if (tool==='roboh') hoverBox.material.color.set(0xe5484d);
+  }
+  if (html && !coarse){ tip.innerHTML = html; tip.hidden = false; const r=canvas.getBoundingClientRect(); tip.style.left = Math.min(cx+16, r.width-270)+'px'; tip.style.top = (cy+16)+'px'; } else tip.hidden = true;
+}
+const coarse = matchMedia('(pointer: coarse)').matches;
+const ptrs = new Map(); let drag = null, pinch0 = 0;
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (ptrs.size===2){ const [a,b]=[...ptrs.values()]; pinch0 = Math.hypot(a.x-b.x,a.y-b.y); drag = { pinch:true, dist:cam.dist }; return; }
+  drag = { x:e.clientX, y:e.clientY, b:e.button, moved:false };
+});
+canvas.addEventListener('pointermove', e => {
+  if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (drag?.pinch && ptrs.size===2){ const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y); cam.dist = clamp(drag.dist*pinch0/d, 12, 80); return; }
+  if (drag){
+    const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
+    if (!drag.moved && Math.hypot(dx,dy) > 6) drag.moved = true;
+    if (drag.moved){
+      if (drag.b===2){ cam.yaw -= dx*0.005; cam.pitch = clamp(cam.pitch + dy*0.004, 0.45, 1.4); }
+      else { const s = cam.dist*0.0016; const fx=-Math.sin(cam.yaw), fz=-Math.cos(cam.yaw), rx=Math.cos(cam.yaw), rz=-Math.sin(cam.yaw);
+        cam.tx -= (rx*dx - fx*dy)*s; cam.tz -= (rz*dx - fz*dy)*s; }
+      drag.x = e.clientX; drag.y = e.clientY;
+    }
+  } else onHover(e.clientX, e.clientY);
+});
+canvas.addEventListener('pointerup', e => {
+  ptrs.delete(e.pointerId);
+  if (drag && !drag.pinch && !drag.moved && drag.b===0 && !titleOpen && !modalOpen) onClick(e.clientX, e.clientY);
+  if (ptrs.size===0) drag = null;
+});
+canvas.addEventListener('pointerleave', () => { $('tip').hidden = true; hoverBox.visible=false; ghost.visible=false; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); cam.dist = clamp(cam.dist*(1+Math.sign(e.deltaY)*0.1), 12, 80); }, { passive:false });
+const keys = new Set();
+addEventListener('keydown', e => {
+  if (titleOpen) return; const k = e.key.toLowerCase();
+  if (k==='escape'){ if (modalOpen) closeModal(); else if (lineStart){ lineStart=null; updateStartRing(); renderSide(); ghost.visible=false; } else { setTool('pilih'); select(null); } return; }
+  if (modalOpen) return;
+  if (k===' '){ e.preventDefault(); setSpeed(S.speed?0:1); return; }
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+  keys.add(k);
+});
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+$('mInfo').onclick = () => $('side').classList.toggle('hide');
+$('mChart').onclick = () => $('chartBox').classList.toggle('show');
+
+/* ======================= LOOP ======================= */
+const SKY = [[0,0x0c1526],[5,0x0c1526],[6.3,0xf0b489],[7.6,0x9fd3e8],[17.3,0x9fd3e8],[18.6,0xee9a62],[19.8,0x1a2340],[24,0x0c1526]];
+const cA=new THREE.Color(), cB=new THREE.Color();
+function skyAt(h){ for (let i=0;i<SKY.length-1;i++){ const [h0,c0]=SKY[i],[h1,c1]=SKY[i+1]; if (h>=h0&&h<=h1) return cA.set(c0).lerp(cB.set(c1),(h-h0)/(h1-h0)); } return cA.set(0x0c1526); }
+function resize(){ const w=innerWidth, h=innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.fov = w<h?55:40; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+let lastT = performance.now(), simAcc = 0, hudT = 0, chartT = 0;
+function loop(now){
+  const dt = Math.min(0.05,(now-lastT)/1000); lastT = now;
+  if (!titleOpen && !modalOpen && S.speed>0){ simAcc += dt*S.speed; let n=0; while (simAcc>=1 && n<4){ simAcc-=1; stepHour(); n++; } if (n) { hudDirty=true; chartT=1; if (sel) renderSide(); } }
+  // Kamera
+  const sp = cam.dist*0.8*dt, fx=-Math.sin(cam.yaw), fz=-Math.cos(cam.yaw), rx=Math.cos(cam.yaw), rz=-Math.sin(cam.yaw);
+  if (keys.has('w')||keys.has('arrowup')){ cam.tx+=fx*sp; cam.tz+=fz*sp; } if (keys.has('s')||keys.has('arrowdown')){ cam.tx-=fx*sp; cam.tz-=fz*sp; }
+  if (keys.has('a')||keys.has('arrowleft')){ cam.tx-=rx*sp; cam.tz-=rz*sp; } if (keys.has('d')||keys.has('arrowright')){ cam.tx+=rx*sp; cam.tz+=rz*sp; }
+  if (keys.has('q')) cam.yaw += dt*1.2; if (keys.has('e')) cam.yaw -= dt*1.2;
+  cam.tx = clamp(cam.tx,-4,W+4); cam.tz = clamp(cam.tz,-4,D+4);
+  const cp = Math.cos(cam.pitch);
+  camera.position.set(cam.tx + Math.sin(cam.yaw)*cp*cam.dist, Math.sin(cam.pitch)*cam.dist, cam.tz + Math.cos(cam.yaw)*cp*cam.dist);
+  camera.lookAt(cam.tx, 0, cam.tz);
+  // Langit
+  const hf = S.speed>0 && !modalOpen ? S.hour + simAcc : S.hour + 0.5;
+  const hh = S.started ? hf : 11;
+  const sky = skyAt(hh%24); scene.background.copy(sky); scene.fog.color.copy(sky);
+  const day = sstep(5.3,7.4,hh) * (1-sstep(17.6,19.8,hh)), a = (hh-6)/12*Math.PI;
+  sun.intensity = 0.2 + day*2.2; hemi.intensity = 0.35 + day*0.75;
+  sun.position.set(cam.tx - Math.cos(a)*30, 8+day*34, cam.tz+18); sun.target.position.set(cam.tx,0,cam.tz);
+  const night = 1-day;
+  for (const t of S.towns){ const v=VIS.towns[t.id]; if (!v) continue; const lit = S.started ? (t.served>=0.9?1: t.served>0.3?0.4:0) : 0.6;
+    v.mats.dom.emissiveIntensity = night*0.45*lit; v.mats.kom.emissiveIntensity = night*0.6*lit; v.mats.ind.emissiveIntensity = night*0.3*lit; }
+  // Asap & denyut
+  const tsec = now/1000;
+  for (const nd of S.nodes){ const v=VIS.nodes[nd.id]; if (!v||!v.puffs.length) continue; const on = nd.out>1;
+    for (const p of v.puffs){ const ph = (tsec*0.35 + p.userData.ph)%1; p.position.set(p.userData.base.x+ph*0.4, p.userData.base.y+ph*1.2, p.userData.base.z); p.scale.setScalar(0.25+ph*0.7); p.material.opacity = on ? (1-ph)*0.55 : 0; } }
+  for (const l of S.lines){ const v=VIS.lines[l.id]; if (!v) continue; if (!v.u || v.u<0.01){ v.pulse.visible=false; continue; }
+    v.pulse.visible = true; v.t = (v.t + dt*(0.15+v.u*0.6)*(S.speed||0.4)) % 1; const f = v.dir>=0 ? v.t : 1-v.t;
+    const segs = v.tops.length-1, s = f*segs, i = Math.min(segs-1, Math.floor(s)); v.pulse.position.copy(v.tops[i]).lerp(v.tops[i+1], s-i); }
+  selRing.rotation.y += dt;
+  hudT += dt; if (hudDirty || hudT>0.3){ hudT=0; hudDirty=false; updateHUD(); }
+  if (chartT>0){ chartT=0; drawChart(); }
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+/* ======================= MULA ======================= */
+function rebuildAll(){
+  for (const g of [townsG,nodesG,linesG]) while (g.children.length) g.remove(g.children[0]);
+  VIS.towns={}; VIS.nodes={}; VIS.lines={}; occ.clear();
+  for (const nd of S.nodes){ occ.set(ix(nd.x,nd.z), nd.id); hideTrees(ix(nd.x,nd.z)); }
+  for (const t of S.towns) buildTown(t);
+  for (const nd of S.nodes) buildNode(nd);
+  for (const l of S.lines) buildLine(l);
+  for (const t of S.towns) refreshTownLabel(t);
+  updateLineColors();
+}
+function start(state){
+  S = state; titleOpen = false; $('title').hidden = true;
+  rebuildAll(); renderPalette(); renderSide(); updateOverlay(); drawChart(); hudDirty = true; canvas.focus();
+}
+const saved = loadSave(); if (saved) $('bCont').hidden = false;
+$('bNew').onclick = () => { start(newState()); toast('Selamat datang, pengendali grid. Ikut langkah di panel kanan.', 'good'); };
+$('bCont').onclick = () => { const s = Object.assign(newState(), saved); start(s); toast('Simpanan dimuat: '+namaBulan(S.month), 'good'); };
+addEventListener('beforeunload', () => { if (!titleOpen) save(); });
+setInterval(() => { if (!titleOpen) save(); }, 20000);
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { rebuildAll(); });
+renderPalette(); rebuildAll(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
