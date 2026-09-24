@@ -45,6 +45,8 @@ summary{cursor:pointer;font-weight:700}
 .tr b{font:500 12px var(--f-m);color:var(--accent);padding-top:2px}
 .note{font-size:13px;color:var(--muted);line-height:1.5;max-width:75ch}
 .note a{color:var(--ink)}
+.note.warn{color:var(--accent);border-left:3px solid var(--accent);padding-left:10px;margin:0}
+#voiceNote{margin:0}
 @media (max-width:640px){
   .ctrl{grid-template-columns:auto 1fr auto;grid-template-areas:"p s t" "v f r"}
   #play{grid-area:p} .scrub{grid-area:s} #time{grid-area:t} #voice{grid-area:v} #fs{grid-area:f} #rec{grid-area:r}
@@ -75,6 +77,8 @@ nav.site div{display:flex;gap:16px;flex-wrap:wrap}
       <button id="rec" hidden title="Rakam video ke fail .webm (hanya bila dibuka di komputer sendiri)">Rakam .webm</button>
     </div>
   </div>
+
+  <p class="note" id="voiceNote" hidden></p>
 
   <div class="chap" id="chap"></div>
 
@@ -521,20 +525,58 @@ function ui(){
   $('time').textContent = fmt(time)+' / '+fmt(TOTAL); seek.value = time;
   const ci = sceneAt(time); document.querySelectorAll('#chap button').forEach((b,i)=>b.classList.toggle('on', i===ci));
 }
-function speakCap(){
-  if (!voice || !playing || !('speechSynthesis' in window)) return;
-  const c = capAt(time); if (c==null || c===lastCap) return; lastCap = c;
-  const u = new SpeechSynthesisUtterance(CAP[c][1].replace(/kWh/g,'kilowatt-jam').replace(/RM(\d)/g,'RM $1'));
-  const vs = speechSynthesis.getVoices(); const v = vs.find(v=>/^ms/i.test(v.lang)) || vs.find(v=>/^id/i.test(v.lang));
-  if (v){ u.voice = v; u.lang = v.lang; } else u.lang = 'ms-MY';
-  u.rate = 1.08; speechSynthesis.cancel(); speechSynthesis.speak(u);
+/* ---------- Suara ---------- */
+const TTS = 'speechSynthesis' in window;
+let voiceObj = null, voiceKind = 'none', speakId = 0, speaking = false, speakStart = 0, speakMax = 0;
+function pickVoice(){
+  const vs = TTS ? speechSynthesis.getVoices() : [];
+  const ms = vs.filter(v => /^ms([-_]|$)/i.test(v.lang) || /malay|melayu/i.test(v.name));
+  const rank = v => (/natural|neural|online|enhanced|premium/i.test(v.name)?2:0) + (/^ms[-_]MY/i.test(v.lang)?1:0);
+  if (ms.length){ voiceObj = ms.sort((a,b)=>rank(b)-rank(a))[0]; voiceKind = 'ms'; }
+  else { voiceObj = vs.find(v=>/^id([-_]|$)/i.test(v.lang)) || null; voiceKind = voiceObj ? 'id' : 'none'; }
+  voiceNote();
 }
-function jump(t){ time = clamp(t, 0, TOTAL); lastCap = -1; if ('speechSynthesis' in window) speechSynthesis.cancel(); render(time); ui(); }
-function toggle(){ if (time>=TOTAL) time = 0; playing = !playing; lastNow = performance.now(); if (!playing && 'speechSynthesis' in window) speechSynthesis.cancel(); lastCap=-1; ui(); }
+function voiceNote(){
+  const n = $('voiceNote'); n.hidden = !voice; if (!voice) return;
+  n.className = 'note' + (voiceKind==='ms' ? '' : ' warn');
+  n.textContent = !TTS ? 'Pelayar ini tidak menyokong suara. Sari kata tetap dipaparkan.'
+    : voiceKind==='ms' ? 'Suara: '+voiceObj.name
+    : 'Pelayar ini tiada suara Bahasa Melayu'+(voiceKind==='id' ? ', jadi suara Bahasa Indonesia digunakan buat sementara' : '')+'. Untuk suara Melayu, buka halaman ini dalam Microsoft Edge (suara Yasmin / Osman), atau pasang suara Bahasa Melayu dalam tetapan teks-ke-pertuturan telefon.';
+}
+if (TTS){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+// Sebutan: koma ribuan dibaca "koma" dalam BM, dan RM135.15 lebih asli sebagai ringgit + sen
+const sebut = s => s
+  .replace(/(\d),(\d{3})/g, '$1$2')
+  .replace(/RM\s?(\d+)\.(\d{2})/g, (_,r,c) => r+' ringgit'+(+c ? ' '+(+c)+' sen' : ''))
+  .replace(/RM\s?(\d+)/g, '$1 ringgit')
+  .replace(/kWh/g, 'kilowatt-jam');
+function stopSpeech(){ speakId++; speaking = false; if (TTS) speechSynthesis.cancel(); }
+function speakCap(){
+  if (!voice || !playing || !TTS) return;
+  const c = capAt(time); if (c==null || c===lastCap) return; lastCap = c;
+  const u = new SpeechSynthesisUtterance(sebut(CAP[c][1]));
+  if (voiceObj){ u.voice = voiceObj; u.lang = voiceObj.lang; } else u.lang = 'ms-MY';
+  u.rate = 1.05;
+  stopSpeech();
+  const id = speakId; speaking = true; speakStart = performance.now();
+  speakMax = 4000 + u.text.length*120/u.rate;   // jaring keselamatan jika pelayar tak hantar onend
+  u.onend = u.onerror = () => { if (id===speakId) speaking = false; };
+  speechSynthesis.speak(u);
+}
+// Tahan garis masa pada hujung sari kata semasa suara masih bercakap, supaya ayat tak terpotong
+function holdForVoice(prev, t){
+  if (!voice || !speaking || lastCap<0) return t;
+  const el = performance.now() - speakStart;
+  if (el > speakMax || (el > 800 && !speechSynthesis.speaking && !speechSynthesis.pending)){ speaking = false; return t; }
+  const limit = (lastCap+1 < CAP.length ? CAP[lastCap+1][0] : TOTAL) - 0.3;
+  return t > limit ? Math.max(prev, limit) : t;
+}
+function jump(t){ time = clamp(t, 0, TOTAL); lastCap = -1; stopSpeech(); render(time); ui(); }
+function toggle(){ if (time>=TOTAL) time = 0; playing = !playing; lastNow = performance.now(); if (!playing) stopSpeech(); lastCap=-1; ui(); }
 $('play').onclick = toggle; cv.onclick = toggle;
 seek.oninput = () => jump(+seek.value);
 $('chap').onclick = e => { const b = e.target.closest('[data-i]'); if (b){ jump(SC[+b.dataset.i].start); if (!playing) toggle(); } };
-$('voice').onclick = () => { voice = !voice; $('voice').textContent = 'Suara: '+(voice?'buka':'tutup'); $('voice').classList.toggle('on', voice); if (!voice && 'speechSynthesis' in window) speechSynthesis.cancel(); lastCap=-1; };
+$('voice').onclick = () => { voice = !voice; $('voice').textContent = 'Suara: '+(voice?'buka':'tutup'); $('voice').classList.toggle('on', voice); if (!voice) stopSpeech(); else if (TTS) pickVoice(); lastCap=-1; voiceNote(); };
 $('fs').onclick = () => { const el = cv.parentElement; (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.())?.catch?.(()=>{}); };
 addEventListener('keydown', e => { if (e.target.tagName==='INPUT' && e.key!==' ') return;
   if (e.key===' '){ e.preventDefault(); toggle(); } else if (e.key==='ArrowRight') jump(time+5); else if (e.key==='ArrowLeft') jump(time-5); });
@@ -551,7 +593,7 @@ $('rec').onclick = () => {
 };
 
 function frame(now){
-  if (playing){ time += (now-lastNow)/1000; if (time>=TOTAL){ time = TOTAL; playing = false; if (rec) rec.stop(); } speakCap(); }
+  if (playing){ time = holdForVoice(time, time + (now-lastNow)/1000); if (time>=TOTAL){ time = TOTAL; playing = false; if (rec) rec.stop(); } speakCap(); }
   lastNow = now; render(time); if (playing || rec) ui();
   requestAnimationFrame(frame);
 }
