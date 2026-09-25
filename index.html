@@ -441,6 +441,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <h3>Jumlah bil sebulan untuk <span id="mbKwh">500</span> kWj (RM) &middot; Jan 2025 &ndash; Dis 2026</h3>
     <p class="chart-note">Tuding / sentuh bar untuk pecahan bil &middot; bar pudar bergaris = unjuran AFA Okt&ndash;Dis 26 (myTNB)</p>
     <div class="tglbar">
+      <span class="toggle" id="protWrap3"><input id="protTgl3" type="checkbox"> Had 800 kWj (Sep&ndash;Dis 26)</span>
       <span class="toggle"><input id="fuelTgl3" type="checkbox"> Kecualikan ICPT / AFA</span>
     </div>
     <div class="scroller"><svg id="monthChart" viewBox="0 0 960 340" style="min-width:720px" role="img" aria-label="Carta bar: jumlah bil bulanan untuk penggunaan yang sama, Jan 2025 hingga Dis 2026"></svg></div>
@@ -1278,6 +1279,10 @@ $("#fuelTgl3").addEventListener("change",e=>{
   $("#fuelTgl").checked=e.target.checked;
   update();
 });
+$("#protTgl3").addEventListener("change",e=>{
+  $("#protTgl").checked=e.target.checked;
+  update();
+});
 $("#protTgl2").addEventListener("change",e=>{
   $("#protTgl").checked=e.target.checked;
   update();
@@ -1354,6 +1359,12 @@ function update(){
   drawMonthly(u, withTax, protTgl.checked, noFuel);
   $("#mbKwh").textContent=u; $("#mbKwh2").textContent=u;
   $("#fuelTgl3").checked=noFuel;
+  {
+    const t3=$("#protTgl3"), w3=$("#protWrap3");
+    t3.checked=protTgl.checked; t3.disabled=u>800;
+    w3.style.opacity=u>800?"0.45":"";
+    w3.title=u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, bulan Sep–Dis 2026";
+  }
   $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
   $("#fuelTgl2").checked=noFuel;
   const protTgl2=$("#protTgl2"), protWrap2=$("#protWrap2");
