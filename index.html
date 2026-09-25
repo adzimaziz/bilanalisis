@@ -200,6 +200,9 @@ select{
 svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 #curveChart{touch-action:none; -webkit-user-select:none; user-select:none}
+.tglbar{display:flex; flex-wrap:wrap; gap:6px 20px; margin:0 0 8px; font-size:13px}
+.mb-sum{margin:14px 0 0; font-size:14px; color:var(--ink-2); line-height:1.55}
+.mb-sum b{color:var(--ink)}
 .zoombar{display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:0 0 10px}
 .zoombar .toggle{margin-left:14px; font-size:13px}
 .zoombar .toggle:first-of-type{margin-left:auto}
@@ -423,6 +426,33 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <span class="key"><span class="sw line" style="background:var(--blk4)"></span>Bil lama (blok + ICPT)</span>
       <span class="key"><span class="sw line" style="background:var(--c-eei)"></span>Bil baharu (RP4)</span>
     </div>
+  </div>
+</section>
+
+<section>
+  <h2>Bil bulanan anda: penggunaan sama, bil berbeza</h2>
+  <div class="rule"></div>
+  <p class="sec-sub">Ramai perasan bil naik walaupun guna elektrik sama banyak. Carta ini mengira bil untuk
+  <b><span id="mbKwh2">500</span> kWj</b> &mdash; penggunaan yang anda pilih di atas &mdash; pada setiap bulan dari Jan 2025 hingga Dis 2026.
+  Bahagian <b style="color:var(--sur)">merah</b> ialah surcaj ICPT/AFA yang menambah bil; kotak <b style="color:var(--reb)">biru bergaris</b>
+  ialah rebat yang mengurangkannya. Garis putus biru tua ialah bil Jun 2025 (bulan terakhir tarif lama) sebagai rujukan.
+  Bulan-bulan di bawah sejajar dengan carta ICPT vs AFA di bawah.</p>
+  <div class="chart-card">
+    <h3>Jumlah bil sebulan untuk <span id="mbKwh">500</span> kWj (RM) &middot; Jan 2025 &ndash; Dis 2026</h3>
+    <p class="chart-note">Tuding / sentuh bar untuk pecahan bil &middot; bar pudar bergaris = unjuran AFA Okt&ndash;Dis 26 (myTNB)</p>
+    <div class="tglbar">
+      <span class="toggle" id="protWrap3"><input id="protTgl3" type="checkbox"> Had 800 kWj (Sep&ndash;Dis 26)</span>
+      <span class="toggle"><input id="fuelTgl3" type="checkbox"> Kecualikan ICPT / AFA</span>
+    </div>
+    <div class="scroller"><svg id="monthChart" viewBox="0 0 960 340" style="min-width:720px" role="img" aria-label="Carta bar: jumlah bil bulanan untuk penggunaan yang sama, Jan 2025 hingga Dis 2026"></svg></div>
+    <div class="legend">
+      <span class="key"><span class="sw" style="background:var(--blk4)"></span>Tarif lama (blok)</span>
+      <span class="key"><span class="sw" style="background:var(--c-eei)"></span>Tarif baharu RP4</span>
+      <span class="key"><span class="sw" style="background:var(--sur)"></span>Surcaj ICPT / AFA</span>
+      <span class="key"><span class="sw" style="background:color-mix(in srgb, var(--reb) 22%, transparent); border:1.5px dashed var(--reb)"></span>Rebat ICPT / AFA (ditolak daripada bil)</span>
+      <span class="key"><span class="sw line" style="background:repeating-linear-gradient(90deg,var(--blk4) 0 6px,transparent 6px 10px)"></span>Bil Jun 2025 (rujukan tarif lama)</span>
+    </div>
+    <p class="mb-sum" id="mbSummary"></p>
   </div>
 </section>
 
@@ -869,6 +899,105 @@ function drawAfa(){
     + AFA_FORECAST.months.map(d=>`<tr><td>${d.m} <span style='color:var(--muted)'>(unjuran)</span></td><td class="num ${d.v<0?"neg":"pos-sur"}">${fmtSen(d.v)}</td></tr>`).join("");
 }
 
+/* ================= BIL BULANAN: penggunaan sama, bil berbeza ================= */
+const PROT_MONTHS=["Sep 26","Okt 26","Nov 26","Dis 26"];
+const MONTHS_ALL = ICPT_MONTHS.map(d=>({m:d.m, era:"icpt"}))
+  .concat(AFA_MONTHS.map(d=>({m:d.m, v:d.v, era:"afa"})))
+  .concat(AFA_FORECAST.months.map(d=>({m:d.m, v:d.v, era:"proj"})));
+// base = bil tanpa pelarasan bahan api; fuel = kesan ICPT/AFA termasuk cukai ke atasnya
+function monthBill(d, u, withTax, protOn, noFuel){
+  if(d.era==="icpt"){
+    const full=calcOld(u,withTax,noFuel), base=calcOld(u,withTax,true);
+    return {total:full.total, base:base.total, fuel:full.total-base.total, rate:full.icptRate, prot:false, lim:null, applies:full.icptRate!==0};
+  }
+  const prot = protOn && u<=800 && PROT_MONTHS.includes(d.m), lim = prot?800:600;
+  const full=calcNew(u,d.v,withTax,lim,noFuel), base=calcNew(u,d.v,withTax,lim,true);
+  return {total:full.total, base:base.total, fuel:full.total-base.total, rate:full.afaApplies?d.v:0, prot, lim, applies:full.afaApplies};
+}
+function drawMonthly(u, withTax, protOn, noFuel){
+  const svg=$("#monthChart"); svg.innerHTML="";
+  const W=960,H=340,mL=50,mR=118,mT=34,mB=40;   // paksi-x sama dengan carta AFA di bawah
+  const plotW=W-mL-mR, plotH=H-mT-mB;
+  const rows=MONTHS_ALL.map(d=>({...d, ...monthBill(d,u,withTax,protOn,noFuel)}));
+  const top=Math.max(...rows.map(r=>Math.max(r.total,r.base)));
+  const yMax=top*1.2, ticks=niceTicks(0,yMax,5);
+  const y=v=> mT+(yMax-v)/yMax*plotH;
+  const band=plotW/rows.length, bw=Math.min(24,band-8), xC=i=>mL+band*i+band/2;
+  const num={"font-variant-numeric":"tabular-nums"};
+  const halo={stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"};
+
+  for(const t of ticks){
+    el("line",{x1:mL,x2:W-mR,y1:y(t),y2:y(t),stroke:t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
+    el("text",{x:mL-8,y:y(t)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)",...num},svg).textContent="RM"+t;
+  }
+  const divider=(i,left,right)=>{
+    const x=mL+band*i;
+    el("line",{x1:x,x2:x,y1:mT-18,y2:H-mB+6,stroke:"var(--axis)","stroke-width":1,"stroke-dasharray":"4 4"},svg);
+    if(left) el("text",{x:x-8,y:mT-6,"text-anchor":"end","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent=left;
+    if(right) el("text",{x:x+8,y:mT-6,"text-anchor":"start","font-size":11,"font-weight":800,"letter-spacing":"1",fill:"var(--ink-2)"},svg).textContent=right;
+  };
+  divider(6,"TARIF LAMA","TARIF BAHARU RP4 + AFA BULANAN");
+  divider(MONTHS_ALL.length-AFA_FORECAST.months.length,null,"UNJURAN");
+
+  // rujukan: bil Jun 2025, bulan terakhir tarif lama
+  const ref=rows[5].total, yr=y(ref);
+  el("line",{x1:mL,x2:W-mR,y1:yr,y2:yr,stroke:"var(--blk4)","stroke-width":1.5,"stroke-dasharray":"6 4"},svg);
+  el("text",{x:W-mR+8,y:yr-3,"font-size":11,"font-weight":700,fill:"var(--ink-2)",...num},svg).textContent="Jun 25 (lama)";
+  el("text",{x:W-mR+8,y:yr+11,"font-size":11,fill:"var(--muted)",...num},svg).textContent=fmtRM0(ref);
+
+  rows.forEach((r,i)=>{
+    const x=xC(i)-bw/2, proj=r.era==="proj", fillBase=r.era==="icpt"?"var(--blk4)":"var(--c-eei)";
+    const solid=Math.min(r.total,r.base), g=el("g",proj?{opacity:.5}:{},svg);
+    el("rect",{x, y:y(solid), width:bw, height:Math.max(1,y(0)-y(solid)), fill:fillBase, rx:3},g);
+    if(r.fuel>0.005) el("rect",{x, y:y(r.total), width:bw, height:Math.max(1,y(r.base)-y(r.total)), fill:"var(--sur)", rx:3},g);
+    if(r.fuel<-0.005) el("rect",{x:x+.75, y:y(r.base), width:bw-1.5, height:Math.max(1,y(r.total)-y(r.base)),
+      fill:"color-mix(in srgb, var(--reb) 22%, transparent)", stroke:"var(--reb)","stroke-width":1.5,"stroke-dasharray":"3 2", rx:3},g);
+    if(proj) el("rect",{x, y:y(Math.max(r.total,r.base)), width:bw, height:y(0)-y(Math.max(r.total,r.base)), fill:"none",
+      stroke:"var(--ink-2)","stroke-width":1.2,"stroke-dasharray":"4 3", rx:3},svg);
+    if(i%3===0||i===rows.length-1)
+      el("text",{x:xC(i),y:H-mB+18,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)","font-style":proj?"italic":"normal"},svg).textContent=r.m;
+
+    const fuelLine = noFuel ? "ICPT / AFA dikecualikan (togol analisis)"
+      : r.era==="icpt" ? (r.rate===0 ? "ICPT: tiada pelarasan (601–1,500 kWj)" : `ICPT ${fmtSen(r.rate)}/kWj → ${fmtRM(r.fuel)}`)
+      : !r.applies ? `AFA dikecualikan (≤${r.lim} kWj)`
+      : `AFA ${fmtSen(r.rate)}/kWj → ${fmtRM(r.fuel)}`;
+    const dRef=r.total-ref;
+    const hit=el("rect",{x:mL+band*i, y:mT, width:band, height:plotH, fill:"transparent"},svg);
+    bindTip(hit,`<b>${r.m}${proj?" — unjuran":""} · ${u} kWj</b><br>`+
+      `${r.era==="icpt"?"Tarif lama (blok + ICPT)":"Tarif baharu RP4"}<br>`+
+      `Bil tanpa pelarasan: ${fmtRM(r.base)}<br>${fuelLine}<br>`+
+      `<b>Jumlah: ${fmtRM(r.total)}</b>`+
+      (i>5?`<br><span style='opacity:.8'>vs Jun 25 (tarif lama): ${dRef>=0?"+":"−"}RM ${Math.abs(dRef).toFixed(2)}</span>`:"")+
+      (r.prot?"<br>🛡 Perlindungan 800 kWj terpakai":""));
+  });
+
+  // label nilai: Jun 25, terendah & tertinggi era baharu, AFA sebenar terkini
+  const nw=rows.map((r,i)=>({...r,i})).slice(6);
+  const lo=nw.reduce((a,b)=>b.total<a.total?b:a), hi=nw.reduce((a,b)=>b.total>a.total?b:a);
+  const lastReal=rows.length-AFA_FORECAST.months.length-1;
+  for(const i of new Set([5, lo.i, hi.i, lastReal])){
+    const r=rows[i];
+    el("text",{x:xC(i),y:y(Math.max(r.total,r.base))-6,"text-anchor":"middle","font-size":10.5,"font-weight":700,
+      fill:"var(--ink)",...halo,...num},svg).textContent=r.total.toFixed(2);
+  }
+  if(protOn && u<=800){
+    const a=MONTHS_ALL.findIndex(d=>d.m===PROT_MONTHS[0]), b=MONTHS_ALL.findIndex(d=>d.m===PROT_MONTHS[PROT_MONTHS.length-1]);
+    const yy=y(Math.max(...rows.slice(a,b+1).map(r=>Math.max(r.total,r.base))))-22;
+    el("path",{d:`M${xC(a)-bw/2} ${yy+5}V${yy}H${xC(b)+bw/2}V${yy+5}`,fill:"none",stroke:"var(--c-eei)","stroke-width":1.5},svg);
+    el("text",{x:(xC(a)+xC(b))/2,y:yy-4,"text-anchor":"middle","font-size":10.5,"font-weight":700,fill:"var(--c-eei)",...halo},svg).textContent="🛡 had 800 kWj";
+  }
+
+  // ringkasan
+  const sum=$("#mbSummary"), same=hi.total-lo.total<0.01, dNow=rows[lastReal].total-ref;
+  const vsRef=`Berbanding Jun 2025 (tarif lama, ${fmtRM(ref)}), bil ${rows[lastReal].m} ialah <b>${dNow>=0?"+":"−"}RM ${Math.abs(dNow).toFixed(2)}</b>.`;
+  if(same) sum.innerHTML=`Pada <b>${u} kWj</b>, bil tarif baharu kekal <b>${fmtRM(lo.total)}</b> setiap bulan`+
+    (noFuel?" kerana ICPT / AFA dikecualikan daripada analisis. ":" kerana penggunaan ini tidak dikenakan AFA. ")+vsRef;
+  else sum.innerHTML=`Pada <b>${u} kWj</b> setiap bulan, bil tarif baharu berubah antara <b>${fmtRM(lo.total)}</b> (${lo.m}) `+
+    `dan <b>${fmtRM(hi.total)}</b> (${hi.m}${hi.era==="proj"?", unjuran":""}) &mdash; beza <b>${fmtRM(hi.total-lo.total)}</b> walaupun penggunaan sama. `+
+    (noFuel ? "Tanpa AFA, beza ini datang daripada perlindungan 800 kWj. "
+      : `Puncanya AFA: ${lo.applies?fmtSen(lo.rate):"tiada"} pada ${lo.m} berbanding ${hi.applies?fmtSen(hi.rate):"tiada"} pada ${hi.m}. `)+vsRef;
+}
+
 /* ================= LENGKUNG BIL (zoom + pan, resolusi 1 kWj) ================= */
 const CURVE_MAX=2000, CURVE_MIN_SPAN=40;
 const curveView={x0:0, x1:CURVE_MAX};
@@ -1146,6 +1275,14 @@ $("#fuelTgl2").addEventListener("change",e=>{
   $("#fuelTgl").checked=e.target.checked;
   update();
 });
+$("#fuelTgl3").addEventListener("change",e=>{
+  $("#fuelTgl").checked=e.target.checked;
+  update();
+});
+$("#protTgl3").addEventListener("change",e=>{
+  $("#protTgl").checked=e.target.checked;
+  update();
+});
 $("#protTgl2").addEventListener("change",e=>{
   $("#protTgl").checked=e.target.checked;
   update();
@@ -1186,7 +1323,6 @@ function update(){
 
   const withTax=$("#taxTgl").checked;
   // Perlindungan hanya untuk bulan Sep–Dis 2026 DAN jumlah penggunaan ≤800 kWj
-  const PROT_MONTHS=["Sep 26","Okt 26","Nov 26","Dis 26"];
   const protSelV=$("#afaSel").value;
   let protMonthOk=true; // purata 6/12 bulan dianggap anggaran bil semasa (dalam tempoh)
   if(protSelV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(2));
@@ -1220,6 +1356,15 @@ function update(){
   fillOldTbl(o,u);
   fillNewTbl(n,u);
   drawCurve(u, withTax, protTgl.checked && protMonthOk, noFuel, afaRate);
+  drawMonthly(u, withTax, protTgl.checked, noFuel);
+  $("#mbKwh").textContent=u; $("#mbKwh2").textContent=u;
+  $("#fuelTgl3").checked=noFuel;
+  {
+    const t3=$("#protTgl3"), w3=$("#protWrap3");
+    t3.checked=protTgl.checked; t3.disabled=u>800;
+    w3.style.opacity=u>800?"0.45":"";
+    w3.title=u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, bulan Sep–Dis 2026";
+  }
   $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
   $("#fuelTgl2").checked=noFuel;
   const protTgl2=$("#protTgl2"), protWrap2=$("#protWrap2");
