@@ -209,10 +209,7 @@ input[type=date]:focus{outline:2px solid var(--accent); outline-offset:2px}
 .afa-box{margin-top:18px; padding-top:14px; border-top:1px solid var(--grid)}
 table.afa-parts{width:auto; min-width:min(100%,520px); font-size:13.5px}
 table.afa-parts td small{display:block; color:var(--muted); font-size:11.5px}
-table.afa-parts input{width:84px; font:700 13.5px "Plus Jakarta Sans",system-ui,sans-serif; color:var(--ink); text-align:right;
-  background:var(--page); border:1.5px solid var(--axis); border-radius:8px; padding:5px 7px; font-variant-numeric:tabular-nums}
-table.afa-parts input.edited{border-color:var(--fuel); background:color-mix(in srgb, var(--fuel) 10%, var(--page))}
-.reset-afa{border:0; background:none; color:var(--accent); font-size:15px; cursor:pointer; padding:0 2px}
+.afa-rate{font-weight:800; font-size:15px; font-variant-numeric:tabular-nums}
 .tag-mini{display:inline-block; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:1px 7px;
   border-radius:999px; background:var(--chip); color:var(--ink-2); vertical-align:1px}
 .tag-mini.warn{background:color-mix(in srgb, var(--sur) 15%, transparent); color:var(--bad-text)}
@@ -351,9 +348,9 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <div class="ctl" id="tempoh">
       <label for="dStart">Tempoh bil</label>
       <div class="dates">
-        <input id="dStart" type="date" value="2026-09-01" min="2025-07-01" max="2027-01-31" aria-label="Tarikh mula bil">
+        <input id="dStart" type="date" value="2026-09-01" min="2025-07-01" max="2026-12-31" aria-label="Tarikh mula bil">
         <span class="unit">hingga</span>
-        <input id="dEnd" type="date" value="2026-09-30" min="2025-07-01" max="2027-01-31" aria-label="Tarikh akhir bil">
+        <input id="dEnd" type="date" value="2026-09-30" min="2025-07-01" max="2026-12-31" aria-label="Tarikh akhir bil">
       </div>
       <div class="dates"><select id="monthQuick" aria-label="Isi pantas tempoh bil satu bulan penuh"></select><span class="days" id="dDays"></span></div>
     </div>
@@ -375,7 +372,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <table class="afa-parts" id="afaParts"><thead><tr><th>Bulan dalam tempoh bil</th><th class="num">Hari</th><th class="num">kWj (prorata)</th><th class="num">Kadar AFA (sen/kWj)</th></tr></thead><tbody></tbody></table>
     <p class="mini-note">Masukkan tempoh bil seperti tertera pada bil TNB anda (cth. 15.08.2025 &ndash; 14.09.2025). Jumlah kWj dan had
     600 kWj dipecahkan mengikut bilangan hari dalam setiap bulan, sama seperti bil TNB &mdash; semak baris
-    &ldquo;AFA (&hellip; kWh) mulai &hellip;&rdquo; pada bil anda. Kadar AFA diisi automatik dan boleh diubah.</p>
+    &ldquo;AFA (&hellip; kWh) mulai &hellip;&rdquo; pada bil anda. Kadar AFA diisi automatik mengikut kadar rasmi setiap bulan.</p>
     <details class="guide-mini"><summary>Panduan: cari tempoh bil &amp; baris AFA dalam bil anda</summary>
       <img src="panduan-afa.png" alt="Contoh Pecahan Pengiraan Bil TNB dengan dua baris AFA: AFA (508kWh, RM0.038/kWh) mulai 01/08/26 dan AFA (208kWh, RM0.0367/kWh) mulai 01/09/26" loading="lazy">
     </details>
@@ -408,7 +405,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <div class="txt">
     <span class="badge-new">Baru</span><b>Bil merentas 2 bulan? Masukkan tempoh bil sebenar</b>
     <p>Bil TNB selalunya bermula pertengahan bulan, jadi AFA dikira <em>prorata</em> ikut bilangan hari. Pilih tarikh
-    mula &amp; akhir bil di atas &mdash; pecahan kWj dan kadar AFA setiap bulan dikira automatik, dan kadar boleh diubah.</p>
+    mula &amp; akhir bil di atas &mdash; pecahan kWj dan kadar AFA setiap bulan dikira automatik ikut kadar rasmi.</p>
   </div>
   <a class="btn-grad" href="#tempoh">Isi tempoh bil &uarr;</a>
 </div>
@@ -589,7 +586,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       Bil merentas bulan: kWj setiap bulan = jumlah kWj &times; hari bulan itu &divide; hari tempoh bil.</li>
     <li><b>Unjuran AFA Okt&ndash;Dis 2026</b>: Unjuran 3-Bulan rasmi myTNB &mdash; Okt +3.36, Nov +2.81, Dis +5.48
       sen/kWj (senario Base Case). Ini bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan. Tempoh bil
-      dalam bulan unjuran menggunakan kadar ini secara automatik (boleh diubah).</li>
+      dalam bulan unjuran menggunakan kadar ini secara automatik.</li>
     <li><b>Cukai Perkhidmatan 8%</b>: dikenakan ke atas lajur &ldquo;Dengan Cukai Perkhidmatan&rdquo; &mdash; bahagian setiap caj bagi
       kWj melebihi 600 (800 bagi Sep&ndash;Dis 2026), termasuk AFA, Caj Peruncitan RM10 dan rebat Cekap Tenaga bahagian itu.
       <b>KWTBB 1.6%</b> (jika &gt;300 kWj): ke atas Caj Tenaga + Kapasiti + Rangkaian + Insentif Cekap Tenaga, tidak termasuk AFA
@@ -1276,7 +1273,6 @@ const labelOfKey=k=>BM[+k.slice(5)-1]+" "+k.slice(2,4);
 const AFA_BY_KEY={};                      // "2026-09" → {v, fc}
 AFA_MONTHS.forEach(d=>{ AFA_BY_KEY[keyOfLabel(d.m)]={v:d.v, fc:false}; });
 AFA_FORECAST.months.forEach(d=>{ AFA_BY_KEY[keyOfLabel(d.m)]={v:d.v, fc:true}; });
-const afaEdits={};                        // kadar AFA yang diubah pengguna, ikut bulan
 const DAY=86400000, PERIOD_MAX=62;
 const parseD=s=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||""); return m?Date.UTC(+m[1],m[2]-1,+m[3]):NaN; };
 const isoD=t=>new Date(t).toISOString().slice(0,10);
@@ -1297,14 +1293,13 @@ function readPeriod(){
   }
   period={parts, D:(b-a)/DAY+1, msg};
 }
-const rateOf=p=>afaEdits[p.key] ?? p.official ?? 0;
+const rateOf=p=>p.official ?? 0;
 function renderParts(){
   $("#afaParts tbody").innerHTML=period.parts.map((p,i)=>{
-    const edited=afaEdits[p.key]!=null, v=rateOf(p);
-    const tag=p.official==null?` <span class="tag-mini warn">tiada data &mdash; isi kadar</span>`:p.fc?` <span class="tag-mini">unjuran</span>`:"";
+    const v=rateOf(p);
+    const tag=p.official==null?` <span class="tag-mini warn">tiada data AFA</span>`:p.fc?` <span class="tag-mini">unjuran</span>`:"";
     return `<tr><td>${p.m}${tag}<small>mulai ${dmy(p.from)}</small></td><td class="num">${p.days}</td><td class="num" id="pk${i}">&ndash;</td>
-      <td class="num"><input type="number" step="0.01" data-key="${p.key}" value="${v.toFixed(2)}" class="${edited?"edited":""}" aria-label="Kadar AFA ${p.m} (sen/kWj)">
-      <button type="button" class="reset-afa" data-reset="${p.key}" title="Kembali ke kadar rasmi" ${edited&&p.official!=null?"":"hidden"}>&#8634;</button></td></tr>`;
+      <td class="num"><span class="afa-rate ${v<0?"neg":v>0?"pos-sur":""}">${v>0?"+":v<0?"−":""}${Math.abs(v).toFixed(2)}</span></td></tr>`;
   }).join("");
   $("#dDays").textContent=period.D+" hari"+(period.parts.length>1?" · merentas "+period.parts.length+" bulan":"")+(period.msg?" · "+period.msg:"");
 }
@@ -1321,18 +1316,6 @@ $("#monthQuick").addEventListener("change",e=>{
   const y=+k.slice(0,4), m=+k.slice(5)-1;
   $("#dStart").value=isoD(Date.UTC(y,m,1)); $("#dEnd").value=isoD(Date.UTC(y,m+1,1)-DAY);
   e.target.value=""; onPeriod();
-});
-$("#afaParts").addEventListener("input",e=>{
-  const inp=e.target.closest("input[data-key]"); if(!inp) return;
-  const p=period.parts.find(x=>x.key===inp.dataset.key), v=parseFloat(inp.value);
-  if(Number.isFinite(v) && (p.official==null || Math.abs(v-p.official)>1e-9)) afaEdits[p.key]=v; else delete afaEdits[p.key];
-  inp.classList.toggle("edited", afaEdits[p.key]!=null);
-  inp.nextElementSibling.hidden = afaEdits[p.key]==null || p.official==null;
-  update();
-});
-$("#afaParts").addEventListener("click",e=>{
-  const b=e.target.closest("[data-reset]"); if(!b) return;
-  delete afaEdits[b.dataset.reset]; renderParts(); update();
 });
 
 /* ================= KEMAS KINI ================= */
