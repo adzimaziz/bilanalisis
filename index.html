@@ -200,6 +200,29 @@ select{
 svg{display:block}
 svg text{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 #curveChart{touch-action:none; -webkit-user-select:none; user-select:none}
+.dates{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+input[type=date]{font:600 14px "Plus Jakarta Sans",system-ui,sans-serif; color:var(--ink); background:var(--page);
+  border:1.5px solid var(--axis); border-radius:12px; padding:8px 10px}
+input[type=date]:focus{outline:2px solid var(--accent); outline-offset:2px}
+.days{font-size:13px; color:var(--ink-2); font-weight:600}
+.prot-note{font-size:12px; color:var(--muted); max-width:46ch; line-height:1.45}
+.afa-box{margin-top:18px; padding-top:14px; border-top:1px solid var(--grid)}
+table.afa-parts{width:auto; min-width:min(100%,520px); font-size:13.5px}
+table.afa-parts td small{display:block; color:var(--muted); font-size:11.5px}
+table.afa-parts input{width:84px; font:700 13.5px "Plus Jakarta Sans",system-ui,sans-serif; color:var(--ink); text-align:right;
+  background:var(--page); border:1.5px solid var(--axis); border-radius:8px; padding:5px 7px; font-variant-numeric:tabular-nums}
+table.afa-parts input.edited{border-color:var(--fuel); background:color-mix(in srgb, var(--fuel) 10%, var(--page))}
+.reset-afa{border:0; background:none; color:var(--accent); font-size:15px; cursor:pointer; padding:0 2px}
+.tag-mini{display:inline-block; font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:1px 7px;
+  border-radius:999px; background:var(--chip); color:var(--ink-2); vertical-align:1px}
+.tag-mini.warn{background:color-mix(in srgb, var(--sur) 15%, transparent); color:var(--bad-text)}
+.mini-note{font-size:12.5px; color:var(--muted); margin:10px 0 0; max-width:100ch; line-height:1.5}
+.guide-mini{margin-top:8px}
+.guide-mini summary{font-size:12.5px; color:var(--accent)}
+.guide-mini img{display:block; margin-top:8px; max-width:min(100%,640px); border-radius:10px; border:1px solid var(--hairline)}
+.tbl-duo{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
+@media (max-width:880px){ .tbl-duo{grid-template-columns:1fr} }
+td small{display:block; color:var(--muted); font-size:11.5px; font-weight:500}
 .tglbar{display:flex; flex-wrap:wrap; gap:6px 20px; margin:0 0 8px; font-size:13px}
 .mb-sum{margin:14px 0 0; font-size:14px; color:var(--ink-2); line-height:1.55}
 .mb-sum b{color:var(--ink)}
@@ -305,7 +328,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
 <header class="hero">
   <div class="kicker">Tarif elektrik domestik &middot; Semenanjung Malaysia</div>
   <h1>Bil TNB anda:<br><span class="grad">sebelum vs selepas</span> Julai 2025</h1>
-  <p class="lede">Masukkan penggunaan bulanan (kWj) dan bandingkan bil di bawah struktur lama
+  <p class="lede">Masukkan penggunaan (kWj) dan tempoh bil anda, dan bandingkan bil di bawah struktur lama
   (kadar blok + ICPT) dengan struktur baharu RP4 (Caj Tenaga, Kapasiti, Rangkaian, Peruncitan,
   AFA dan Insentif Cekap Tenaga) yang berkuat kuasa 1 Julai 2025.</p>
 </header>
@@ -313,11 +336,11 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
 <div class="panel">
   <div class="controls">
     <div class="ctl">
-      <label for="kwh">Penggunaan bulanan</label>
+      <label for="kwh">Penggunaan dalam tempoh bil</label>
       <div class="kwh-row">
-        <input id="kwh" type="number" min="1" max="5000" step="1" value="500">
+        <input id="kwh" type="number" min="0" max="5000" step="1" value="500">
         <span class="unit">kWj</span>
-        <input id="kwhRange" type="range" min="50" max="2000" step="10" value="500" aria-label="Penggunaan bulanan (kWj)">
+        <input id="kwhRange" type="range" min="0" max="2000" step="10" value="500" aria-label="Penggunaan (kWj)">
       </div>
       <div class="presets" id="presets" role="group" aria-label="Contoh penggunaan">
         <button data-v="200">200</button><button data-v="350">350</button>
@@ -325,9 +348,14 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
         <button data-v="800">800</button><button data-v="1000">1000</button><button data-v="1600">1600</button>
       </div>
     </div>
-    <div class="ctl">
-      <label for="afaSel">Kadar AFA untuk bil baharu</label>
-      <select id="afaSel"></select>
+    <div class="ctl" id="tempoh">
+      <label for="dStart">Tempoh bil</label>
+      <div class="dates">
+        <input id="dStart" type="date" value="2026-09-01" min="2025-07-01" max="2027-01-31" aria-label="Tarikh mula bil">
+        <span class="unit">hingga</span>
+        <input id="dEnd" type="date" value="2026-09-30" min="2025-07-01" max="2027-01-31" aria-label="Tarikh akhir bil">
+      </div>
+      <div class="dates"><select id="monthQuick" aria-label="Isi pantas tempoh bil satu bulan penuh"></select><span class="days" id="dDays"></span></div>
     </div>
     <div class="ctl">
       <label>Cukai &amp; kumpulan wang</label>
@@ -336,11 +364,21 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <div class="ctl">
       <label>Perlindungan Sep&ndash;Dis 2026</label>
       <span class="toggle"><input id="protTgl" type="checkbox"> Had pengecualian AFA, Peruncitan &amp; SST dinaikkan ke 800 kWj</span>
+      <span class="prot-note">Nota: bil yang merangkumi September 2026 dan Disember 2026 akan diprorata mengikut bilangan hari dalam tempoh perlindungan.</span>
     </div>
     <div class="ctl">
       <label>Pelarasan bahan api</label>
       <span class="toggle"><input id="fuelTgl" type="checkbox"> Kecualikan ICPT / AFA daripada keseluruhan analisis</span>
     </div>
+  </div>
+  <div class="afa-box">
+    <table class="afa-parts" id="afaParts"><thead><tr><th>Bulan dalam tempoh bil</th><th class="num">Hari</th><th class="num">kWj (prorata)</th><th class="num">Kadar AFA (sen/kWj)</th></tr></thead><tbody></tbody></table>
+    <p class="mini-note">Masukkan tempoh bil seperti tertera pada bil TNB anda (cth. 15.08.2025 &ndash; 14.09.2025). Jumlah kWj dan had
+    600 kWj dipecahkan mengikut bilangan hari dalam setiap bulan, sama seperti bil TNB &mdash; semak baris
+    &ldquo;AFA (&hellip; kWh) mulai &hellip;&rdquo; pada bil anda. Kadar AFA diisi automatik dan boleh diubah.</p>
+    <details class="guide-mini"><summary>Panduan: cari tempoh bil &amp; baris AFA dalam bil anda</summary>
+      <img src="panduan-afa.png" alt="Contoh Pecahan Pengiraan Bil TNB dengan dua baris AFA: AFA (508kWh, RM0.038/kWh) mulai 01/08/26 dan AFA (208kWh, RM0.0367/kWh) mulai 01/09/26" loading="lazy">
+    </details>
   </div>
 </div>
 
@@ -353,7 +391,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   </div>
   <div class="tile t-new">
     <span class="tag">Mulai Jul 2025</span>
-    <div class="lbl">Bil baharu (RP4)</div>
+    <div class="lbl" id="newLbl">Bil baharu (RP4)</div>
     <div class="val" id="newVal">RM 0.00</div>
     <div class="sub" id="newEff"></div>
   </div>
@@ -368,26 +406,20 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
 <div class="announce">
   <span class="spark">🧾</span>
   <div class="txt">
-    <span class="badge-new">Baru</span><b>Analisis Bil Sebenar &mdash; bil merentas 2 bulan</b>
-    <p>Bil TNB anda selalunya bermula pertengahan bulan dan berakhir pertengahan bulan berikutnya, jadi AFA dikira
-    <em>prorata</em> mengikut dua kadar berbeza. Pilih dua bulan, masukkan kWj setiap bulan &mdash; kami kira macam bil sebenar.</p>
+    <span class="badge-new">Baru</span><b>Bil merentas 2 bulan? Masukkan tempoh bil sebenar</b>
+    <p>Bil TNB selalunya bermula pertengahan bulan, jadi AFA dikira <em>prorata</em> ikut bilangan hari. Pilih tarikh
+    mula &amp; akhir bil di atas &mdash; pecahan kWj dan kadar AFA setiap bulan dikira automatik, dan kadar boleh diubah.</p>
   </div>
-  <a class="btn-grad" href="prorata.html">Cuba sekarang &rarr;</a>
+  <a class="btn-grad" href="#tempoh">Isi tempoh bil &uarr;</a>
 </div>
 
 <section>
-  <h2>Anatomi bil: kadar blok lama vs caj berkomponen baharu</h2>
+  <h2>Anatomi bil untuk <span id="chartKwh">500</span> kWj: kadar blok lama vs caj berkomponen baharu</h2>
   <div class="rule"></div>
-  <p class="sec-sub">Bar kiri memecahkan bil lama mengikut blok kadar (1&ndash;200, 201&ndash;300, &hellip;) berserta ICPT.
-  Bar kanan memecahkan bil baharu mengikut komponen RP4. Segmen di bawah garisan sifar ialah rebat.</p>
-  <div class="duo">
-    <div class="chart-card">
-      <h3>Perbandingan bil untuk <span id="chartKwh">500</span> kWj</h3>
-      <p class="chart-note">RM sebulan &middot; tuding pada segmen untuk nilai penuh</p>
-      <div class="scroller"><svg id="cmpChart" viewBox="0 0 680 420" role="img" aria-label="Carta bar bertindan: bil lama vs bil baharu"></svg></div>
-      <div class="legend" id="cmpLegend"></div>
-    </div>
-    <div class="tbl-stack">
+  <p class="sec-sub">Kiri: bil lama mengikut blok kadar (1&ndash;200, 201&ndash;300, &hellip;) berserta ICPT. Kanan: bil baharu mengikut
+  komponen RP4. Kedua-duanya disusun dan dibundarkan seperti bil TNB &mdash; caj, Cukai Perkhidmatan (8%), kemudian KWTBB (1.6%).</p>
+  <div>
+    <div class="tbl-duo">
       <div class="tbl-card">
         <h3>Bil lama &mdash; kadar blok</h3>
         <table id="oldTbl"><thead><tr><th>Perkara</th><th class="num">Unit</th><th class="num">Kadar</th><th class="num">RM</th></tr></thead><tbody></tbody></table>
@@ -463,8 +495,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   601&ndash;1,500 kWj tiada pelarasan, &gt;1,500 kWj surcaj 10 sen/kWj).
   Mulai Julai 2025, AFA disemak <em>setiap bulan</em>. Garis putus oren menunjukkan <b>konsep ICPT</b>: kadar purata setiap
   blok 6 bulan &mdash; inilah kadar tetap yang anda akan bayar jika semakan masih dibuat 6 bulan sekali. Bandingkan dengan bar
-  bulanan: contohnya Nov 2025, AFA sebenar beri rebat 8.91 sen tetapi konsep ICPT hanya 4.06 sen. Garis hitam pula ialah
-  purata bergerak 6 bulan yang digunakan sebagai anggaran dalam kalkulator. Pengguna &le;600 kWj dikecualikan daripada AFA
+  bulanan: contohnya Nov 2025, AFA sebenar beri rebat 8.91 sen tetapi konsep ICPT hanya 4.06 sen. Pengguna &le;600 kWj dikecualikan daripada AFA
   &mdash; dan bagi penggunaan Sep&ndash;Dis 2026, had perlindungan ini dinaikkan kepada <b>800 kWj</b> (pengecualian AFA,
   Caj Peruncitan &amp; SST).</p>
   <div class="chart-card">
@@ -475,7 +506,6 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
       <span class="key"><span class="sw" style="background:var(--fuel)"></span>Era ICPT (rebat domestik &le;600 kWj)</span>
       <span class="key"><span class="sw" style="background:var(--reb)"></span>AFA &mdash; rebat</span>
       <span class="key"><span class="sw" style="background:var(--sur)"></span>AFA &mdash; surcaj</span>
-      <span class="key"><span class="sw line" style="background:var(--avg)"></span>Purata bergerak 6 bulan</span>
       <span class="key"><span class="sw line" style="background:repeating-linear-gradient(90deg,var(--fuel) 0 6px,transparent 6px 10px)"></span>Konsep ICPT (purata blok 6 bulan)</span>
       <span class="key"><span class="sw" style="background:color-mix(in srgb, var(--sur) 32%, transparent); border:1.5px dashed var(--sur)"></span>Unjuran bulanan Okt&ndash;Dis 26 (myTNB)</span>
     </div>
@@ -512,12 +542,6 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <h2>Teroka lagi</h2>
   <div class="rule"></div>
   <div class="cards">
-    <a class="card" href="prorata.html">
-      <span class="ico">🧾</span>
-      <h3>Analisis Bil Sebenar<span class="badge-new">Baru</span></h3>
-      <p>Bil merentas 2 bulan? Pilih bulan, masukkan kWj setiap bulan &mdash; AFA dikira prorata macam bil sebenar TNB.</p>
-      <span class="go">Buka kalkulator &rarr;</span>
-    </a>
     <a class="card" href="grid.html">
       <span class="ico">🗼</span>
       <h3>Grid Titiwangsa<span class="badge-new">Baru</span></h3>
@@ -556,18 +580,23 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <li><b>Perlindungan diperluas (Sep&ndash;Dis 2026)</b>: had perlindungan dinaikkan daripada 600 kWj kepada
       <b>800 kWj</b> sebulan bagi penggunaan September&ndash;Disember 2026 &mdash; pengguna sehingga 800 kWj mendapat
       pengecualian AFA, Caj Peruncitan &amp; SST. Togol &ldquo;Perlindungan Sep&ndash;Dis 2026&rdquo; hanya berkesan
-      jika bulan AFA yang dipilih berada dalam tempoh Sep&ndash;Dis 2026 <em>dan</em> penggunaan &le;800 kWj;
-      melebihi 800 kWj atau bulan di luar tempoh, bil dikira seperti biasa (had asal 600 kWj).</li>
+      untuk hari dalam tempoh Sep&ndash;Dis 2026 <em>dan</em> penggunaan &le;800 kWj. Bil yang merangkumi September 2026
+      dan Disember 2026 diprorata mengikut hari (anggaran kalkulator: had 600/800 kWj dan Caj Peruncitan dipecah ikut hari).</li>
     <li><b>Insentif Cekap Tenaga (EEI)</b>: rebat berperingkat 25.0 &rarr; 0.5 sen/kWj untuk penggunaan &le;1,000 kWj,
       dikenakan ke atas semua unit mengikut jumlah penggunaan bulan itu.</li>
-    <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Pilihan lalai
-      kalkulator ialah purata 6 bulan terkini; anda boleh pilih mana-mana bulan sebenar dari senarai.</li>
+    <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Kadar diambil
+      ikut bulan dalam tempoh bil yang anda masukkan (bukan purata), kerana penggunaan dan kadar AFA berbeza setiap bulan.
+      Bil merentas bulan: kWj setiap bulan = jumlah kWj &times; hari bulan itu &divide; hari tempoh bil.</li>
     <li><b>Unjuran AFA Okt&ndash;Dis 2026</b>: Unjuran 3-Bulan rasmi myTNB &mdash; Okt +3.36, Nov +2.81, Dis +5.48
-      sen/kWj (senario Base Case). Ini bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan. Bulan unjuran
-      boleh dipilih dalam dropdown untuk anggaran bil akan datang.</li>
-    <li><b>KWTBB</b> 1.6% dikenakan jika penggunaan &gt;300 kWj; <b>Cukai Perkhidmatan</b> 8% dikenakan ke atas bahagian
-      penggunaan melebihi 600 kWj (800 kWj bagi Sep&ndash;Dis 2026). Kedua-duanya anggaran &mdash; kaedah pengiraan penuh
-      TNB mungkin berbeza sedikit.</li>
+      sen/kWj (senario Base Case). Ini bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan. Tempoh bil
+      dalam bulan unjuran menggunakan kadar ini secara automatik (boleh diubah).</li>
+    <li><b>Cukai Perkhidmatan 8%</b>: dikenakan ke atas lajur &ldquo;Dengan Cukai Perkhidmatan&rdquo; &mdash; bahagian setiap caj bagi
+      kWj melebihi 600 (800 bagi Sep&ndash;Dis 2026), termasuk AFA, Caj Peruncitan RM10 dan rebat Cekap Tenaga bahagian itu.
+      <b>KWTBB 1.6%</b> (jika &gt;300 kWj): ke atas Caj Tenaga + Kapasiti + Rangkaian + Insentif Cekap Tenaga, tidak termasuk AFA
+      dan Caj Peruncitan. Bil lama: KWTBB ke atas caj blok sahaja (tanpa ICPT).</li>
+    <li><b>Pembundaran</b>: setiap caj dibundarkan ke sen terdekat (0.5 sen ke atas) secara berasingan bagi lajur tanpa
+      dan dengan cukai, seperti bil TNB. Jumlah bil sebenar digenapkan ke 5 sen terdekat. Kaedah ini disahkan dengan
+      25 bil sebenar (13 RP4, 12 tarif lama) dalam semakan kalkulator B&amp;C, 24 Sep 2026 &mdash; semua padan hingga ke sen.</li>
     <li>Alat ini untuk perbandingan kasar sahaja; rujuk bil sebenar atau kalkulator rasmi myTNB untuk angka muktamad.</li>
   </ol>
   <p>Sumber: <a href="https://www.st.gov.my/jadual-elektrik-baharu-lebih-236-juta-pengguna-domestik-semenanjung-nikmati-kadar-lebih-adil" target="_blank" rel="noopener">Suruhanjaya Tenaga (jadual tarif RP4, Jun 2025)</a> &middot;
@@ -576,7 +605,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
   <a href="https://www.singlebuyer.com.my/Generation-Info-Tariff/automatic-fuel-adjustment-(afa)" target="_blank" rel="noopener">unjuran AFA (Single Buyer)</a></p>
 </section>
 
-<footer>Dikemas kini September 2026. Kadar AFA terkini diumumkan Suruhanjaya Tenaga pada awal setiap bulan.</footer>
+<footer>Dikemas kini September 2026 &middot; Dihasilkan oleh <b>Adzim &amp; Abbas</b> &middot; Pengiraan disemak dengan bil sebenar oleh B&amp;C. Kadar AFA terkini diumumkan Suruhanjaya Tenaga pada awal setiap bulan.</footer>
 </div>
 
 <div id="tip" role="status"></div>
@@ -618,33 +647,42 @@ const AFA_FORECAST = { // Unjuran 3-Bulan Kadar AFA rasmi (myTNB)
 const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const blockOf = j => AFA_BLOCKS.find(b=>j>=b.s&&j<=b.e);
 const blockAvg = b => avgOf(AFA_MONTHS.slice(b.s,b.e+1).map(d=>d.v));
-const AFA_AVG6 = avgOf(AFA_MONTHS.slice(-6).map(d=>d.v));
-const AFA_AVG12 = avgOf(AFA_MONTHS.slice(-12).map(d=>d.v));
 
-/* ================= KIRAAN ================= */
+/* ================= KIRAAN — ikut kaedah bil TNB ================= */
+// Setiap amaun dibundar ke sen terdekat (separuh ke atas, jauh dari sifar) dalam aritmetik integer,
+// jadi 101 kWj × 6.50 sen = RM6.565 → RM6.57 seperti bil TNB (float biasa beri 6.56).
+const cents = rm => Math.round(rm*100);
+const sumRM = arr => arr.reduce((a,x)=>a+cents(x),0)/100;
+function amt(kwh, rateSen){                        // kWj × sen/kWj → RM
+  const p = kwh*Math.round(rateSen*100), a = Math.floor((Math.abs(p)+50)/100);
+  return (p<0?-a:a)/100;
+}
+function pctOf(rm, num, den){                      // 8% = (8,100); 1.6% = (16,1000)
+  const c = cents(rm), v = Math.floor((Math.abs(c)*num + den/2)/den);
+  return (c<0?-v:v)/100;
+}
+const roundTo5sen = rm => Math.round(cents(rm)/5)*5/100;
+
 function calcOld(u, withTax, noFuel=false){
   const segs=[]; let prev=0;
   for(let i=0;i<OLD_BLOCKS.length;i++){
     const [cap,rate]=OLD_BLOCKS[i];
     const take=Math.max(0, Math.min(u,cap)-prev);
-    if(take>0) segs.push({i, kwh:take, rate, rm:take*rate/100});
+    if(take>0) segs.push({i, kwh:take, rate, rm:amt(take,rate)});
     prev=cap; if(u<=cap) break;
   }
-  let blockTotal=segs.reduce((a,s)=>a+s.rm,0);
-  blockTotal=Math.max(blockTotal,3); // caj minimum RM3
+  const blockTotal=Math.max(sumRM(segs.map(s=>s.rm)),3); // caj minimum RM3
   const icptRate = noFuel ? 0 : (u>1500 ? 10 : (u>600 ? 0 : -2));
-  const icpt = u*icptRate/100;
+  const icpt = amt(u, icptRate);
   let kwtbb=0, sst=0;
   if(withTax){
-    if(u>300) kwtbb = 0.016*blockTotal;
-    if(u>600){
-      const over=u-600;
-      const b4=Math.min(over,300), b5=Math.max(0,over-300);
-      const overCost=(b4*54.6+b5*57.1)/100 + over*icptRate/100;
-      sst=0.08*overCost;
-    }
+    // Cukai Perkhidmatan: 8% atas lajur "Dengan Cukai" = blok 4 & 5 (kWj ke-601 ke atas) + ICPT bahagian itu
+    if(u>600) sst = pctOf(sumRM(segs.filter(s=>s.i>=3).map(s=>s.rm)) + icpt - amt(600,icptRate), 8, 100);
+    // KWTBB: 1.6% atas caj blok sahaja (tanpa ICPT)
+    if(u>300) kwtbb = pctOf(blockTotal, 16, 1000);
   }
-  return {segs, blockTotal, icptRate, icpt, kwtbb, sst, noFuel, total: blockTotal+icpt+kwtbb+sst};
+  const total=sumRM([blockTotal,icpt,sst,kwtbb]);
+  return {segs, blockTotal, icptRate, icpt, kwtbb, sst, noFuel, total, rounded:roundTo5sen(total)};
 }
 
 function eeiRate(u){
@@ -653,24 +691,47 @@ function eeiRate(u){
   return 0;
 }
 
-function calcNew(u, afaRate, withTax, lim=600, noFuel=false){
-  const tRate = u>1500 ? 37.03 : 27.03;
-  const tenaga = u*tRate/100;
-  const kapasiti = u*4.55/100;
-  const rangkaian = u*12.85/100;
-  const peruncitan = u>lim ? 10 : 0;
-  const afaApplies = u>lim && !noFuel;
-  const afa = afaApplies ? u*afaRate/100 : 0;
-  const eRate = eeiRate(u);
-  const eei = -u*eRate/100;
-  let kwtbb=0, sst=0;
-  if(withTax){
-    const base = tenaga+kapasiti+rangkaian+peruncitan+afa+eei;
-    if(u>300) kwtbb = 0.016*Math.max(base,0);
-    if(u>lim) sst = 0.08*((u-lim)/u)*(tenaga+afa+kapasiti+rangkaian);
+// parts: satu bahagian bagi setiap bulan kalendar dalam tempoh bil — {m, days, rate (sen/kWj), prot}
+// TNB memprorata kWj DAN had 600 kWj ikut bilangan hari; bahagian terakhir mengambil baki.
+function calcRP4(u, parts, withTax, noFuel=false){
+  const D = parts.reduce((a,p)=>a+p.days,0) || 1;
+  const P = parts.map(p=>({...p, lim:(p.prot && u<=800) ? 800 : 600}));
+  const thrTotal = Math.round(P.reduce((a,p)=>a+p.lim*p.days,0)/D);
+  let kLeft=u, tLeft=thrTotal;
+  P.forEach((p,i)=>{
+    const last=i===P.length-1;
+    p.kwh = last ? kLeft : Math.round(u*p.days/D); kLeft-=p.kwh;
+    p.thr = last ? tLeft : Math.round(p.lim*p.days/D); tLeft-=p.thr;
+    p.kwhN = Math.min(p.kwh, p.thr);               // kWj tanpa cukai perkhidmatan
+  });
+  const N = P.reduce((a,p)=>a+p.kwhN,0), S = u-N;  // S = kWj yang dikenakan cukai perkhidmatan
+  const tRate = u>1500 ? 37.03 : 27.03, eRate = eeiRate(u);
+  const split = rate => { const tot=amt(u,rate), n=amt(N,rate); return {tot, st:sumRM([tot,-n])}; };
+  const E=split(tRate), K=split(4.55), R=split(12.85), X=split(-eRate);
+  for(const p of P){
+    p.applies = !noFuel && u>p.lim;
+    p.amt = p.applies ? amt(p.kwh, p.rate) : 0;
+    p.st  = p.applies ? sumRM([p.amt, -amt(p.kwhN, p.rate)]) : 0;
   }
-  return {tRate, tenaga, kapasiti, rangkaian, peruncitan, afaApplies, afaRate, afa, eRate, eei, kwtbb, sst, lim,
-          total: tenaga+kapasiti+rangkaian+peruncitan+afa+eei+kwtbb+sst};
+  // Caj Peruncitan RM10 (dalam lajur bercukai), diprorata jika tempoh bil merentas had perlindungan
+  const retDays = P.filter(p=>u>p.lim).reduce((a,p)=>a+p.days,0);
+  const peruncitan = retDays===D ? 10 : Math.round(1000*retDays/D)/100;
+  const afa = sumRM(P.map(p=>p.amt));
+  let sst=0, kwtbb=0;
+  if(withTax){
+    const stBase = sumRM([E.st, ...P.map(p=>p.st), K.st, R.st, peruncitan, X.st]);
+    if(S>0 && stBase>0) sst = pctOf(stBase, 8, 100);
+    // KWTBB: 1.6% atas Caj Tenaga + Kapasiti + Rangkaian + Insentif Cekap Tenaga (tanpa AFA & Peruncitan)
+    if(u>300) kwtbb = pctOf(sumRM([E.tot, K.tot, R.tot, X.tot]), 16, 1000);
+  }
+  const total = sumRM([E.tot, afa, K.tot, R.tot, peruncitan, X.tot, sst, kwtbb]);
+  return {tRate, tenaga:E.tot, kapasiti:K.tot, rangkaian:R.tot, peruncitan, eRate, eei:X.tot,
+    afa, afaParts:P, afaApplies:P.some(p=>p.applies), afaRate: sumRM([afa])&&u ? afa/u*100 : (P[0]?P[0].rate:0),
+    lim: Math.max(...P.map(p=>p.lim)), kwhN:N, kwhS:S, sst, kwtbb, total, rounded:roundTo5sen(total)};
+}
+// Bil sebulan penuh pada satu kadar AFA (untuk carta)
+function calcNew(u, afaRate, withTax, lim=600, noFuel=false){
+  return calcRP4(u, [{m:"", days:30, rate:afaRate, prot:lim===800}], withTax, noFuel);
 }
 
 /* ================= UTIL ================= */
@@ -705,108 +766,42 @@ function niceTicks(min,max,n){
   return t;
 }
 
-/* ================= CARTA PERBANDINGAN ================= */
-function drawCompare(o,n,u){
-  const svg=$("#cmpChart"); svg.innerHTML="";
-  const W=680,H=420,mL=58,mR=16,mT=44,mB=34;
-  const plotW=W-mL-mR, plotH=H-mT-mB;
-
-  const oldSegs = o.segs.map(s=>({label:BLOCK_META[s.i].name+" @ "+s.rate+" sen/kWj", sub:s.kwh+" kWj", rm:s.rm, fill:`var(${BLOCK_META[s.i].v})`}));
-  if(o.kwtbb||o.sst) oldSegs.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:o.kwtbb+o.sst, fill:"var(--tax)"});
-  const oldNeg=[], oldPos=oldSegs;
-  if(o.icpt!==0)
-    (o.icpt>=0?oldPos:oldNeg).push({label:"ICPT ("+(o.icptRate>0?"+":"−")+Math.abs(o.icptRate)+" sen/kWj)", sub:u+" kWj", rm:o.icpt, fill:"var(--fuel)"});
-
-  const newPos=[
-    {label:"Caj Tenaga @ "+n.tRate+" sen/kWj", sub:u+" kWj", rm:n.tenaga, fill:"var(--c-tenaga)"},
-    {label:"Caj Kapasiti @ 4.55 sen/kWj", sub:u+" kWj", rm:n.kapasiti, fill:"var(--c-kapasiti)"},
-    {label:"Caj Rangkaian @ 12.85 sen/kWj", sub:u+" kWj", rm:n.rangkaian, fill:"var(--c-rangkaian)"},
-  ];
-  if(n.peruncitan) newPos.push({label:"Caj Peruncitan", sub:"RM10/bulan", rm:n.peruncitan, fill:"var(--c-peruncitan)"});
-  const newNeg=[];
-  if(n.afaApplies && n.afa!==0)
-    (n.afa>=0?newPos:newNeg).push({label:"AFA ("+fmtSen(n.afaRate)+"/kWj)", sub:u+" kWj", rm:n.afa, fill:"var(--fuel)"});
-  if(n.kwtbb||n.sst) newPos.push({label:"KWTBB + Cukai Perkhidmatan", sub:"", rm:n.kwtbb+n.sst, fill:"var(--tax)"});
-  if(n.eei!==0) newNeg.push({label:"Insentif Cekap Tenaga (−"+n.eRate+" sen/kWj)", sub:"rebat", rm:n.eei, fill:"var(--c-eei)"});
-
-  const sumPos=a=>a.filter(s=>s.rm>0).reduce((x,s)=>x+s.rm,0);
-  const sumNeg=a=>a.filter(s=>s.rm<0).reduce((x,s)=>x+s.rm,0);
-  const maxPos=Math.max(sumPos(oldPos),sumPos(newPos),1);
-  const minNeg=Math.min(sumNeg(oldNeg),sumNeg(newNeg),0);
-  const yMax=maxPos*1.12, yMin=minNeg*1.25;
-  const y=v=> mT + (yMax-v)/(yMax-yMin)*plotH;
-
-  for(const t of niceTicks(yMin,yMax,6)){
-    const yy=y(t);
-    el("line",{x1:mL,x2:W-mR,y1:yy,y2:yy,stroke: t===0?"var(--axis)":"var(--grid)","stroke-width":1},svg);
-    el("text",{x:mL-8,y:yy+4,"text-anchor":"end","font-size":11,fill:"var(--muted)","font-variant-numeric":"tabular-nums"},svg).textContent="RM"+t.toFixed(0);
-  }
-
-  const groups=[
-    {x:mL+plotW*0.27, title:"SEBELUM", sub:"Blok + ICPT", pos:oldPos, neg:oldNeg, total:o.total},
-    {x:mL+plotW*0.73, title:"SELEPAS", sub:"Komponen RP4", pos:newPos, neg:newNeg, total:n.total},
-  ];
-  const bw=Math.min(150,plotW*0.3);
-  for(const g of groups){
-    let acc=0;
-    for(const s of g.pos.filter(s=>s.rm>0)){
-      const y1=y(acc+s.rm), y2=y(acc);
-      const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:3},svg);
-      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
-      acc+=s.rm;
-    }
-    let dn=0;
-    for(const s of g.neg){
-      const y1=y(dn), y2=y(dn+s.rm);
-      const r=el("rect",{x:g.x-bw/2, y:y1+1, width:bw, height:Math.max(0,(y2-y1)-2), fill:s.fill, rx:3},svg);
-      bindTip(r,`<b>${s.label}</b><br>${s.sub?s.sub+" · ":""}${fmtRM(s.rm)}`);
-      dn+=s.rm;
-    }
-    el("text",{x:g.x, y:y(acc)-10,"text-anchor":"middle","font-size":15,"font-weight":800,fill:"var(--ink)"},svg).textContent=fmtRM0(g.total);
-    el("text",{x:g.x, y:H-16,"text-anchor":"middle","font-size":12,"font-weight":800,"letter-spacing":"1.5",fill:"var(--ink)"},svg).textContent=g.title;
-    el("text",{x:g.x, y:H-3,"text-anchor":"middle","font-size":10.5,fill:"var(--muted)"},svg).textContent=g.sub;
-    const ty=y(g.total);
-    el("line",{x1:g.x-bw/2-8,x2:g.x+bw/2+8,y1:ty,y2:ty,stroke:"var(--ink)","stroke-width":2,"stroke-dasharray":"5 3"},svg);
-  }
-
-  const legend=$("#cmpLegend");
-  const items=[
-    ["var(--blk1)","Blok lama (cerah→gelap = blok 1→5)"],
-    ["var(--fuel)","ICPT / AFA (bahan api)"],
-    ["var(--c-tenaga)","Caj Tenaga"],["var(--c-kapasiti)","Caj Kapasiti"],
-    ["var(--c-rangkaian)","Caj Rangkaian"],["var(--c-peruncitan)","Caj Peruncitan"],
-    ["var(--c-eei)","Insentif Cekap Tenaga"],["var(--tax)","KWTBB + cukai"],
-  ];
-  legend.innerHTML=items.map(([c,t])=>`<span class="key"><span class="sw" style="background:${c}"></span>${t}</span>`).join("");
-}
-
 /* ================= JADUAL ================= */
+// Susunan ikut bil TNB: caj, Cukai Perkhidmatan (8%), kemudian KWTBB (1.6%)
+function tblRows(sel){
+  const tb=$(sel+" tbody"); tb.innerHTML="";
+  return (cells,cls)=>{ const tr=document.createElement("tr"); if(cls) tr.className=cls; tr.innerHTML=cells; tb.appendChild(tr); };
+}
 function fillOldTbl(o,u){
-  const tb=$("#oldTbl tbody"); tb.innerHTML="";
-  const row=(cells,cls)=>{const tr=document.createElement("tr"); if(cls)tr.className=cls;
-    tr.innerHTML=cells; tb.appendChild(tr);};
+  const row=tblRows("#oldTbl");
   for(const s of o.segs){
     const m=BLOCK_META[s.i];
     row(`<td><span class="dot" style="background:var(${m.v})"></span>${m.name}</td><td class="num">${s.kwh}</td><td class="num">${m.rate.toFixed(1)} sen</td><td class="num">${s.rm.toFixed(2)}</td>`);
   }
+  if(o.blockTotal>o.segs.reduce((a,s)=>a+s.rm,0)+0.001)
+    row(`<td>Caj minimum</td><td class="num">&ndash;</td><td class="num">RM3</td><td class="num">${o.blockTotal.toFixed(2)}</td>`,"minor");
   row(`<td><span class="dot" style="background:var(--fuel)"></span>ICPT</td><td class="num">${u}</td><td class="num">${o.noFuel?"dikecualikan":o.icptRate===0?"tiada":(o.icptRate>0?"+":"−")+Math.abs(o.icptRate).toFixed(1)+" sen"}</td><td class="num ${o.icpt<0?"neg":o.icpt>0?"pos-sur":""}">${o.icpt.toFixed(2)}</td>`);
-  if(o.kwtbb) row(`<td>KWTBB</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
-  if(o.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
-  row(`<td colspan="3">Jumlah</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
+  if(o.sst) row(`<td>Cukai Perkhidmatan (8%)</td><td class="num">&ndash;</td><td class="num">8%</td><td class="num">${o.sst.toFixed(2)}</td>`,"minor");
+  if(o.kwtbb) row(`<td>KWTBB (1.6%)</td><td class="num">&ndash;</td><td class="num">1.6%</td><td class="num">${o.kwtbb.toFixed(2)}</td>`,"minor");
+  row(`<td colspan="3">Caj semasa</td><td class="num">${o.total.toFixed(2)}</td>`,"total");
+  if(Math.abs(o.rounded-o.total)>0.001) row(`<td colspan="3">Jumlah bil (digenapkan ke 5 sen)</td><td class="num">${o.rounded.toFixed(2)}</td>`,"minor");
 }
-function fillNewTbl(n,u){
-  const tb=$("#newTbl tbody"); tb.innerHTML="";
-  const row=(cells,cls)=>{const tr=document.createElement("tr"); if(cls)tr.className=cls;
-    tr.innerHTML=cells; tb.appendChild(tr);};
+function fillNewTbl(n,noFuel){
+  const row=tblRows("#newTbl"), P=n.afaParts, sign=v=>v<0?"neg":v>0?"pos-sur":"";
   row(`<td><span class="dot" style="background:var(--c-tenaga)"></span>Caj Tenaga</td><td class="num">${n.tRate} sen</td><td class="num">${n.tenaga.toFixed(2)}</td>`);
-  row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA</td><td class="num">${n.afaApplies?fmtSen(n.afaRate):"dikecualikan"}</td><td class="num ${n.afa<0?"neg":n.afa>0?"pos-sur":""}">${n.afaApplies?n.afa.toFixed(2):"0.00"}</td>`);
+  if(noFuel) row(`<td><span class="dot" style="background:var(--fuel)"></span>AFA</td><td class="num">dikecualikan (togol)</td><td class="num">0.00</td>`);
+  else for(const p of P){
+    const lbl = P.length>1 ? `AFA (${p.kwh} kWj) mulai 01/${p.key.slice(5)}/${p.key.slice(2,4)}` : `AFA ${p.m}`;
+    row(`<td><span class="dot" style="background:var(--fuel)"></span>${lbl}${p.fc?" <span class='tag-mini'>unjuran</span>":""}</td><td class="num">${p.applies?fmtSen(p.rate):"dikecualikan (≤"+p.lim+" kWj)"}</td><td class="num ${sign(p.amt)}">${p.amt.toFixed(2)}</td>`);
+  }
   row(`<td><span class="dot" style="background:var(--c-kapasiti)"></span>Caj Kapasiti</td><td class="num">4.55 sen</td><td class="num">${n.kapasiti.toFixed(2)}</td>`);
   row(`<td><span class="dot" style="background:var(--c-rangkaian)"></span>Caj Rangkaian</td><td class="num">12.85 sen</td><td class="num">${n.rangkaian.toFixed(2)}</td>`);
-  row(`<td><span class="dot" style="background:var(--c-peruncitan)"></span>Caj Peruncitan</td><td class="num">${n.peruncitan?"RM10":"dikecualikan"}</td><td class="num">${n.peruncitan.toFixed(2)}</td>`);
+  row(`<td><span class="dot" style="background:var(--c-peruncitan)"></span>Caj Peruncitan</td><td class="num">${n.peruncitan===10?"RM10":n.peruncitan>0?"RM10 (prorata hari)":"dikecualikan"}</td><td class="num">${n.peruncitan.toFixed(2)}</td>`);
   row(`<td><span class="dot" style="background:var(--c-eei)"></span>Insentif Cekap Tenaga</td><td class="num">${n.eRate?("−"+n.eRate+" sen"):"–"}</td><td class="num ${n.eei<0?"neg":""}">${n.eei.toFixed(2)}</td>`);
-  if(n.kwtbb) row(`<td>KWTBB</td><td class="num">1.6%</td><td class="num">${n.kwtbb.toFixed(2)}</td>`,"minor");
-  if(n.sst) row(`<td>Cukai Perkhidmatan</td><td class="num">8%</td><td class="num">${n.sst.toFixed(2)}</td>`,"minor");
-  row(`<td colspan="2">Jumlah</td><td class="num">${n.total.toFixed(2)}</td>`,"total");
+  if(n.sst) row(`<td>Cukai Perkhidmatan (8%)<small>${n.kwhS} kWj melebihi had</small></td><td class="num">8%</td><td class="num">${n.sst.toFixed(2)}</td>`,"minor");
+  if(n.kwtbb) row(`<td>KWTBB (1.6%)</td><td class="num">1.6%</td><td class="num">${n.kwtbb.toFixed(2)}</td>`,"minor");
+  row(`<td colspan="2">Caj semasa</td><td class="num">${n.total.toFixed(2)}</td>`,"total");
+  if(Math.abs(n.rounded-n.total)>0.001) row(`<td colspan="2">Jumlah bil (digenapkan ke 5 sen)</td><td class="num">${n.rounded.toFixed(2)}</td>`,"minor");
 }
 
 /* ================= CARTA AFA ================= */
@@ -879,20 +874,6 @@ function drawAfa(){
     const hit=el("rect",{x:x1,y:yy-9,width:x2-x1,height:18,fill:"transparent"},svg);
     bindTip(hit,`<b>Konsep ICPT — ${b.label}${b.partial?" (blok belum lengkap)":""}</b><br>Purata blok: ${fmtSen(avg)}/kWj<br><span style='opacity:.75'>Kadar tetap jika semakan dibuat 6 bulan sekali</span>`);
   }
-
-  const pts=[];
-  AFA_MONTHS.forEach((d,j)=>{
-    if(j>=5){
-      const avg=avgOf(AFA_MONTHS.slice(j-5,j+1).map(x=>x.v));
-      pts.push({i:6+j, v:avg});
-    }
-  });
-  const path=pts.map((p,k)=>(k?"L":"M")+xC(p.i)+" "+y(p.v)).join(" ");
-  el("path",{d:path,fill:"none",stroke:"var(--avg)","stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
-  const last=pts[pts.length-1];
-  el("circle",{cx:xC(last.i),cy:y(last.v),r:4.5,fill:"var(--avg)",stroke:"var(--surface)","stroke-width":2},svg);
-  el("text",{x:xC(last.i)+10,y:y(last.v)+14,"font-size":11.5,"font-weight":700,fill:"var(--ink)",
-    stroke:"var(--surface)","stroke-width":3,"paint-order":"stroke"},svg).textContent="Purata 6 bln: "+fmtSen(last.v);
 
   const tb=$("#afaTbl tbody");
   tb.innerHTML = TIMELINE.map(d=>`<tr><td>${d.m}${d.era==="icpt"?" <span style='color:var(--muted)'>(ICPT)</span>":""}</td><td class="num ${d.v<0?"neg":d.v>0?"pos-sur":""}">${fmtSen(d.v)}</td></tr>`).join("")
@@ -1288,62 +1269,106 @@ $("#protTgl2").addEventListener("change",e=>{
   update();
 });
 
-/* ================= KEMAS KINI ================= */
-function buildAfaSelect(){
-  const sel=$("#afaSel");
-  const opts=[
-    {v:"avg6", t:`Purata 6 bulan terkini (${fmtSen(AFA_AVG6)})`},
-    {v:"avg12", t:`Purata 12 bulan (${fmtSen(AFA_AVG12)})`},
-  ].concat(AFA_FORECAST.months.slice().reverse().map(d=>({v:"fm:"+d.m, t:`${d.m} — unjuran (${fmtSen(d.v)})`})))
-   .concat(AFA_MONTHS.slice().reverse().map(d=>({v:"m:"+d.m, t:`${d.m} (${fmtSen(d.v)})`})));
-  sel.innerHTML=opts.map(o=>`<option value="${o.v}">${o.t}</option>`).join("");
-  sel.value="avg6";
-}
-function currentAfaRate(){
-  const v=$("#afaSel").value;
-  if(v==="avg6") return AFA_AVG6;
-  if(v==="avg12") return AFA_AVG12;
-  if(v.startsWith("fm:")){
-    const d=AFA_FORECAST.months.find(x=>x.m===v.slice(3));
-    return d?d.v:0;
+/* ================= TEMPOH BIL & AFA PRORATA ================= */
+const BM=["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
+const keyOfLabel=m=>{ const [mm,yy]=m.split(" "); return "20"+yy+"-"+String(BM.indexOf(mm)+1).padStart(2,"0"); };
+const labelOfKey=k=>BM[+k.slice(5)-1]+" "+k.slice(2,4);
+const AFA_BY_KEY={};                      // "2026-09" → {v, fc}
+AFA_MONTHS.forEach(d=>{ AFA_BY_KEY[keyOfLabel(d.m)]={v:d.v, fc:false}; });
+AFA_FORECAST.months.forEach(d=>{ AFA_BY_KEY[keyOfLabel(d.m)]={v:d.v, fc:true}; });
+const afaEdits={};                        // kadar AFA yang diubah pengguna, ikut bulan
+const DAY=86400000, PERIOD_MAX=62;
+const parseD=s=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||""); return m?Date.UTC(+m[1],m[2]-1,+m[3]):NaN; };
+const isoD=t=>new Date(t).toISOString().slice(0,10);
+const dmy=t=>{ const d=new Date(t); return String(d.getUTCDate()).padStart(2,"0")+"/"+String(d.getUTCMonth()+1).padStart(2,"0")+"/"+String(d.getUTCFullYear()).slice(2); };
+let period={parts:[], D:30, msg:""};
+function readPeriod(){
+  let a=parseD($("#dStart").value), b=parseD($("#dEnd").value), msg="";
+  if(!Number.isFinite(a)) a=Date.UTC(2026,8,1);
+  if(!Number.isFinite(b)) b=a+29*DAY;
+  if(b<a){ b=a; msg="tarikh akhir tidak boleh sebelum tarikh mula"; $("#dEnd").value=isoD(b); }
+  if((b-a)/DAY+1>PERIOD_MAX){ b=a+(PERIOD_MAX-1)*DAY; msg="tempoh maksimum "+PERIOD_MAX+" hari"; $("#dEnd").value=isoD(b); }
+  const parts=[];
+  for(let t=a; t<=b; ){
+    const d=new Date(t), y=d.getUTCFullYear(), mo=d.getUTCMonth();
+    const e=Math.min(Date.UTC(y,mo+1,1)-DAY, b), key=y+"-"+String(mo+1).padStart(2,"0"), off=AFA_BY_KEY[key];
+    parts.push({key, m:labelOfKey(key), from:t, days:(e-t)/DAY+1, official:off?off.v:null, fc:!!(off&&off.fc)});
+    t=e+DAY;
   }
-  const m=v.slice(2);
-  const d=AFA_MONTHS.find(x=>x.m===m);
-  return d?d.v:0;
+  period={parts, D:(b-a)/DAY+1, msg};
 }
+const rateOf=p=>afaEdits[p.key] ?? p.official ?? 0;
+function renderParts(){
+  $("#afaParts tbody").innerHTML=period.parts.map((p,i)=>{
+    const edited=afaEdits[p.key]!=null, v=rateOf(p);
+    const tag=p.official==null?` <span class="tag-mini warn">tiada data &mdash; isi kadar</span>`:p.fc?` <span class="tag-mini">unjuran</span>`:"";
+    return `<tr><td>${p.m}${tag}<small>mulai ${dmy(p.from)}</small></td><td class="num">${p.days}</td><td class="num" id="pk${i}">&ndash;</td>
+      <td class="num"><input type="number" step="0.01" data-key="${p.key}" value="${v.toFixed(2)}" class="${edited?"edited":""}" aria-label="Kadar AFA ${p.m} (sen/kWj)">
+      <button type="button" class="reset-afa" data-reset="${p.key}" title="Kembali ke kadar rasmi" ${edited&&p.official!=null?"":"hidden"}>&#8634;</button></td></tr>`;
+  }).join("");
+  $("#dDays").textContent=period.D+" hari"+(period.parts.length>1?" · merentas "+period.parts.length+" bulan":"")+(period.msg?" · "+period.msg:"");
+}
+function onPeriod(){ readPeriod(); renderParts(); update(); }
+function buildQuick(){
+  const keys=Object.keys(AFA_BY_KEY).sort().reverse();
+  $("#monthQuick").innerHTML=`<option value="">Isi pantas: satu bulan penuh&hellip;</option>`+
+    keys.map(k=>`<option value="${k}">${labelOfKey(k)}${AFA_BY_KEY[k].fc?" (unjuran AFA)":""}</option>`).join("");
+}
+$("#dStart").addEventListener("change",onPeriod);
+$("#dEnd").addEventListener("change",onPeriod);
+$("#monthQuick").addEventListener("change",e=>{
+  const k=e.target.value; if(!k) return;
+  const y=+k.slice(0,4), m=+k.slice(5)-1;
+  $("#dStart").value=isoD(Date.UTC(y,m,1)); $("#dEnd").value=isoD(Date.UTC(y,m+1,1)-DAY);
+  e.target.value=""; onPeriod();
+});
+$("#afaParts").addEventListener("input",e=>{
+  const inp=e.target.closest("input[data-key]"); if(!inp) return;
+  const p=period.parts.find(x=>x.key===inp.dataset.key), v=parseFloat(inp.value);
+  if(Number.isFinite(v) && (p.official==null || Math.abs(v-p.official)>1e-9)) afaEdits[p.key]=v; else delete afaEdits[p.key];
+  inp.classList.toggle("edited", afaEdits[p.key]!=null);
+  inp.nextElementSibling.hidden = afaEdits[p.key]==null || p.official==null;
+  update();
+});
+$("#afaParts").addEventListener("click",e=>{
+  const b=e.target.closest("[data-reset]"); if(!b) return;
+  delete afaEdits[b.dataset.reset]; renderParts(); update();
+});
 
+/* ================= KEMAS KINI ================= */
 function update(){
   let u=parseInt($("#kwh").value,10);
-  if(!Number.isFinite(u)||u<1) u=1;
+  if(!Number.isFinite(u)||u<0) u=0;
   if(u>5000) u=5000;
   $("#kwh").value=u;
-  $("#kwhRange").value=Math.min(Math.max(u,50),2000);
+  $("#kwhRange").value=Math.min(u,2000);
   document.querySelectorAll("#presets button").forEach(b=>b.setAttribute("aria-pressed", String(+b.dataset.v===u)));
   $("#chartKwh").textContent=u;
 
-  const withTax=$("#taxTgl").checked;
-  // Perlindungan hanya untuk bulan Sep–Dis 2026 DAN jumlah penggunaan ≤800 kWj
-  const protSelV=$("#afaSel").value;
-  let protMonthOk=true; // purata 6/12 bulan dianggap anggaran bil semasa (dalam tempoh)
-  if(protSelV.startsWith("m:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(2));
-  else if(protSelV.startsWith("fm:")) protMonthOk=PROT_MONTHS.includes(protSelV.slice(3));
-  const protTgl=$("#protTgl");
-  const protOk=protMonthOk && u<=800;
+  const withTax=$("#taxTgl").checked, noFuel=$("#fuelTgl").checked;
+  const parts=period.parts.map(p=>({...p, rate:rateOf(p), inProt:PROT_MONTHS.includes(p.m)}));
+  // Perlindungan hanya untuk hari dalam Sep–Dis 2026 DAN jumlah penggunaan ≤800 kWj
+  const protTgl=$("#protTgl"), protAny=parts.some(p=>p.inProt), protOk=protAny && u<=800;
   protTgl.disabled=!protOk;
   const protWrap=protTgl.closest(".toggle");
   protWrap.style.opacity=protOk?"":"0.45";
-  protWrap.title=!protMonthOk
-    ? "Hanya untuk bulan Sep–Dis 2026 — bulan AFA yang dipilih di luar tempoh ini"
+  protWrap.title=!protAny
+    ? "Hanya untuk penggunaan Sep–Dis 2026 — tempoh bil di luar tempoh ini"
     : (u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, Sep–Dis 2026");
-  const lim=(protTgl.checked && protOk) ? 800 : 600;
-  const noFuel=$("#fuelTgl").checked;
-  const afaRate=currentAfaRate();
-  const o=calcOld(u,withTax,noFuel), n=calcNew(u,afaRate,withTax,lim,noFuel);
+  const protOn=protTgl.checked && protOk;
 
+  const o=calcOld(u,withTax,noFuel);
+  const n=calcRP4(u, parts.map(p=>({m:p.m, key:p.key, from:p.from, fc:p.fc, days:p.days, rate:p.rate, prot:protOn&&p.inProt})), withTax, noFuel);
+  n.afaParts.forEach((p,i)=>{ const c=$("#pk"+i); if(c) c.textContent=p.kwh; });
+  const afaEff=parts.reduce((a,p)=>a+p.rate*p.days,0)/(period.D||1);
+  const primary=parts.reduce((a,p)=>p.days>a.days?p:a, parts[0]);
+
+  const eff=t=>u ? (t/u*100).toFixed(1)+" sen/kWj efektif" : "tiada penggunaan";
   $("#oldVal").textContent=fmtRM(o.total);
   $("#newVal").textContent=fmtRM(n.total);
-  $("#oldEff").textContent=(o.total/u*100).toFixed(1)+" sen/kWj efektif";
-  $("#newEff").textContent=(n.total/u*100).toFixed(1)+" sen/kWj efektif · "+(noFuel?"AFA dikecualikan":"AFA "+fmtSen(afaRate));
+  $("#newLbl").textContent="Bil baharu (RP4"+(parts.length>1?", AFA prorata":"")+")";
+  $("#oldEff").textContent=eff(o.total);
+  $("#newEff").textContent=eff(n.total)+" · "+(noFuel?"AFA dikecualikan":parts.map(p=>"AFA "+p.m+" "+fmtSen(p.rate)).join(" & "));
 
   const d=n.total-o.total;
   const dv=$("#deltaVal");
@@ -1352,10 +1377,18 @@ function update(){
   $("#deltaLbl").textContent= d<=0 ? "Jimat dengan tarif baharu" : "Naik dengan tarif baharu";
   $("#deltaPct").textContent=(d<=0?"−":"+")+Math.abs(d/o.total*100).toFixed(1)+"% berbanding bil lama";
 
-  drawCompare(o,n,u);
   fillOldTbl(o,u);
-  fillNewTbl(n,u);
-  drawCurve(u, withTax, protTgl.checked && protMonthOk, noFuel, afaRate);
+  fillNewTbl(n,noFuel);
+  drawCurve(u, withTax, protOn && primary.inProt, noFuel, afaEff);
+  $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan"
+    : parts.length>1 ? `AFA purata tempoh bil ${fmtSen(afaEff)} (${parts.map(p=>p.m).join(" & ")})`
+    : `AFA ${primary.m}: ${fmtSen(primary.rate)}`;
+  $("#fuelTgl2").checked=noFuel;
+  const protTgl2=$("#protTgl2"), protWrap2=$("#protWrap2");
+  protTgl2.checked=protTgl.checked;
+  protTgl2.disabled=protTgl.disabled;
+  protWrap2.style.opacity=protTgl.disabled?"0.45":"";
+  protWrap2.title=protWrap.title;
   drawMonthly(u, withTax, protTgl.checked, noFuel);
   $("#mbKwh").textContent=u; $("#mbKwh2").textContent=u;
   $("#fuelTgl3").checked=noFuel;
@@ -1365,22 +1398,12 @@ function update(){
     w3.style.opacity=u>800?"0.45":"";
     w3.title=u>800?"Penggunaan melebihi 800 kWj — perlindungan tidak terpakai":"Pengecualian AFA, Caj Peruncitan & SST untuk ≤800 kWj, bulan Sep–Dis 2026";
   }
-  $("#curveAfaLbl").textContent = noFuel ? "AFA dikecualikan" : "AFA: "+$("#afaSel").selectedOptions[0].textContent;
-  $("#fuelTgl2").checked=noFuel;
-  const protTgl2=$("#protTgl2"), protWrap2=$("#protWrap2");
-  protTgl2.checked=protTgl.checked;
-  protTgl2.disabled=protTgl.disabled;
-  protWrap2.style.opacity=protTgl.disabled?"0.45":"";
-  protWrap2.title=protWrap.title;
 
-  // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan)
-  const selV=$("#afaSel").value;
-  let selIdx=AFA_MONTHS.length-1;
-  if(selV.startsWith("m:")){
-    const k=AFA_MONTHS.findIndex(x=>x.m===selV.slice(2));
-    if(k>=0) selIdx=k;
-  }
+  // tiles: AFA bulanan vs konsep ICPT (purata blok 6 bulan) — bulan utama tempoh bil
+  let selIdx=AFA_MONTHS.findIndex(x=>x.m===primary.m);
+  if(selIdx<0) selIdx=AFA_MONTHS.length-1;
   const mObj=AFA_MONTHS[selIdx];
+  const lim=(protOn && PROT_MONTHS.includes(mObj.m)) ? 800 : 600;
   const blk=blockOf(selIdx), bAvg=blockAvg(blk);
   const bilA=calcNew(u,mObj.v,withTax,lim,noFuel), bilB=calcNew(u,bAvg,withTax,lim,noFuel);
   $("#cmpAfaLbl").textContent="Bil baharu · AFA "+mObj.m;
@@ -1409,7 +1432,6 @@ function update(){
 
 $("#kwh").addEventListener("input",update);
 $("#kwhRange").addEventListener("input",e=>{$("#kwh").value=e.target.value; update();});
-$("#afaSel").addEventListener("change",update);
 $("#taxTgl").addEventListener("change",update);
 $("#protTgl").addEventListener("change",update);
 $("#fuelTgl").addEventListener("change",update);
@@ -1418,7 +1440,9 @@ $("#presets").addEventListener("click",e=>{
   $("#kwh").value=b.dataset.v; update();
 });
 
-buildAfaSelect();
+buildQuick();
+readPeriod();
+renderParts();
 drawAfa();
 update();
 </script>
