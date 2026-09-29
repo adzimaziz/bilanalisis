@@ -217,6 +217,12 @@ table.afa-parts td small{display:block; color:var(--muted); font-size:11.5px}
 .guide-mini{margin-top:8px}
 .guide-mini summary{font-size:12.5px; color:var(--accent)}
 .guide-mini img{display:block; margin-top:8px; max-width:min(100%,640px); border-radius:10px; border:1px solid var(--hairline)}
+.guide-steps{display:grid; gap:16px; margin-top:12px}
+.gstep{display:flex; gap:12px; align-items:flex-start}
+.gstep .n{flex:none; width:26px; height:26px; border-radius:50%; background:var(--grad); color:#fff; font-weight:800; font-size:13px; display:grid; place-items:center}
+.gstep b{font-size:14px}
+.gstep p{margin:2px 0 8px; font-size:13px; color:var(--ink-2); max-width:70ch}
+.gstep img{margin-top:0; max-width:min(100%,520px)}
 .tbl-duo{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
 @media (max-width:880px){ .tbl-duo{grid-template-columns:1fr} }
 td small{display:block; color:var(--muted); font-size:11.5px; font-weight:500}
@@ -373,8 +379,16 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <p class="mini-note">Masukkan tempoh bil seperti tertera pada bil TNB anda (cth. 15.08.2025 &ndash; 14.09.2025). Jumlah kWj dan had
     600 kWj dipecahkan mengikut bilangan hari dalam setiap bulan, sama seperti bil TNB &mdash; semak baris
     &ldquo;AFA (&hellip; kWh) mulai &hellip;&rdquo; pada bil anda. Kadar AFA diisi automatik mengikut kadar rasmi setiap bulan.</p>
-    <details class="guide-mini"><summary>Panduan: cari tempoh bil &amp; baris AFA dalam bil anda</summary>
-      <img src="panduan-afa.png" alt="Contoh Pecahan Pengiraan Bil TNB dengan dua baris AFA: AFA (508kWh, RM0.038/kWh) mulai 01/08/26 dan AFA (208kWh, RM0.0367/kWh) mulai 01/09/26" loading="lazy">
+    <details class="guide-mini"><summary>Panduan: cari tempoh bil &amp; penggunaan kWj dalam bil anda</summary>
+      <div class="guide-steps">
+        <div class="gstep"><span class="n">1</span><div><b>Tempoh bil</b>
+          <p>Salin tarikh mula dan tarikh akhir ke ruangan <b>Tempoh bil</b> di atas.</p>
+          <img src="panduan-tempoh.jpg" alt="Contoh bil TNB: Tempoh Bil 15.08.2026 - 14.09.2026 (31 Hari)" loading="lazy"></div></div>
+        <div class="gstep"><span class="n">2</span><div><b>Penggunaan kWh</b>
+          <p>Dalam jadual <b>Bacaan Meter</b>, ambil nilai lajur <b>Penggunaan</b> pada baris unit <b>kWh</b> (bukan kW atau kVARh)
+          dan masukkan ke ruangan penggunaan di atas.</p>
+          <img src="panduan-kwh.jpg" alt="Contoh jadual Bacaan Meter TNB: penggunaan 301 kWh dibulatkan merah" loading="lazy"></div></div>
+      </div>
     </details>
   </div>
 </div>
