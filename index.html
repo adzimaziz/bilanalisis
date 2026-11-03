@@ -589,7 +589,7 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <li><b>AFA</b>: dikecualikan untuk penggunaan &le;600 kWj (&le;800 kWj bagi Sep&ndash;Dis 2026). Kadar diambil
       ikut bulan dalam tempoh bil yang anda masukkan (bukan purata), kerana penggunaan dan kadar AFA berbeza setiap bulan.
       Bil merentas bulan: kWj setiap bulan = jumlah kWj &times; hari bulan itu &divide; hari tempoh bil.</li>
-    <li><b>Unjuran AFA Okt&ndash;Dis 2026</b>: Unjuran 3-Bulan rasmi myTNB &mdash; Okt +3.36, Nov +2.81, Dis +5.48
+    <li><b>Unjuran AFA Dis 2026&ndash;Feb 2027</b>: Unjuran 3-Bulan rasmi myTNB &mdash; Dis +7.98, Jan +6.23, Feb +6.27
       sen/kWj (senario Base Case). Ini bukan kadar muktamad; kadar sebenar diumumkan awal setiap bulan. Tempoh bil
       dalam bulan unjuran menggunakan kadar ini secara automatik.</li>
     <li><b>Cukai Perkhidmatan 8%</b>: dikenakan ke atas lajur &ldquo;Dengan Cukai Perkhidmatan&rdquo; &mdash; bahagian setiap caj bagi
@@ -602,12 +602,12 @@ footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--grid); font
     <li>Alat ini untuk perbandingan kasar sahaja; rujuk bil sebenar atau kalkulator rasmi myTNB untuk angka muktamad.</li>
   </ol>
   <p>Sumber: <a href="https://www.st.gov.my/jadual-elektrik-baharu-lebih-236-juta-pengguna-domestik-semenanjung-nikmati-kadar-lebih-adil" target="_blank" rel="noopener">Suruhanjaya Tenaga (jadual tarif RP4, Jun 2025)</a> &middot;
-  <a href="https://paultan.org/2026/09/02/tnb-afa-rate-september-2026-set-at-3-67-sen-kwh/" target="_blank" rel="noopener">kadar AFA bulanan Jul 2025&ndash;Sep 2026</a> &middot;
+  <a href="https://paultan.org/2026/11/02/tnb-bill-afa-rate-november-2026-set-at-3-60-sen-kwh/" target="_blank" rel="noopener">kadar AFA bulanan Jul 2025&ndash;Nov 2026</a> &middot;
   <a href="https://www.mytnb.com.my/tariff" target="_blank" rel="noopener">myTNB</a> &middot;
   <a href="https://www.singlebuyer.com.my/Generation-Info-Tariff/automatic-fuel-adjustment-(afa)" target="_blank" rel="noopener">unjuran AFA (Single Buyer)</a></p>
 </section>
 
-<footer>Dikemas kini September 2026 &middot; Dihasilkan oleh <b>Adzim &amp; Abbas</b> &middot; Pengiraan disemak dengan bil sebenar oleh B&amp;C. Kadar AFA terkini diumumkan Suruhanjaya Tenaga pada awal setiap bulan.</footer>
+<footer>Dikemas kini November 2026 &middot; Dihasilkan oleh <b>Adzim &amp; Abbas</b> &middot; Pengiraan disemak dengan bil sebenar oleh B&amp;C. Kadar AFA terkini diumumkan Suruhanjaya Tenaga pada awal setiap bulan.</footer>
 </div>
 
 <div id="tip" role="status"></div>
@@ -633,18 +633,18 @@ const ICPT_MONTHS = ["Jan 25","Feb 25","Mac 25","Apr 25","Mei 25","Jun 25"].map(
 const AFA_MONTHS = [
   ["Jul 25",0.00],["Ogo 25",-1.45],["Sep 25",-1.10],["Okt 25",-6.50],["Nov 25",-8.91],["Dis 25",-6.42],
   ["Jan 26",-4.99],["Feb 26",-2.77],["Mac 26",-2.15],["Apr 26",-0.47],["Mei 26",1.38],["Jun 26",2.59],
-  ["Jul 26",3.59],["Ogo 26",3.80],["Sep 26",3.67]
+  ["Jul 26",3.59],["Ogo 26",3.80],["Sep 26",3.67],["Okt 26",3.61],["Nov 26",3.60]
 ].map(([m,v])=>({m,v,era:"afa"}));
 const TIMELINE = ICPT_MONTHS.concat(AFA_MONTHS);
 
 const AFA_BLOCKS = [ // blok 6 bulan (indeks dalam AFA_MONTHS)
   {label:"Jul–Dis 25", s:0, e:5},
   {label:"Jan–Jun 26", s:6, e:11},
-  {label:"Jul–Sep 26", s:12, e:14, partial:true},
+  {label:"Jul–Nov 26", s:12, e:16, partial:true},
 ];
 const AFA_FORECAST = { // Unjuran 3-Bulan Kadar AFA rasmi (myTNB)
-  label:"Okt–Dis 26",
-  months:[{m:"Okt 26",v:3.36},{m:"Nov 26",v:2.81},{m:"Dis 26",v:5.48}]
+  label:"Dis 26–Feb 27",
+  months:[{m:"Dis 26",v:7.98},{m:"Jan 27",v:6.23},{m:"Feb 27",v:6.27}]
 };
 const avgOf = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
 const blockOf = j => AFA_BLOCKS.find(b=>j>=b.s&&j<=b.e);
@@ -811,7 +811,7 @@ function drawAfa(){
   const svg=$("#afaChart"); svg.innerHTML="";
   const W=960,H=330,mL=50,mR=118,mT=30,mB=40;
   const plotW=W-mL-mR, plotH=H-mT-mB;
-  const yMin=-10, yMax=6;
+  const yMin=-10, yMax=8;
   const y=v=> mT+(yMax-v)/(yMax-yMin)*plotH;
   const slots=TIMELINE.length+AFA_FORECAST.months.length;
   const band=plotW/slots;
@@ -861,7 +861,7 @@ function drawAfa(){
 
   const lbl=(i,v,dy)=>el("text",{x:xC(i),y:y(v)+dy,"text-anchor":"middle","font-size":11,"font-weight":700,fill:"var(--ink-2)","font-variant-numeric":"tabular-nums"},svg);
   lbl(10,-8.91,14).textContent="−8.91";
-  lbl(TIMELINE.length-1,3.67,-8).textContent="+3.67";
+  lbl(TIMELINE.length-1,3.60,-8).textContent="+3.60";
   lbl(2,-2,14).textContent="−2.00";
 
   // konsep ICPT: purata setiap blok 6 bulan sebagai kadar tetap
